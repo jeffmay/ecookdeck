@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "yjs": "^13.6.30"
   }
 }
