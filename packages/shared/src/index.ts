@@ -7,3 +7,4 @@ export * from "./math/fraction.js";
 export * from "./math/units.js";
 export * from "./fixtures/parse_kitchenware_csv.js";
 export * from "./fixtures/default_kitchenware.js";
+export * from "./yjs/ingredient_store.js";

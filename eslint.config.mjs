@@ -46,8 +46,8 @@ export default [
   {
     // snake_case hook names (use_foo) are not recognised by rules-of-hooks,
     // which expects useFoo. The project convention requires snake_case, so we
-    // disable the rule only in hook definition files.
-    files: ["packages/*/src/hooks/**/*.ts"],
+    // disable the rule in hook and context definition files.
+    files: ["packages/*/src/hooks/**/*.ts", "packages/*/src/contexts/**/*.ts"],
     rules: {
       "react-hooks/rules-of-hooks": "off",
     },

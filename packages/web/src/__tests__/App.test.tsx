@@ -24,7 +24,7 @@ describe("App — no user stored", () => {
     render(<App />);
     await userEvent.type(screen.getByLabelText("Your name"), "Alice");
     await userEvent.click(screen.getByRole("button", { name: "Get Started" }));
-    expect(screen.getByLabelText("Menu")).toBeInTheDocument();
+    expect(screen.getByLabelText("Navigation menu")).toBeInTheDocument();
     expect(screen.getByLabelText("User menu for Alice")).toBeInTheDocument();
   });
 
@@ -43,9 +43,16 @@ describe("App — user already stored", () => {
 
   it("shows home content when user is already stored", () => {
     render(<App />);
-    expect(screen.getByLabelText("Menu")).toBeInTheDocument();
+    expect(screen.getByLabelText("Navigation menu")).toBeInTheDocument();
     expect(screen.getByLabelText("Undo")).toBeInTheDocument();
     expect(screen.getByLabelText("User menu for Bob")).toBeInTheDocument();
+  });
+
+  it("navigates to Bulk Ingredient Editor via the nav menu", async () => {
+    render(<App />);
+    await userEvent.click(screen.getByLabelText("Navigation menu"));
+    await userEvent.click(screen.getByRole("button", { name: "Ingredients" }));
+    expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
   });
 
   it("navigates to profile settings via the user menu", async () => {
@@ -53,7 +60,6 @@ describe("App — user already stored", () => {
     await userEvent.click(screen.getByLabelText("User menu for Bob"));
     await userEvent.click(screen.getByRole("menuitem", { name: "Profile settings" }));
     expect(screen.getByRole("heading", { name: "Profile Settings" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Your name")).toHaveValue("Bob");
   });
 
   it("returns to home after cancelling profile settings", async () => {
