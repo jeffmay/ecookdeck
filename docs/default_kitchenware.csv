@@ -1,0 +1,3 @@
+Unique ID,Type,Description,Default Measurement Type,Labels
+butter,ingredient,Butter,volume,baking+fat+solid
+cheese,ingredient,Cheese,weight,solid
