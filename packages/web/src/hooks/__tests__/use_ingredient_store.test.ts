@@ -90,6 +90,34 @@ describe("use_ingredient_store", () => {
     expect(updated?.default_measurement_type).toBe("weight");
   });
 
+  it("rename_ingredient updates the ingredient name", () => {
+    const { result } = renderHook(() => use_ingredient_store(), {
+      wrapper: make_wrapper(doc),
+    });
+    const butter = result.current.ingredients.find((i) => i.id === "butter");
+    if (butter === undefined) throw new Error("butter not found in defaults");
+    act(() => result.current.rename_ingredient(butter.id, "Salted Butter"));
+    expect(result.current.ingredients.find((i) => i.id === "butter")?.name).toBe("Salted Butter");
+  });
+
+  it("set_labels replaces all labels for an ingredient", () => {
+    const { result } = renderHook(() => use_ingredient_store(), {
+      wrapper: make_wrapper(doc),
+    });
+    act(() =>
+      result.current.create_ingredient({
+        name: "Test Ing Labels",
+        default_measurement_type: "volume",
+        labels: ["a", "b"],
+      }),
+    );
+    const id = result.current.ingredients.find((i) => i.name === "Test Ing Labels")?.id;
+    if (id === undefined) throw new Error("ingredient not found");
+    act(() => result.current.set_labels(id, ["x", "y", "z"]));
+    const updated = result.current.ingredients.find((i) => i.id === id);
+    expect(updated?.labels).toEqual(["x", "y", "z"]);
+  });
+
   it("set_parent sets and clears parent_id", () => {
     const { result } = renderHook(() => use_ingredient_store(), {
       wrapper: make_wrapper(doc),

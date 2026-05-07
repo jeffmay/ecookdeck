@@ -32,17 +32,9 @@ describe("BulkIngredientEditorPage — initial render", () => {
     expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
   });
 
-  it("renders filter controls", () => {
-    setup();
-    expect(screen.getByLabelText("Filter by label")).toBeInTheDocument();
-    expect(screen.getByLabelText("Filter by measurement type")).toBeInTheDocument();
-    expect(screen.getByLabelText("Filter by parent ingredient")).toBeInTheDocument();
-  });
-
   it("renders the ingredient table with default data", () => {
     setup();
     expect(get_table()).toBeInTheDocument();
-    // Default kitchenware includes butter — check within the table region
     expect(within(get_table()).getByText("Butter")).toBeInTheDocument();
   });
 
@@ -51,58 +43,9 @@ describe("BulkIngredientEditorPage — initial render", () => {
     expect(screen.getByLabelText("Add new ingredient")).toBeInTheDocument();
   });
 
-  it("does not show bulk bar when nothing selected", () => {
+  it("does not show filter bar", () => {
     setup();
-    expect(screen.queryByLabelText("Bulk actions")).not.toBeInTheDocument();
-  });
-});
-
-describe("BulkIngredientEditorPage — filter", () => {
-  it("filters by label to show only matching ingredients", async () => {
-    setup();
-    await userEvent.type(screen.getByLabelText("Filter by label"), "fat");
-    const table = get_table();
-    // Butter has 'fat' label — should still be visible in the table
-    expect(within(table).getByText("Butter")).toBeInTheDocument();
-    // Flour does not have 'fat' — should be hidden from the table
-    expect(within(table).queryByText("Flour")).not.toBeInTheDocument();
-  });
-
-  it("filters by measurement type", async () => {
-    setup();
-    await userEvent.selectOptions(screen.getByLabelText("Filter by measurement type"), "weight");
-    const table = get_table();
-    // Butter is volume — should be hidden from the table
-    expect(within(table).queryByText("Butter")).not.toBeInTheDocument();
-    // Cheese is weight — should be visible (from defaults)
-    expect(within(table).getByText("Cheese")).toBeInTheDocument();
-  });
-});
-
-describe("BulkIngredientEditorPage — selection", () => {
-  it("shows bulk bar after selecting an ingredient", async () => {
-    setup();
-    await userEvent.click(screen.getByLabelText("Select Butter"));
-    expect(screen.getByLabelText("Bulk actions")).toBeInTheDocument();
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
-  });
-
-  it("select-all checkbox selects all displayed ingredients", async () => {
-    setup();
-    await userEvent.click(screen.getByLabelText("Select all ingredients"));
-    // All row checkboxes (excluding select-all itself) should be checked
-    within(get_table())
-      .getAllByRole("checkbox")
-      .forEach((cb) => expect(cb).toBeChecked());
-  });
-
-  it("deselects all when select-all clicked while all selected", async () => {
-    setup();
-    await userEvent.click(screen.getByLabelText("Select all ingredients"));
-    await userEvent.click(screen.getByLabelText("Select all ingredients"));
-    within(get_table())
-      .getAllByRole("checkbox")
-      .forEach((cb) => expect(cb).not.toBeChecked());
+    expect(screen.queryByLabelText("Filter ingredients")).not.toBeInTheDocument();
   });
 });
 
@@ -134,73 +77,16 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
     expect(within(get_table()).getByText("Coconut Oil")).toBeInTheDocument();
     expect(screen.queryByLabelText("New ingredient name")).not.toBeInTheDocument();
   });
-});
 
-describe("BulkIngredientEditorPage — bulk actions", () => {
-  function get_butter_row() {
-    const cell = within(get_table()).getByText("Butter");
-    const row = cell.closest("tr");
-    if (row === null) throw new Error("Butter row not found");
-    return row;
-  }
-
-  async function select_butter() {
-    await userEvent.click(screen.getByLabelText("Select Butter"));
-  }
-
-  it("adds a label to selected ingredients", async () => {
+  it("creates an ingredient with a parent", async () => {
     setup();
-    await select_butter();
-    const bar = screen.getByLabelText("Bulk actions");
-    await userEvent.type(within(bar).getByLabelText("Label to add"), "premium");
-    await userEvent.click(within(bar).getAllByRole("button", { name: "Apply" })[0]!);
-    expect(within(get_butter_row()).getByText(/premium/)).toBeInTheDocument();
-  });
-
-  it("removes a label from selected ingredients", async () => {
-    setup();
-    await select_butter();
-    const bar = screen.getByLabelText("Bulk actions");
-    await userEvent.type(within(bar).getByLabelText("Label to remove"), "fat");
-    await userEvent.click(within(bar).getAllByRole("button", { name: "Apply" })[1]!);
-    // 'fat' should no longer be in the Butter row's labels cell
-    expect(within(get_butter_row()).queryByText(/\bfat\b/)).not.toBeInTheDocument();
-  });
-
-  it("changes measurement type for selected ingredients", async () => {
-    setup();
-    await select_butter();
-    const bar = screen.getByLabelText("Bulk actions");
-    await userEvent.selectOptions(within(bar).getByLabelText("Measurement type to set"), "weight");
-    await userEvent.click(within(bar).getAllByRole("button", { name: "Apply" })[2]!);
-    expect(within(get_butter_row()).getByText("weight")).toBeInTheDocument();
-  });
-});
-
-describe("BulkIngredientEditorPage — stale filter", () => {
-  it("shows stale banner when a bulk edit would change the filtered list", async () => {
-    setup();
-    // Filter to show only 'fat'-labelled ingredients (Butter has 'fat')
-    await userEvent.type(screen.getByLabelText("Filter by label"), "fat");
-    // Select Butter and remove the 'fat' label → Butter no longer matches filter
-    await userEvent.click(screen.getByLabelText("Select Butter"));
-    const bar = screen.getByLabelText("Bulk actions");
-    await userEvent.type(within(bar).getByLabelText("Label to remove"), "fat");
-    await userEvent.click(within(bar).getAllByRole("button", { name: "Apply" })[1]!);
-    expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Refresh filter" })).toBeInTheDocument();
-  });
-
-  it("clears stale banner after Refresh filter and removes non-matching rows", async () => {
-    setup();
-    await userEvent.type(screen.getByLabelText("Filter by label"), "fat");
-    await userEvent.click(screen.getByLabelText("Select Butter"));
-    const bar = screen.getByLabelText("Bulk actions");
-    await userEvent.type(within(bar).getByLabelText("Label to remove"), "fat");
-    await userEvent.click(within(bar).getAllByRole("button", { name: "Apply" })[1]!);
-    await userEvent.click(screen.getByRole("button", { name: "Refresh filter" }));
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    // Butter no longer has 'fat' label, so it should be gone from the table
-    expect(within(get_table()).queryByText("Butter")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Add new ingredient"));
+    await userEvent.type(screen.getByLabelText("New ingredient name"), "Salted Butter");
+    await userEvent.selectOptions(
+      screen.getByLabelText("New ingredient parent"),
+      screen.getAllByRole("option", { name: "Butter" })[0]!,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(screen.queryByLabelText("New ingredient name")).not.toBeInTheDocument();
   });
 });

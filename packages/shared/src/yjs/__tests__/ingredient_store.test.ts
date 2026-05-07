@@ -7,6 +7,8 @@ import {
   remove_labels_from_ingredients,
   set_measurement_type_for_ingredients,
   set_parent_for_ingredients,
+  rename_ingredient,
+  set_labels_for_ingredient,
   init_ingredients_from_defaults,
 } from "../ingredient_store.js";
 import type { Ingredient } from "../../types/kitchenware.js";
@@ -124,6 +126,47 @@ describe("set_parent_for_ingredients", () => {
     set_parent_for_ingredients(doc, ["butter"], undefined);
     const result = get_ingredients(doc).find((i) => i.id === "butter");
     expect(result?.parent_id).toBeUndefined();
+  });
+});
+
+describe("rename_ingredient", () => {
+  it("updates the ingredient name", () => {
+    add_ingredient(doc, BUTTER);
+    rename_ingredient(doc, "butter", "Salted Butter");
+    const result = get_ingredients(doc).find((i) => i.id === "butter");
+    expect(result?.name).toBe("Salted Butter");
+  });
+
+  it("preserves other fields when renaming", () => {
+    add_ingredient(doc, BUTTER);
+    rename_ingredient(doc, "butter", "Salted Butter");
+    const result = get_ingredients(doc).find((i) => i.id === "butter");
+    expect(result?.labels).toEqual(BUTTER.labels);
+    expect(result?.default_measurement_type).toBe(BUTTER.default_measurement_type);
+  });
+
+  it("silently skips unknown ids", () => {
+    expect(() => rename_ingredient(doc, "nonexistent", "New Name")).not.toThrow();
+  });
+});
+
+describe("set_labels_for_ingredient", () => {
+  it("replaces all labels for the ingredient", () => {
+    add_ingredient(doc, BUTTER);
+    set_labels_for_ingredient(doc, "butter", ["dairy", "premium"]);
+    const result = get_ingredients(doc).find((i) => i.id === "butter");
+    expect(result?.labels).toEqual(["dairy", "premium"]);
+  });
+
+  it("clears labels when empty array passed", () => {
+    add_ingredient(doc, BUTTER);
+    set_labels_for_ingredient(doc, "butter", []);
+    const result = get_ingredients(doc).find((i) => i.id === "butter");
+    expect(result?.labels).toEqual([]);
+  });
+
+  it("silently skips unknown ids", () => {
+    expect(() => set_labels_for_ingredient(doc, "nonexistent", ["x"])).not.toThrow();
   });
 });
 

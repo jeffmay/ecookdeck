@@ -9,6 +9,8 @@ import {
   remove_labels_from_ingredients,
   set_measurement_type_for_ingredients,
   set_parent_for_ingredients,
+  rename_ingredient as rename_ingredient_in_doc,
+  set_labels_for_ingredient,
   make_ingredient_id,
 } from "@recipe-book/shared";
 import { use_doc } from "../contexts/doc_context.js";
@@ -23,8 +25,10 @@ export interface NewIngredientInput {
 export interface UseIngredientStoreResult {
   readonly ingredients: readonly Ingredient[];
   readonly create_ingredient: (input: NewIngredientInput) => string;
+  readonly rename_ingredient: (id: string, name: string) => void;
   readonly add_labels: (ids: readonly string[], labels: readonly string[]) => void;
   readonly remove_labels: (ids: readonly string[], labels: readonly string[]) => void;
+  readonly set_labels: (id: string, labels: readonly string[]) => void;
   readonly set_measurement_type: (ids: readonly string[], type: MeasurementType) => void;
   readonly set_parent: (ids: readonly string[], parent_id: string | undefined) => void;
 }
@@ -58,11 +62,17 @@ export function use_ingredient_store(): UseIngredientStoreResult {
       add_ingredient(doc, ingredient);
       return id;
     },
+    rename_ingredient(id, name) {
+      rename_ingredient_in_doc(doc, id, name);
+    },
     add_labels(ids, labels) {
       add_labels_to_ingredients(doc, ids, labels);
     },
     remove_labels(ids, labels) {
       remove_labels_from_ingredients(doc, ids, labels);
+    },
+    set_labels(id, labels) {
+      set_labels_for_ingredient(doc, id, labels);
     },
     set_measurement_type(ids, type) {
       set_measurement_type_for_ingredients(doc, ids, type);

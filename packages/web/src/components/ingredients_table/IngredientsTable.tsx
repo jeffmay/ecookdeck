@@ -1,0 +1,654 @@
+import { useState, useMemo, type KeyboardEvent } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  getGroupedRowModel,
+  getExpandedRowModel,
+  createColumnHelper,
+  flexRender,
+  type ColumnFiltersState,
+  type SortingState,
+  type GroupingState,
+  type ExpandedState,
+  type FilterFn,
+  type RowData,
+  type CellContext,
+  type Header,
+} from "@tanstack/react-table";
+import type { Ingredient, MeasurementType } from "@recipe-book/shared";
+import { MultiSelectFilter } from "./MultiSelectFilter.js";
+import { build_ingredient_tree, type IngredientRow } from "./build_ingredient_tree.js";
+import "./IngredientsTable.css";
+
+// ---------------------------------------------------------------------------
+// Module augmentations
+// ---------------------------------------------------------------------------
+
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface TableMeta<TData extends RowData> {
+    pending_edits: Map<string, string>;
+    on_begin_edit: (ingredient_id: string, col_id: string, initial: string) => void;
+    on_update_edit: (ingredient_id: string, col_id: string, value: string) => void;
+    on_commit_edit: (ingredient_id: string, col_id: string) => void;
+    on_cancel_edit: (ingredient_id: string, col_id: string) => void;
+    all_ingredients: readonly Ingredient[];
+  }
+  interface FilterFns {
+    fuzzy_text: FilterFn<IngredientRow>;
+    multi_select: FilterFn<IngredientRow>;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Filter functions
+// ---------------------------------------------------------------------------
+
+const fuzzy_text: FilterFn<IngredientRow> = (row, col_id, value) => {
+  if (typeof value !== "string" || value === "") return true;
+  return String(row.getValue(col_id)).toLowerCase().includes(value.toLowerCase());
+};
+fuzzy_text.autoRemove = (v) => typeof v !== "string" || v === "";
+
+const multi_select: FilterFn<IngredientRow> = (row, col_id, value) => {
+  if (!Array.isArray(value) || value.length === 0) return true;
+  const selected = value.filter((v): v is string => typeof v === "string");
+  if (selected.length === 0) return true;
+  const cell = row.getValue(col_id);
+  const values: string[] = Array.isArray(cell)
+    ? cell.filter((v): v is string => typeof v === "string")
+    : [String(cell)];
+  return selected.some((s) => values.includes(s));
+};
+multi_select.autoRemove = (v) => !Array.isArray(v) || v.length === 0;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function pkey(ingredient_id: string, col_id: string): string {
+  return `${ingredient_id}|${col_id}`;
+}
+
+const MEASUREMENT_TYPES: readonly MeasurementType[] = ["count", "volume", "weight"];
+
+function validate_type(v: string): MeasurementType | undefined {
+  if (v === "volume" || v === "weight" || v === "count") return v;
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Editable cell components
+// ---------------------------------------------------------------------------
+
+function NameCell({ getValue, row, column, table }: CellContext<IngredientRow, string>) {
+  const value = getValue();
+  const meta = table.options.meta!;
+  const key = pkey(row.original.id, column.id);
+  const pending = meta.pending_edits.get(key);
+
+  if (pending !== undefined) {
+    return (
+      <span className="it-editing">
+        <input
+          type="text"
+          value={pending}
+          className="it-edit-input"
+          autoFocus
+          aria-label={`Edit name for ${value}`}
+          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") meta.on_commit_edit(row.original.id, column.id);
+            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+          }}
+        />
+        <button
+          type="button"
+          className="it-confirm-btn"
+          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          aria-label="Confirm edit"
+        >
+          ✔︎
+        </button>
+        <button
+          type="button"
+          className="it-cancel-btn"
+          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          aria-label="Cancel edit"
+        >
+          ✗
+        </button>
+      </span>
+    );
+  }
+  return (
+    <span
+      className="it-editable"
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit name for ${value}`}
+      onClick={() => meta.on_begin_edit(row.original.id, column.id, value)}
+      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === "Enter" || e.key === " ")
+          meta.on_begin_edit(row.original.id, column.id, value);
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+function TypeCell({ getValue, row, column, table }: CellContext<IngredientRow, MeasurementType>) {
+  const value = getValue();
+  const meta = table.options.meta!;
+  const key = pkey(row.original.id, column.id);
+  const pending = meta.pending_edits.get(key);
+
+  if (pending !== undefined) {
+    return (
+      <span className="it-editing">
+        <select
+          value={pending}
+          autoFocus
+          aria-label={`Edit type for ${row.original.name}`}
+          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
+            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+          }}
+        >
+          {MEASUREMENT_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="it-confirm-btn"
+          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          aria-label="Confirm edit"
+        >
+          ✔︎
+        </button>
+        <button
+          type="button"
+          className="it-cancel-btn"
+          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          aria-label="Cancel edit"
+        >
+          ✗
+        </button>
+      </span>
+    );
+  }
+  return (
+    <span
+      className="it-editable"
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit type for ${row.original.name}`}
+      onClick={() => meta.on_begin_edit(row.original.id, column.id, value)}
+      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === "Enter" || e.key === " ")
+          meta.on_begin_edit(row.original.id, column.id, value);
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+function LabelsCell({
+  getValue,
+  row,
+  column,
+  table,
+}: CellContext<IngredientRow, readonly string[]>) {
+  const labels = getValue();
+  const display = labels.join(", ");
+  const meta = table.options.meta!;
+  const key = pkey(row.original.id, column.id);
+  const pending = meta.pending_edits.get(key);
+
+  if (pending !== undefined) {
+    return (
+      <span className="it-editing">
+        <input
+          type="text"
+          value={pending}
+          className="it-edit-input it-edit-input--wide"
+          autoFocus
+          placeholder="label1, label2"
+          aria-label={`Edit labels for ${row.original.name}`}
+          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") meta.on_commit_edit(row.original.id, column.id);
+            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+          }}
+        />
+        <button
+          type="button"
+          className="it-confirm-btn"
+          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          aria-label="Confirm edit"
+        >
+          ✔︎
+        </button>
+        <button
+          type="button"
+          className="it-cancel-btn"
+          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          aria-label="Cancel edit"
+        >
+          ✗
+        </button>
+      </span>
+    );
+  }
+  return (
+    <span
+      className="it-editable"
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit labels for ${row.original.name}`}
+      onClick={() => meta.on_begin_edit(row.original.id, column.id, display)}
+      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === "Enter" || e.key === " ")
+          meta.on_begin_edit(row.original.id, column.id, display);
+      }}
+    >
+      {display || <span className="it-muted">—</span>}
+    </span>
+  );
+}
+
+function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) {
+  const meta = table.options.meta!;
+  const key = pkey(row.original.id, column.id);
+  const pending = meta.pending_edits.get(key);
+  const display = row.original.parent_name || "—";
+
+  if (pending !== undefined) {
+    return (
+      <span className="it-editing">
+        <select
+          value={pending}
+          autoFocus
+          aria-label={`Edit parent for ${row.original.name}`}
+          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
+            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+          }}
+        >
+          <option value="">— None —</option>
+          {meta.all_ingredients
+            .filter((i) => i.id !== row.original.id)
+            .map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+        </select>
+        <button
+          type="button"
+          className="it-confirm-btn"
+          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          aria-label="Confirm edit"
+        >
+          ✔︎
+        </button>
+        <button
+          type="button"
+          className="it-cancel-btn"
+          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          aria-label="Cancel edit"
+        >
+          ✗
+        </button>
+      </span>
+    );
+  }
+  return (
+    <span
+      className="it-editable"
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit parent for ${row.original.name}`}
+      onClick={() =>
+        meta.on_begin_edit(row.original.id, column.id, row.original.parent_id ?? "")
+      }
+      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === "Enter" || e.key === " ")
+          meta.on_begin_edit(row.original.id, column.id, row.original.parent_id ?? "");
+      }}
+    >
+      {display}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Column header
+// ---------------------------------------------------------------------------
+
+interface ColumnHeaderProps {
+  readonly header: Header<IngredientRow, unknown>;
+  readonly all_labels: readonly string[];
+}
+
+function ColumnHeader({ header, all_labels }: ColumnHeaderProps) {
+  const col = header.column;
+  const sorted = col.getIsSorted();
+  const is_grouped = col.getIsGrouped();
+
+  return (
+    <div className="it-col-header">
+      <div className="it-col-title">
+        {col.getCanSort() ? (
+          <button
+            type="button"
+            className="it-sort-btn"
+            onClick={col.getToggleSortingHandler()}
+            aria-label={`Sort by ${col.id}`}
+          >
+            {flexRender(col.columnDef.header, header.getContext())}
+            <span className="it-sort-icon" aria-hidden>
+              {sorted === "asc" ? " ↑" : sorted === "desc" ? " ↓" : " ↕"}
+            </span>
+          </button>
+        ) : (
+          <span>{flexRender(col.columnDef.header, header.getContext())}</span>
+        )}
+        {col.getCanGroup() && (
+          <button
+            type="button"
+            className={`it-group-btn${is_grouped ? " it-group-btn--on" : ""}`}
+            onClick={col.getToggleGroupingHandler()}
+            aria-label={`${is_grouped ? "Ungroup" : "Group"} by ${col.id}`}
+            title={is_grouped ? "Remove grouping" : "Group by this column"}
+          >
+            {is_grouped ? "⊟" : "⊞"}
+          </button>
+        )}
+      </div>
+      {col.getCanFilter() && (
+        <div className="it-filter-row">
+          {col.id === "default_measurement_type" ? (
+            <MultiSelectFilter
+              column={col}
+              all_options={MEASUREMENT_TYPES}
+              aria_label="Filter by type"
+            />
+          ) : col.id === "labels" ? (
+            <MultiSelectFilter
+              column={col}
+              all_options={all_labels}
+              aria_label="Filter by labels"
+            />
+          ) : (
+            <input
+              type="text"
+              className="it-text-filter"
+              value={typeof col.getFilterValue() === "string" ? (col.getFilterValue() as string) : ""}
+              onChange={(e) => col.setFilterValue(e.target.value || undefined)}
+              placeholder="Filter…"
+              aria-label={
+                col.id === "name"
+                  ? "Filter by name"
+                  : col.id === "parent_name"
+                    ? "Filter by parent"
+                    : `Filter by ${col.id}`
+              }
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Column definitions (static — dynamic data passed via meta / ColumnHeader props)
+// ---------------------------------------------------------------------------
+
+const col = createColumnHelper<IngredientRow>();
+
+const COLUMNS = [
+  col.display({
+    id: "expand",
+    enableSorting: false,
+    enableGrouping: false,
+    enableColumnFilter: false,
+    header: () => null,
+    cell: ({ row }) => {
+      const can = row.getCanExpand();
+      const open = row.getIsExpanded();
+      const name = row.getIsGrouped() ? "group" : row.original.name;
+      return (
+        <div
+          className="it-expand-cell"
+          style={row.getIsGrouped() ? undefined : { paddingLeft: `${row.depth * 1.5}em` }}
+        >
+          {can ? (
+            <button
+              type="button"
+              className="it-expand-btn"
+              onClick={row.getToggleExpandedHandler()}
+              aria-label={`${open ? "Collapse" : "Expand"} ${name}`}
+            >
+              {open ? "▼" : "▶"}
+            </button>
+          ) : (
+            <span className="it-expand-spacer" aria-hidden />
+          )}
+        </div>
+      );
+    },
+  }),
+  col.accessor("name", {
+    header: "Name",
+    filterFn: "fuzzy_text",
+    enableGrouping: true,
+    cell: NameCell,
+  }),
+  col.accessor("default_measurement_type", {
+    header: "Type",
+    filterFn: "multi_select",
+    enableGrouping: true,
+    cell: TypeCell,
+  }),
+  col.accessor((row) => row.labels, {
+    id: "labels",
+    header: "Labels",
+    filterFn: "multi_select",
+    enableGrouping: false,
+    enableSorting: false,
+    cell: LabelsCell,
+  }),
+  col.accessor("parent_name", {
+    header: "Parent",
+    filterFn: "fuzzy_text",
+    enableGrouping: true,
+    cell: ParentCell,
+  }),
+];
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+export interface IngredientsTableProps {
+  readonly ingredients: readonly Ingredient[];
+  readonly on_rename: (id: string, name: string) => void;
+  readonly on_set_type: (id: string, type: MeasurementType) => void;
+  readonly on_set_labels: (id: string, labels: readonly string[]) => void;
+  readonly on_set_parent: (id: string, parent_id: string | undefined) => void;
+}
+
+export function IngredientsTable({
+  ingredients,
+  on_rename,
+  on_set_type,
+  on_set_labels,
+  on_set_parent,
+}: IngredientsTableProps) {
+  const [column_filters, set_column_filters] = useState<ColumnFiltersState>([]);
+  const [sorting, set_sorting] = useState<SortingState>([]);
+  const [grouping, set_grouping] = useState<GroupingState>([]);
+  const [expanded, set_expanded] = useState<ExpandedState>({});
+  const [pending_edits, set_pending_edits] = useState<Map<string, string>>(new Map());
+
+  const data = useMemo(() => build_ingredient_tree(ingredients), [ingredients]);
+
+  const all_labels = useMemo(() => {
+    const s = new Set<string>();
+    for (const i of ingredients) for (const l of i.labels) s.add(l);
+    return [...s].sort();
+  }, [ingredients]);
+
+  function on_begin_edit(ingredient_id: string, col_id: string, initial: string): void {
+    set_pending_edits((prev) => new Map(prev).set(pkey(ingredient_id, col_id), initial));
+  }
+
+  function on_update_edit(ingredient_id: string, col_id: string, value: string): void {
+    const key = pkey(ingredient_id, col_id);
+    set_pending_edits((prev) => {
+      if (!prev.has(key)) return prev;
+      return new Map(prev).set(key, value);
+    });
+  }
+
+  function on_commit_edit(ingredient_id: string, col_id: string): void {
+    const key = pkey(ingredient_id, col_id);
+    const value = pending_edits.get(key);
+    if (value === undefined) return;
+
+    if (col_id === "name") {
+      const trimmed = value.trim();
+      if (trimmed !== "") on_rename(ingredient_id, trimmed);
+    } else if (col_id === "default_measurement_type") {
+      const type = validate_type(value);
+      if (type !== undefined) on_set_type(ingredient_id, type);
+    } else if (col_id === "labels") {
+      const labels = value
+        .split(",")
+        .map((l) => l.trim())
+        .filter((l) => l !== "");
+      on_set_labels(ingredient_id, labels);
+    } else if (col_id === "parent_name") {
+      on_set_parent(ingredient_id, value !== "" ? value : undefined);
+    }
+
+    set_pending_edits((prev) => {
+      const next = new Map(prev);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  function on_cancel_edit(ingredient_id: string, col_id: string): void {
+    const key = pkey(ingredient_id, col_id);
+    set_pending_edits((prev) => {
+      const next = new Map(prev);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  const table = useReactTable({
+    data,
+    columns: COLUMNS,
+    state: { columnFilters: column_filters, sorting, grouping, expanded },
+    onColumnFiltersChange: set_column_filters,
+    onSortingChange: set_sorting,
+    onGroupingChange: set_grouping,
+    onExpandedChange: set_expanded,
+    getSubRows: (row) => row.subRows,
+    autoResetExpanded: false,
+    filterFns: { fuzzy_text, multi_select },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    meta: {
+      pending_edits,
+      on_begin_edit,
+      on_update_edit,
+      on_commit_edit,
+      on_cancel_edit,
+      all_ingredients: ingredients,
+    },
+  });
+
+  const rows = table.getRowModel().rows;
+
+  return (
+    <div className="it-wrapper" role="region" aria-label="Ingredient list">
+      <table className="it-table">
+        <thead>
+          {table.getHeaderGroups().map((hg) => (
+            <tr key={hg.id}>
+              {hg.headers.map((h) => (
+                <th key={h.id} className="it-th">
+                  {h.isPlaceholder || h.column.id === "expand" ? null : (
+                    <ColumnHeader header={h} all_labels={all_labels} />
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={COLUMNS.length} className="it-empty">
+                No ingredients match the current filter.
+              </td>
+            </tr>
+          ) : (
+            rows.map((row) => (
+              <tr key={row.id} className={row.getIsGrouped() ? "it-row--group" : ""}>
+                {row.getVisibleCells().map((cell) => {
+                  // Expand column: always render
+                  if (cell.column.id === "expand") {
+                    return (
+                      <td key={cell.id} className="it-td it-td--expand">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  }
+                  // Group rows: show group value + count in the grouped column, blank elsewhere
+                  if (row.getIsGrouped()) {
+                    if (cell.getIsGrouped()) {
+                      return (
+                        <td key={cell.id} className="it-td it-td--group-value">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          <span className="it-group-count"> ({row.subRows.length})</span>
+                        </td>
+                      );
+                    }
+                    return <td key={cell.id} className="it-td" />;
+                  }
+                  // Placeholders / aggregations — only meaningful when column grouping is active;
+                  // tree parent rows also satisfy getIsAggregated() but should render normally
+                  if (grouping.length > 0 && (cell.getIsPlaceholder() || cell.getIsAggregated())) {
+                    return <td key={cell.id} className="it-td" />;
+                  }
+                  // Normal leaf cell
+                  return (
+                    <td key={cell.id} className="it-td">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}

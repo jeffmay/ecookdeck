@@ -145,6 +145,24 @@ export function set_parent_for_ingredients(
   });
 }
 
+export function rename_ingredient(doc: Y.Doc, id: string, name: string): void {
+  const map = get_ingredient_ymap(doc);
+  const ingredient = validate_stored(id, map.get(id));
+  if (ingredient === null) return;
+  map.set(id, to_stored({ ...ingredient, name }));
+}
+
+export function set_labels_for_ingredient(
+  doc: Y.Doc,
+  id: string,
+  labels: readonly string[],
+): void {
+  const map = get_ingredient_ymap(doc);
+  const ingredient = validate_stored(id, map.get(id));
+  if (ingredient === null) return;
+  map.set(id, to_stored({ ...ingredient, labels: [...labels] }));
+}
+
 export function make_ingredient_id(name: string): string {
   const slug = name
     .toLowerCase()
