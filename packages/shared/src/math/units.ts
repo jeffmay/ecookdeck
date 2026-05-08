@@ -1,9 +1,9 @@
-import type { VolumeUnit, WeightUnit } from "../types/measurement.js";
-import type { Fraction } from "../types/measurement.js";
-import { make_fraction, multiply_fractions, divide_fractions, fractions_equal } from "./fraction.js";
+import { ReadonlyDeep } from "type-fest";
+import type { Fraction, VolumeUnit, WeightUnit } from "../types/measurement.js";
+import { divide_fractions, fractions_equal, make_fraction, multiply_fractions } from "./fraction.js";
 
 // US customary volume: base unit is tsp (all conversions are exact integers)
-const TSP_PER: Readonly<Record<VolumeUnit, Fraction | null>> = {
+const TSP_PER: ReadonlyDeep<Record<VolumeUnit, Fraction | null>> = {
   tsp: make_fraction(1, 1),
   tbsp: make_fraction(3, 1),
   fl_oz: make_fraction(6, 1),
@@ -16,7 +16,7 @@ const TSP_PER: Readonly<Record<VolumeUnit, Fraction | null>> = {
 };
 
 // Metric volume: base unit is ml (exact)
-const ML_PER: Readonly<Record<VolumeUnit, Fraction | null>> = {
+const ML_PER: ReadonlyDeep<Record<VolumeUnit, Fraction | null>> = {
   ml: make_fraction(1, 1),
   l: make_fraction(1000, 1),
   tsp: null,
@@ -29,7 +29,7 @@ const ML_PER: Readonly<Record<VolumeUnit, Fraction | null>> = {
 };
 
 // US weight: base unit is oz (exact)
-const OZ_PER: Readonly<Record<WeightUnit, Fraction | null>> = {
+const OZ_PER: ReadonlyDeep<Record<WeightUnit, Fraction | null>> = {
   oz: make_fraction(1, 1),
   lb: make_fraction(16, 1),
   g: null,
@@ -37,7 +37,7 @@ const OZ_PER: Readonly<Record<WeightUnit, Fraction | null>> = {
 };
 
 // Metric weight: base unit is g (exact)
-const G_PER: Readonly<Record<WeightUnit, Fraction | null>> = {
+const G_PER: ReadonlyDeep<Record<WeightUnit, Fraction | null>> = {
   g: make_fraction(1, 1),
   kg: make_fraction(1000, 1),
   oz: null,
@@ -49,7 +49,7 @@ function same_system_volume(a: VolumeUnit, b: VolumeUnit): boolean {
     (ML_PER[a] !== null && ML_PER[b] !== null);
 }
 
-export function convert_volume(value: Fraction, from: VolumeUnit, to: VolumeUnit): Fraction {
+export function convert_volume(value: ReadonlyDeep<Fraction>, from: VolumeUnit, to: VolumeUnit): Fraction {
   if (from === to) return value;
   const from_tsp = TSP_PER[from];
   const to_tsp = TSP_PER[to];
@@ -64,7 +64,7 @@ export function convert_volume(value: Fraction, from: VolumeUnit, to: VolumeUnit
   throw new Error(`Cannot convert between ${from} and ${to}: different unit systems`);
 }
 
-export function convert_weight(value: Fraction, from: WeightUnit, to: WeightUnit): Fraction {
+export function convert_weight(value: ReadonlyDeep<Fraction>, from: WeightUnit, to: WeightUnit): Fraction {
   if (from === to) return value;
   const from_oz = OZ_PER[from];
   const to_oz = OZ_PER[to];
@@ -79,7 +79,7 @@ export function convert_weight(value: Fraction, from: WeightUnit, to: WeightUnit
   throw new Error(`Cannot convert between ${from} and ${to}: different unit systems`);
 }
 
-export function largest_whole_volume_unit(value: Fraction, base: VolumeUnit): VolumeUnit {
+export function largest_whole_volume_unit(value: ReadonlyDeep<Fraction>, base: VolumeUnit): VolumeUnit {
   const us_order: VolumeUnit[] = ["gallon", "quart", "pint", "cup", "fl_oz", "tbsp", "tsp"];
   const metric_order: VolumeUnit[] = ["l", "ml"];
   const candidates = same_system_volume(base, "tsp") ? us_order : metric_order;
@@ -93,7 +93,7 @@ export function largest_whole_volume_unit(value: Fraction, base: VolumeUnit): Vo
   return base;
 }
 
-export function largest_whole_weight_unit(value: Fraction, base: WeightUnit): WeightUnit {
+export function largest_whole_weight_unit(value: ReadonlyDeep<Fraction>, base: WeightUnit): WeightUnit {
   const us_order: WeightUnit[] = ["lb", "oz"];
   const metric_order: WeightUnit[] = ["kg", "g"];
   const candidates = OZ_PER[base] !== null ? us_order : metric_order;

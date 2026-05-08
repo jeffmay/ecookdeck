@@ -1,14 +1,13 @@
+import { find_or_create_label, IngredientId, KitchenwareKind, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
 import { useState } from "react";
-import type { MeasurementType, Ingredient, ItemLabel, ItemKind } from "@recipe-book/shared";
-import { find_or_create_label } from "@recipe-book/shared";
-import { use_ingredient_store } from "../hooks/use_ingredient_store.js";
-import { use_label_store } from "../hooks/use_label_store.js";
-import { use_doc } from "../contexts/doc_context.js";
 import { IngredientsTable, type ExternalLabelFilter } from "../components/ingredients_table/IngredientsTable.js";
 import { LabelTable } from "../components/ingredients_table/LabelTable.js";
+import { use_doc } from "../contexts/doc_context.js";
+import { use_ingredient_store } from "../hooks/use_ingredient_store.js";
+import { use_label_store } from "../hooks/use_label_store.js";
 import "./BulkIngredientEditorPage.css";
 
-const INGREDIENT_KINDS: ReadonlySet<ItemKind> = new Set(["ingredient"]);
+const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
 // ---------------------------------------------------------------------------
 // Add-ingredient form state
@@ -54,60 +53,64 @@ export function BulkIngredientEditorPage() {
     ExternalLabelFilter | undefined
   >(undefined);
 
-  function resolve_label_names(label_names: readonly string[]): readonly ItemLabel.Id[] {
+  function resolve_label_names(label_names: readonly string[]): readonly KitchenwareLabelId[] {
     return label_names.map((name) => find_or_create_label(doc, name, INGREDIENT_KINDS));
   }
 
   function handle_add_submit(e: { preventDefault(): void }): void {
     e.preventDefault();
-    if (add_form.name.trim() === "") return;
+    // TODO: Validate parent_id
+    const valid_parent_id = add_form.parent_id as IngredientId;
+    // assert_valid(valid_parent_id, { message: "Invalid parent ingredient ID" });
+    const label_name = add_form.name.trim();
+    if (label_name === "") return;
     const label_names = add_form.labels_raw
       .split(",")
       .map((l) => l.trim())
       .filter((l) => l !== "");
     create_ingredient({
-      name: add_form.name.trim(),
+      name: label_name,
       default_measurement_type: add_form.measurement_type,
       label_names,
-      ...(add_form.parent_id !== "" && {
-        parent_id: add_form.parent_id as Ingredient.Id,
+      ...(add_form.parent_id && {
+        parent_id: valid_parent_id,
       }),
     });
     set_add_form(EMPTY_ADD_FORM);
     set_show_add_form(false);
   }
 
-  function handle_set_labels(id: Ingredient.Id, label_names: readonly string[]): void {
+  function handle_set_labels(id: IngredientId, label_names: readonly string[]): void {
     set_labels(id, resolve_label_names(label_names));
   }
 
   function handle_add_labels(
-    ids: readonly Ingredient.Id[],
+    ids: readonly IngredientId[],
     label_names: readonly string[],
   ): void {
     add_labels(ids, resolve_label_names(label_names));
   }
 
   function handle_remove_labels(
-    ids: readonly Ingredient.Id[],
+    ids: readonly IngredientId[],
     label_names: readonly string[],
   ): void {
     const remove_ids = label_names
       .map((name) => labels.find((l) => l.name === name)?.id)
-      .filter((id): id is ItemLabel.Id => id !== undefined);
+      .filter((id) => id !== undefined);
     if (remove_ids.length > 0) {
       remove_labels(ids, remove_ids);
     }
   }
 
   function handle_set_parent(
-    id: Ingredient.Id,
-    parent_id: Ingredient.Id | undefined,
+    id: IngredientId,
+    parent_id: IngredientId | undefined,
   ): void {
     set_parent([id], parent_id);
   }
 
-  function handle_filter_all(label_ids: readonly ItemLabel.Id[]): void {
+  function handle_filter_all(label_ids: readonly KitchenwareLabelId[]): void {
     if (label_ids.length === 0) {
       set_external_label_filter(undefined);
     } else {
@@ -115,7 +118,7 @@ export function BulkIngredientEditorPage() {
     }
   }
 
-  function handle_filter_any(label_ids: readonly ItemLabel.Id[]): void {
+  function handle_filter_any(label_ids: readonly KitchenwareLabelId[]): void {
     if (label_ids.length === 0) {
       set_external_label_filter(undefined);
     } else {

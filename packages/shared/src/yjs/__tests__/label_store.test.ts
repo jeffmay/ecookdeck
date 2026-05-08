@@ -8,7 +8,7 @@ import {
   delete_labels,
   rename_label,
 } from "../label_store.js";
-import type { ItemLabel } from "../../types/item_label.js";
+import { KitchenwareLabelId } from "../../types/kitchenware.js";
 
 let doc: Y.Doc;
 
@@ -102,7 +102,7 @@ describe("delete_labels", () => {
 
   it("silently ignores unknown ids", () => {
     add_label(doc, "fat", INGREDIENT_KINDS);
-    expect(() => delete_labels(doc, ["nonexist" as ItemLabel.Id])).not.toThrow();
+    expect(() => delete_labels(doc, ["nonexist" as KitchenwareLabelId])).not.toThrow();
     expect(get_labels(doc)).toHaveLength(1);
   });
 
@@ -134,6 +134,6 @@ describe("rename_label", () => {
   });
 
   it("silently skips unknown id", () => {
-    expect(() => rename_label(doc, "nonexist" as ItemLabel.Id, "new name")).not.toThrow();
+    expect(() => rename_label(doc, "nonexist" as KitchenwareLabelId, "new name")).not.toThrow();
   });
 });

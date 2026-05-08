@@ -1,23 +1,24 @@
+import { type KitchenwareKind, type KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { ItemLabel, ItemKind } from "@recipe-book/shared";
+import { ReadonlyDeep } from "type-fest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LabelTable } from "../LabelTable.js";
 
-const KIND_INGREDIENT: ReadonlySet<ItemKind> = new Set(["ingredient"]);
+const KIND_INGREDIENT: Set<KitchenwareKind> = new Set(["ingredient"]);
 
-const FAT: ItemLabel = {
-  id: "fat0000" as ItemLabel.Id,
+const FAT: ReadonlyDeep<KitchenwareLabel> = {
+  id: "fat0000" as KitchenwareLabelId,
   name: "fat",
   kinds: KIND_INGREDIENT,
 };
-const SOLID: ItemLabel = {
-  id: "sol0000" as ItemLabel.Id,
+const SOLID: ReadonlyDeep<KitchenwareLabel> = {
+  id: "sol0000" as KitchenwareLabelId,
   name: "solid",
   kinds: KIND_INGREDIENT,
 };
-const BAKING: ItemLabel = {
-  id: "bak0000" as ItemLabel.Id,
+const BAKING: ReadonlyDeep<KitchenwareLabel> = {
+  id: "bak0000" as KitchenwareLabelId,
   name: "baking",
   kinds: KIND_INGREDIENT,
 };
@@ -28,7 +29,7 @@ const on_delete = vi.fn();
 const on_merge = vi.fn();
 const on_rename = vi.fn();
 
-function setup(labels: ItemLabel[] = [FAT, SOLID, BAKING]) {
+function setup(labels: ReadonlyDeep<KitchenwareLabel[]> = [FAT, SOLID, BAKING]) {
   return render(
     <LabelTable
       labels={labels}
@@ -103,7 +104,7 @@ describe("LabelTable — expanded state", () => {
 });
 
 describe("LabelTable — selection and bulk actions", () => {
-  async function expand_and_select(labels: ItemLabel[] = [FAT, SOLID]) {
+  async function expand_and_select(labels: ReadonlyDeep<KitchenwareLabel[]> = [FAT, SOLID]) {
     render(
       <LabelTable
         labels={labels}

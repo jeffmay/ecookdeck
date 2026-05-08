@@ -1,37 +1,37 @@
+import type { Ingredient, IngredientId, KitchenwareLabelId } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Ingredient, ItemLabel } from "@recipe-book/shared";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IngredientsTable } from "../IngredientsTable.js";
 
 const DAIRY: Ingredient = {
   kind: "ingredient",
-  id: "dairy" as Ingredient.Id,
+  id: "dairy" as IngredientId,
   name: "Dairy",
   default_measurement_type: "volume",
-  labels: new Set<ItemLabel.Id>(),
+  labels: new Set<KitchenwareLabelId>(),
 };
 const BUTTER: Ingredient = {
   kind: "ingredient",
-  id: "butter" as Ingredient.Id,
+  id: "butter" as IngredientId,
   name: "Butter",
   default_measurement_type: "volume",
-  labels: new Set(["fat0000" as ItemLabel.Id, "sol0000" as ItemLabel.Id]),
-  parent_id: "dairy" as Ingredient.Id,
+  labels: new Set(["fat0000" as KitchenwareLabelId, "sol0000" as KitchenwareLabelId]),
+  parent_id: "dairy" as IngredientId,
 };
 const FLOUR: Ingredient = {
   kind: "ingredient",
-  id: "flour" as Ingredient.Id,
+  id: "flour" as IngredientId,
   name: "Flour",
   default_measurement_type: "volume",
-  labels: new Set(["bak0000" as ItemLabel.Id]),
+  labels: new Set(["bak0000" as KitchenwareLabelId]),
 };
 const CHEESE: Ingredient = {
   kind: "ingredient",
-  id: "cheese" as Ingredient.Id,
+  id: "cheese" as IngredientId,
   name: "Cheese",
   default_measurement_type: "weight",
-  labels: new Set(["sol0000" as ItemLabel.Id]),
+  labels: new Set(["sol0000" as KitchenwareLabelId]),
 };
 
 const on_rename = vi.fn();

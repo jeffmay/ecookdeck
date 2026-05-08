@@ -18,7 +18,7 @@ import {
   type Header,
   type Table,
 } from "@tanstack/react-table";
-import type { Ingredient, ItemLabel, MeasurementType } from "@recipe-book/shared";
+import type { Ingredient, IngredientId, KitchenwareLabel, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
 import { MultiSelectFilter } from "./MultiSelectFilter.js";
 import { build_ingredient_tree, type IngredientRow } from "./build_ingredient_tree.js";
 import "./IngredientsTable.css";
@@ -28,7 +28,7 @@ import "./IngredientsTable.css";
 // ---------------------------------------------------------------------------
 
 export interface ExternalLabelFilter {
-  readonly label_ids: readonly ItemLabel.Id[];
+  readonly label_ids: readonly KitchenwareLabelId[];
   readonly mode: "all" | "any";
 }
 
@@ -39,15 +39,15 @@ export interface ExternalLabelFilter {
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
-    pending_edits: Map<string, string>;
-    on_begin_edit: (ingredient_id: Ingredient.Id, col_id: string, initial: string) => void;
-    on_update_edit: (ingredient_id: Ingredient.Id, col_id: string, value: string) => void;
-    on_commit_edit: (ingredient_id: Ingredient.Id, col_id: string) => void;
-    on_cancel_edit: (ingredient_id: Ingredient.Id, col_id: string) => void;
+    pending_edits: ReadonlyMap<string, string>;
+    on_begin_edit: (ingredient_id: IngredientId, col_id: string, initial: string) => void;
+    on_update_edit: (ingredient_id: IngredientId, col_id: string, value: string) => void;
+    on_commit_edit: (ingredient_id: IngredientId, col_id: string) => void;
+    on_cancel_edit: (ingredient_id: IngredientId, col_id: string) => void;
     all_ingredients: readonly Ingredient[];
-    selected_ids: ReadonlySet<Ingredient.Id>;
-    on_toggle_select: (id: Ingredient.Id) => void;
-    on_toggle_select_all: (ids: readonly Ingredient.Id[]) => void;
+    selected_ids: ReadonlySet<IngredientId>;
+    on_toggle_select: (id: IngredientId) => void;
+    on_toggle_select_all: (ids: readonly IngredientId[]) => void;
   }
   interface FilterFns {
     fuzzy_text: FilterFn<IngredientRow>;
@@ -93,7 +93,7 @@ name_recursive_fuzzy.autoRemove = (v) => typeof v !== "string" || v === "";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function pkey(ingredient_id: Ingredient.Id, col_id: string): string {
+function pkey(ingredient_id: IngredientId, col_id: string): string {
   return `${ingredient_id}|${col_id}`;
 }
 
@@ -559,21 +559,21 @@ const COLUMNS = [
 
 export interface IngredientsTableProps {
   readonly ingredients: readonly Ingredient[];
-  readonly labels: readonly ItemLabel[];
+  readonly labels: readonly KitchenwareLabel[];
   readonly external_label_filter?: ExternalLabelFilter;
-  readonly on_rename: (id: Ingredient.Id, name: string) => void;
-  readonly on_set_type: (id: Ingredient.Id, type: MeasurementType) => void;
-  readonly on_set_labels: (id: Ingredient.Id, label_names: readonly string[]) => void;
-  readonly on_set_parent: (id: Ingredient.Id, parent_id: Ingredient.Id | undefined) => void;
-  readonly on_add_labels: (ids: readonly Ingredient.Id[], label_names: readonly string[]) => void;
+  readonly on_rename: (id: IngredientId, name: string) => void;
+  readonly on_set_type: (id: IngredientId, type: MeasurementType) => void;
+  readonly on_set_labels: (id: IngredientId, label_names: readonly string[]) => void;
+  readonly on_set_parent: (id: IngredientId, parent_id: IngredientId | undefined) => void;
+  readonly on_add_labels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
   readonly on_remove_labels: (
-    ids: readonly Ingredient.Id[],
+    ids: readonly IngredientId[],
     label_names: readonly string[],
   ) => void;
-  readonly on_bulk_set_type: (ids: readonly Ingredient.Id[], type: MeasurementType) => void;
+  readonly on_bulk_set_type: (ids: readonly IngredientId[], type: MeasurementType) => void;
   readonly on_bulk_set_parent: (
-    ids: readonly Ingredient.Id[],
-    parent_id: Ingredient.Id | undefined,
+    ids: readonly IngredientId[],
+    parent_id: IngredientId | undefined,
   ) => void;
 }
 
@@ -594,8 +594,8 @@ export function IngredientsTable({
   const [sorting, set_sorting] = useState<SortingState>([]);
   const [grouping, set_grouping] = useState<GroupingState>([]);
   const [expanded, set_expanded] = useState<ExpandedState>({});
-  const [pending_edits, set_pending_edits] = useState<Map<string, string>>(new Map());
-  const [selected_ids, set_selected_ids] = useState<Set<Ingredient.Id>>(new Set());
+  const [pending_edits, set_pending_edits] = useState<ReadonlyMap<string, string>>(new Map());
+  const [selected_ids, set_selected_ids] = useState<ReadonlySet<IngredientId>>(new Set());
   const [bulk_add_labels, set_bulk_add_labels] = useState("");
   const [bulk_remove_labels, set_bulk_remove_labels] = useState("");
   const [bulk_type, set_bulk_type] = useState("");
@@ -630,11 +630,11 @@ export function IngredientsTable({
     }
   }, [column_filters]);
 
-  function on_begin_edit(ingredient_id: Ingredient.Id, col_id: string, initial: string): void {
+  function on_begin_edit(ingredient_id: IngredientId, col_id: string, initial: string): void {
     set_pending_edits((prev) => new Map(prev).set(pkey(ingredient_id, col_id), initial));
   }
 
-  function on_update_edit(ingredient_id: Ingredient.Id, col_id: string, value: string): void {
+  function on_update_edit(ingredient_id: IngredientId, col_id: string, value: string): void {
     const key = pkey(ingredient_id, col_id);
     set_pending_edits((prev) => {
       if (!prev.has(key)) return prev;
@@ -642,7 +642,7 @@ export function IngredientsTable({
     });
   }
 
-  function on_commit_edit(ingredient_id: Ingredient.Id, col_id: string): void {
+  function on_commit_edit(ingredient_id: IngredientId, col_id: string): void {
     const key = pkey(ingredient_id, col_id);
     const value = pending_edits.get(key);
     if (value === undefined) return;
@@ -656,7 +656,7 @@ export function IngredientsTable({
     } else if (col_id === "labels") {
       on_set_labels(ingredient_id, parse_labels(value));
     } else if (col_id === "parent_name") {
-      on_set_parent(ingredient_id, value !== "" ? (value as Ingredient.Id) : undefined);
+      on_set_parent(ingredient_id, value !== "" ? (value as IngredientId) : undefined);
     }
 
     set_pending_edits((prev) => {
@@ -666,7 +666,7 @@ export function IngredientsTable({
     });
   }
 
-  function on_cancel_edit(ingredient_id: Ingredient.Id, col_id: string): void {
+  function on_cancel_edit(ingredient_id: IngredientId, col_id: string): void {
     const key = pkey(ingredient_id, col_id);
     set_pending_edits((prev) => {
       const next = new Map(prev);
@@ -675,7 +675,7 @@ export function IngredientsTable({
     });
   }
 
-  function toggle_select(id: Ingredient.Id): void {
+  function toggle_select(id: IngredientId): void {
     set_selected_ids((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -684,7 +684,7 @@ export function IngredientsTable({
     });
   }
 
-  function toggle_select_all(ids: readonly Ingredient.Id[]): void {
+  function toggle_select_all(ids: readonly IngredientId[]): void {
     set_selected_ids((prev) => {
       const all_selected = ids.length > 0 && ids.every((id) => prev.has(id));
       const next = new Set(prev);
@@ -714,7 +714,7 @@ export function IngredientsTable({
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     meta: {
-      pending_edits,
+      pending_edits: pending_edits,
       on_begin_edit,
       on_update_edit,
       on_commit_edit,
@@ -757,7 +757,8 @@ export function IngredientsTable({
     if (bulk_parent_id === "__none__") {
       on_bulk_set_parent(selected_array, undefined);
     } else if (bulk_parent_id !== "") {
-      on_bulk_set_parent(selected_array, bulk_parent_id as Ingredient.Id);
+      // TODO: validate parent ID matches a real id?
+      on_bulk_set_parent(selected_array, bulk_parent_id as IngredientId);
     }
     set_bulk_parent_id("");
   }
@@ -881,8 +882,8 @@ export function IngredientsTable({
               {hg.headers.map((h) => (
                 <th key={h.id} className="it-th">
                   {h.isPlaceholder ||
-                  h.column.id === "expand" ||
-                  h.column.id === "select" ? (
+                    h.column.id === "expand" ||
+                    h.column.id === "select" ? (
                     flexRender(h.column.columnDef.header, h.getContext())
                   ) : (
                     <ColumnHeader header={h} all_labels={all_label_names} />

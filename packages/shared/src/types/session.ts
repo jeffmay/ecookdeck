@@ -1,25 +1,35 @@
-import type { Fraction, Measurement } from "./measurement.js";
+import { type } from "arktype";
+import { IdCompanion } from "./ids.js";
+import { Fraction, Measurement } from "./measurement.js";
+import { EnumCompanion } from "./enums.js";
+import { Companion } from "./companion.js";
 
-export interface ItemState {
-  readonly checked: boolean;
-  readonly one_off_quantity?: Measurement;
-  readonly notes?: string;
-}
+export const ItemState = Companion("ItemState", type({
+  checked: "boolean",
+  "one_off_quantity?": Measurement,
+  "notes?": "string",
+}));
+export type ItemState = typeof ItemState.type.infer;
 
-export type SessionStatus = "active" | "completed";
+export const SessionStatus = EnumCompanion("SessionStatus", ["active", "completed"]);
+export type SessionStatus = typeof SessionStatus.type.infer;
 
-export interface Session {
-  readonly id: string;
-  readonly recipe_id: string;
-  readonly recipe_version_id: string;
-  readonly started_at: number;
-  readonly completed_at?: number;
-  readonly status: SessionStatus;
-  readonly item_states: Readonly<Record<string, ItemState>>;
-  readonly rescale_multiplier?: Fraction;
-  readonly rating?: number;
-  readonly session_notes?: string;
-}
+export const SessionId = IdCompanion("SessionId", 12);
+export type SessionId = typeof SessionId.type.infer;
+
+export const Session = type({
+  id: SessionId.type,
+  recipe_id: "string",
+  recipe_version_id: "string",
+  started_at: "number",
+  "completed_at?": "number",
+  status: SessionStatus.type,
+  item_states: type({ "[string]": ItemState.type }),
+  "rescale_multiplier?": Fraction,
+  "rating?": "number",
+  "session_notes?": "string",
+});
+export type Session = typeof Session.infer;
 
 export function is_active_session(session: Session): session is Session & { status: "active" } {
   return session.status === "active";

@@ -1,9 +1,10 @@
-import { describe, it, expect } from "vitest";
-import { is_active_session, is_completed_session, type Session } from "../session.js";
+import { describe, expect, it } from "vitest";
+import { padded_id } from "../ids.js";
+import { is_active_session, is_completed_session, SessionId, type Session } from "../session.js";
 
 describe("session type guards", () => {
   const active_session: Session = {
-    id: "sess-1",
+    id: padded_id(SessionId, "sess-1"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
     started_at: 1000,
@@ -12,7 +13,7 @@ describe("session type guards", () => {
   };
 
   const completed_session: Session = {
-    id: "sess-2",
+    id: padded_id(SessionId, "sess-2"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
     started_at: 1000,

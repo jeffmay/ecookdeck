@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import type { KitchenwareLabelId } from "@recipe-book/shared";
+import { find_or_create_label, IngredientId, type KitchenwareKind } from "@recipe-book/shared";
+import { padded_id } from "@recipe-book/shared/src/types/ids.js";
+import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { find_or_create_label, type ItemLabel, type ItemKind } from "@recipe-book/shared";
-import type { Ingredient } from "@recipe-book/shared";
 import { DocContext } from "../../contexts/doc_context.js";
 import { use_ingredient_store } from "../use_ingredient_store.js";
 
-const INGREDIENT_KINDS: ReadonlySet<ItemKind> = new Set(["ingredient"]);
+const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
 function make_wrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -127,7 +128,7 @@ describe("use_ingredient_store", () => {
     const z_id = find_or_create_label(doc, "z", INGREDIENT_KINDS);
     act(() => result.current.set_labels(id, [x_id, y_id, z_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels).toEqual(new Set<ItemLabel.Id>([x_id, y_id, z_id]));
+    expect(updated?.labels).toEqual(new Set<KitchenwareLabelId>([x_id, y_id, z_id]));
   });
 
   it("set_parent sets and clears parent_id", () => {
@@ -136,8 +137,9 @@ describe("use_ingredient_store", () => {
     });
     const butter = result.current.ingredients.find((i) => i.id === "butter");
     if (butter === undefined) throw new Error("butter not found in defaults");
-    act(() => result.current.set_parent([butter.id], "dairy" as Ingredient.Id));
-    expect(result.current.ingredients.find((i) => i.id === "butter")?.parent_id).toBe("dairy");
+    const expectedId = padded_id(IngredientId, "dairy");
+    act(() => result.current.set_parent([butter.id], expectedId));
+    expect(result.current.ingredients.find((i) => i.id === "butter")?.parent_id).toBe(expectedId);
     act(() => result.current.set_parent([butter.id], undefined));
     expect(result.current.ingredients.find((i) => i.id === "butter")?.parent_id).toBeUndefined();
   });

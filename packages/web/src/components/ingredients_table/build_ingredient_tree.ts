@@ -1,19 +1,20 @@
-import type { Ingredient, ItemLabel, MeasurementType } from "@recipe-book/shared";
+import type { Ingredient, IngredientId, KitchenwareLabel, MeasurementType } from "@recipe-book/shared";
+import { ReadonlyDeep } from "type-fest";
 
 export interface IngredientRow {
   readonly kind: "ingredient";
-  readonly id: Ingredient.Id;
+  readonly id: IngredientId;
   readonly name: string;
   readonly default_measurement_type: MeasurementType;
   readonly labels: readonly string[];
-  readonly parent_id?: Ingredient.Id;
+  readonly parent_id?: IngredientId;
   readonly parent_name: string;
   readonly subRows: IngredientRow[]; // readonly ref, mutable contents — safe to push during build
 }
 
 export function build_ingredient_tree(
-  ingredients: readonly Ingredient[],
-  item_labels: readonly ItemLabel[],
+  ingredients: ReadonlyDeep<Ingredient[]>,
+  item_labels: ReadonlyDeep<KitchenwareLabel[]>,
 ): IngredientRow[] {
   const label_name_by_id = new Map<string, string>(item_labels.map((l) => [l.id, l.name]));
   const id_to_name = new Map<string, string>(ingredients.map((i) => [i.id, i.name]));

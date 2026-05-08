@@ -1,36 +1,42 @@
-import { describe, it, expect } from "vitest";
+import { type } from "arktype";
+import { describe, expect, it } from "vitest";
+import { pad_right } from "../ids.js";
 import {
-  is_ingredient,
+  Container,
+  ContainerId,
+  Equipment,
+  EquipmentId,
+  Ingredient,
+  IngredientId,
   is_container,
   is_equipment,
-  type Item,
-  type Ingredient,
-  type Container,
-  type Equipment,
-} from "../item.js";
-import type { ItemLabel } from "../item_label.js";
+  is_ingredient,
+  KitchenwareKind,
+  type Kitchenware,
+  type KitchenwareLabelId,
+} from "../kitchenware.js";
 
 describe("kitchenware type guards", () => {
-  const ingredient: Item = {
+  const ingredient: Kitchenware = {
     kind: "ingredient",
-    id: "butter" as Ingredient.Id,
+    id: "butter" as IngredientId,
     name: "Butter",
     default_measurement_type: "volume",
-    labels: new Set<ItemLabel.Id>(),
+    labels: new Set<KitchenwareLabelId>(),
   };
 
-  const container: Item = {
+  const container: Kitchenware = {
     kind: "container",
-    id: "bowl" as Container.Id,
+    id: "bowl" as ContainerId,
     name: "Bowl",
-    labels: new Set<ItemLabel.Id>(),
+    labels: new Set<KitchenwareLabelId>(),
   };
 
-  const equipment: Item = {
+  const equipment: Kitchenware = {
     kind: "equipment",
-    id: "oven" as Equipment.Id,
+    id: "oven" as EquipmentId,
     name: "Oven",
-    labels: new Set<ItemLabel.Id>(),
+    labels: new Set<KitchenwareLabelId>(),
   };
 
   it("is_ingredient returns true only for ingredient", () => {
@@ -49,5 +55,57 @@ describe("kitchenware type guards", () => {
     expect(is_equipment(ingredient)).toBe(false);
     expect(is_equipment(container)).toBe(false);
     expect(is_equipment(equipment)).toBe(true);
+  });
+});
+
+describe("ItemKind schema", () => {
+  it("accepts valid kinds", () => {
+    expect(KitchenwareKind("ingredient") instanceof type.errors).toBe(false);
+    expect(KitchenwareKind("container") instanceof type.errors).toBe(false);
+    expect(KitchenwareKind("equipment") instanceof type.errors).toBe(false);
+  });
+
+  it("rejects invalid kinds", () => {
+    expect(KitchenwareKind("widget") instanceof type.errors).toBe(true);
+    expect(KitchenwareKind("") instanceof type.errors).toBe(true);
+  });
+});
+
+describe("Kitchenware constructors", () => {
+  it("Ingredient accepts a valid ingredient", () => {
+    const result = Ingredient({
+      kind: "ingredient",
+      id: pad_right("butter", IngredientId.length),
+      name: "Butter",
+      default_measurement_type: "volume",
+      labels: [],
+    });
+    expect(result instanceof type.errors).toBe(false);
+  });
+
+  it("Ingredient rejects a missing required field", () => {
+    const result = Ingredient({ kind: "ingredient", id: "butter" });
+    expect(result instanceof type.errors).toBe(true);
+  });
+
+  it("Ingredient rejects an invalid measurement type", () => {
+    const result = Ingredient({
+      kind: "ingredient",
+      id: "butter",
+      name: "Butter",
+      default_measurement_type: "bad",
+      labels: new Set(),
+    });
+    expect(result instanceof type.errors).toBe(true);
+  });
+
+  it("Container accepts a valid container", () => {
+    const result = Container({ kind: "container", id: "bowl", name: "Bowl", labels: [] });
+    expect(result).instanceOf(type.errors)
+  });
+
+  it("Equipment accepts a valid equipment", () => {
+    const result = Equipment({ kind: "equipment", id: pad_right("oven", EquipmentId.length), name: "Oven", labels: new Set() });
+    expect(result instanceof type.errors).toBe(false);
   });
 });

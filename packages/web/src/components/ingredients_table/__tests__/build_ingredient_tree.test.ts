@@ -1,58 +1,59 @@
-import { describe, it, expect } from "vitest";
-import type { Ingredient, ItemLabel, ItemKind } from "@recipe-book/shared";
+import type { Ingredient, IngredientId, KitchenwareKind, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
+import { describe, expect, it } from "vitest";
 import { build_ingredient_tree } from "../build_ingredient_tree.js";
+import { ReadonlyDeep } from "type-fest";
 
 // Label fixtures
-const FAT_LABEL: ItemLabel = {
-  id: "fat0000" as ItemLabel.Id,
+const FAT_LABEL: ReadonlyDeep<KitchenwareLabel> = {
+  id: "fat0000" as KitchenwareLabelId,
   name: "fat",
-  kinds: new Set<ItemKind>(["ingredient"]),
+  kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
-const SOLID_LABEL: ItemLabel = {
-  id: "sol0000" as ItemLabel.Id,
+const SOLID_LABEL: ReadonlyDeep<KitchenwareLabel> = {
+  id: "sol0000" as KitchenwareLabelId,
   name: "solid",
-  kinds: new Set<ItemKind>(["ingredient"]),
+  kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
-const LIQUID_LABEL: ItemLabel = {
-  id: "liq0000" as ItemLabel.Id,
+const LIQUID_LABEL: ReadonlyDeep<KitchenwareLabel> = {
+  id: "liq0000" as KitchenwareLabelId,
   name: "liquid",
-  kinds: new Set<ItemKind>(["ingredient"]),
+  kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
-const BAKING_LABEL: ItemLabel = {
-  id: "bak0000" as ItemLabel.Id,
+const BAKING_LABEL: ReadonlyDeep<KitchenwareLabel> = {
+  id: "bak0000" as KitchenwareLabelId,
   name: "baking",
-  kinds: new Set<ItemKind>(["ingredient"]),
+  kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 
-const ALL_LABELS: ItemLabel[] = [FAT_LABEL, SOLID_LABEL, LIQUID_LABEL, BAKING_LABEL];
+const ALL_LABELS: ReadonlyDeep<KitchenwareLabel[]> = [FAT_LABEL, SOLID_LABEL, LIQUID_LABEL, BAKING_LABEL];
 
 // Ingredient fixtures
-const DAIRY: Ingredient = {
+const DAIRY: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: "dairy" as Ingredient.Id,
+  id: "dairy" as IngredientId,
   name: "Dairy",
   default_measurement_type: "volume",
-  labels: new Set<ItemLabel.Id>(),
+  labels: new Set<KitchenwareLabelId>(),
 };
-const BUTTER: Ingredient = {
+const BUTTER: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: "butter" as Ingredient.Id,
+  id: "butter" as IngredientId,
   name: "Butter",
   default_measurement_type: "volume",
   labels: new Set([FAT_LABEL.id, SOLID_LABEL.id]),
-  parent_id: "dairy" as Ingredient.Id,
+  parent_id: "dairy" as IngredientId,
 };
-const MILK: Ingredient = {
+const MILK: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: "milk" as Ingredient.Id,
+  id: "milk" as IngredientId,
   name: "Milk",
   default_measurement_type: "volume",
   labels: new Set([LIQUID_LABEL.id]),
-  parent_id: "dairy" as Ingredient.Id,
+  parent_id: "dairy" as IngredientId,
 };
-const FLOUR: Ingredient = {
+const FLOUR: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: "flour" as Ingredient.Id,
+  id: "flour" as IngredientId,
   name: "Flour",
   default_measurement_type: "volume",
   labels: new Set([BAKING_LABEL.id]),
@@ -91,10 +92,10 @@ describe("build_ingredient_tree", () => {
   });
 
   it("treats unknown parent_id as a root-level row and uses id as parent_name fallback", () => {
-    const orphan: Ingredient = {
+    const orphan: ReadonlyDeep<Ingredient> = {
       ...BUTTER,
-      id: "salted_butter" as Ingredient.Id,
-      parent_id: "nonexistent" as Ingredient.Id,
+      id: "salted_butter" as IngredientId,
+      parent_id: "nonexistent" as IngredientId,
     };
     const rows = build_ingredient_tree([orphan], []);
     expect(rows).toHaveLength(1);

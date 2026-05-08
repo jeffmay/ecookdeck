@@ -1,3 +1,4 @@
+import type { ReadonlyDeep } from "type-fest";
 import type { Fraction } from "../types/measurement.js";
 
 function gcd(a: number, b: number): number {
@@ -26,53 +27,53 @@ export function fraction_from_integer(n: number): Fraction {
   return { numerator: n, denominator: 1 };
 }
 
-export function simplify(f: Fraction): Fraction {
+export function simplify(f: ReadonlyDeep<Fraction>): Fraction {
   return make_fraction(f.numerator, f.denominator);
 }
 
-export function add_fractions(a: Fraction, b: Fraction): Fraction {
+export function add_fractions(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction>): Fraction {
   return make_fraction(
     a.numerator * b.denominator + b.numerator * a.denominator,
     a.denominator * b.denominator,
   );
 }
 
-export function subtract_fractions(a: Fraction, b: Fraction): Fraction {
+export function subtract_fractions(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction>): Fraction {
   return make_fraction(
     a.numerator * b.denominator - b.numerator * a.denominator,
     a.denominator * b.denominator,
   );
 }
 
-export function multiply_fractions(a: Fraction, b: Fraction): Fraction {
+export function multiply_fractions(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction>): Fraction {
   return make_fraction(a.numerator * b.numerator, a.denominator * b.denominator);
 }
 
-export function divide_fractions(a: Fraction, b: Fraction): Fraction {
+export function divide_fractions(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction>): Fraction {
   if (b.numerator === 0) throw new Error("Cannot divide by zero");
   return make_fraction(a.numerator * b.denominator, a.denominator * b.numerator);
 }
 
-export function fractions_equal(a: Fraction, b: Fraction): boolean {
+export function fractions_equal(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction>): boolean {
   const sa = simplify(a);
   const sb = simplify(b);
   return sa.numerator === sb.numerator && sa.denominator === sb.denominator;
 }
 
-export function fraction_to_decimal(f: Fraction): number {
+export function fraction_to_decimal(f: ReadonlyDeep<Fraction>): number {
   return f.numerator / f.denominator;
 }
 
-export function integer_part(f: Fraction): number {
+export function integer_part(f: ReadonlyDeep<Fraction>): number {
   return Math.trunc(f.numerator / f.denominator);
 }
 
-export function fractional_part(f: Fraction): Fraction {
+export function fractional_part(f: ReadonlyDeep<Fraction>): Fraction {
   const int = integer_part(f);
   return make_fraction(f.numerator - int * f.denominator, f.denominator);
 }
 
-export function format_fraction(f: Fraction): string {
+export function format_fraction(f: ReadonlyDeep<Fraction>): string {
   const s = simplify(f);
   const int = integer_part(s);
   const frac = fractional_part(s);

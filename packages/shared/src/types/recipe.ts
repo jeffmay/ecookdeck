@@ -1,85 +1,115 @@
-import type { Measurement } from "./measurement.js";
+import { type } from "arktype";
+import { ContainerId, EquipmentId, IngredientId } from "./kitchenware.js";
+import { Measurement } from "./measurement.js";
+import { IdCompanion } from "./ids.js";
+import { Companion } from "./companion.js";
+import { EnumCompanion } from "./enums.js";
 
-export interface IngredientItem {
-  readonly kind: "ingredient_item";
-  readonly id: string;
-  readonly ingredient_id: string;
-  readonly quantity: Measurement;
-  readonly notes?: string;
-}
+export const RecipeId = IdCompanion("RecipeId", 12);
+export type RecipeId = typeof RecipeId.type.infer;
 
-export interface ContainerItem {
-  readonly kind: "container_item";
-  readonly id: string;
-  readonly container_id: string;
-  readonly contents: readonly IngredientItem[];
-  readonly notes?: string;
-}
+export const RecipeItemId = IdCompanion("RecipeItemId", 12);
+export type RecipeItemId = typeof RecipeItemId.type.infer;
 
-export interface SectionLabel {
-  readonly kind: "section_label";
-  readonly id: string;
-  readonly label: string;
-}
+export const IngredientItem = Companion("IngredientItem", type({
+  kind: "'ingredient'",
+  id: RecipeItemId.type,
+  ingredient_id: IngredientId.type,
+  quantity: Measurement,
+  "notes?": "string",
+}));
+export type IngredientItem = typeof IngredientItem.type.infer;
 
-export interface InstructionBlock {
-  readonly kind: "instruction_block";
-  readonly id: string;
-  readonly text: string;
-  readonly notes?: string;
-}
+export const ContainerItem = Companion("ContainerItem", type({
+  kind: "'container'",
+  id: RecipeItemId.type,
+  container_id: ContainerId.type,
+  contents: IngredientItem.type.array(),
+  "notes?": "string",
+}));
+export type ContainerItem = typeof ContainerItem.type.infer;
 
-export interface EquipmentInstruction {
-  readonly kind: "equipment_instruction";
-  readonly id: string;
-  readonly equipment_id: string;
-  readonly instruction: string;
-  readonly duration_seconds?: number;
-  readonly notes?: string;
-}
+export const SectionHeader = Companion("SectionHeader", type({
+  kind: "'section_header'",
+  id: RecipeItemId.type,
+  label: "string",
+}));
+export type SectionHeader = typeof SectionHeader.type.infer;
 
-export type RecipeItem =
-  | IngredientItem
-  | ContainerItem
-  | SectionLabel
-  | InstructionBlock
-  | EquipmentInstruction;
+export const TextBlock = Companion("TextBlock", type({
+  kind: "'text_block'",
+  id: RecipeItemId.type,
+  text: "string",
+  "notes?": "string",
+}));
+export type TextBlock = typeof TextBlock.type.infer;
 
-export type RecipeItemKind = RecipeItem["kind"];
+export const Instruction = Companion("Instruction", type({
+  kind: "'instruction'",
+  id: RecipeItemId.type,
+  equipment_id: EquipmentId.type,
+  instruction: "string",
+  "duration_seconds?": "number",
+  "notes?": "string",
+}));
+export type Instruction = typeof Instruction.type.infer;
 
-export interface RecipeVersion {
-  readonly id: string;
-  readonly recipe_id: string;
-  readonly items: readonly RecipeItem[];
-  readonly created_at: number;
-}
+export const RecipeItem = Companion("RecipeItem", type.or(
+  IngredientItem.type,
+  ContainerItem.type,
+  SectionHeader.type,
+  TextBlock.type,
+  Instruction.type,
+));
+export type RecipeItem = typeof RecipeItem.type.infer;
 
-export interface Recipe {
-  readonly id: string;
-  readonly name: string;
-  readonly description: string;
-  readonly parent_group_id?: string;
-  readonly versions: readonly RecipeVersion[];
-  readonly created_at: number;
-  readonly updated_at: number;
-}
+export const RecipeItemKind = EnumCompanion("RecipeItemKind", [
+  "ingredient_item",
+  "container_item",
+  "section_label",
+  "instruction_block",
+  "equipment_instruction",
+]);
+export type RecipeItemKind = typeof RecipeItemKind.type.infer;
+
+export const RecipeVersionId = IdCompanion("RecipeVersionId", 12);
+export type RecipeVersionId = typeof RecipeVersionId.type.infer;
+
+export const RecipeVersion = Companion("RecipeVersion", type({
+  id: RecipeVersionId.type,
+  recipe_id: RecipeId.type,
+  items: RecipeItem.type.array(),
+  created_at: "number",
+}));
+export type RecipeVersion = typeof RecipeVersion.type.infer;
+
+export const Recipe = Companion("Recipe", type({
+  id: RecipeId.type,
+  name: "string",
+  description: "string",
+  "parent_group_id?": "string",
+  versions: RecipeVersion.type.array(),
+  created_at: "number",
+  updated_at: "number",
+}));
+export type Recipe = typeof Recipe.type.infer;
 
 export function is_ingredient_item(item: RecipeItem): item is IngredientItem {
-  return item.kind === "ingredient_item";
+  return item.kind === "ingredient";
 }
 
 export function is_container_item(item: RecipeItem): item is ContainerItem {
-  return item.kind === "container_item";
+  return item.kind === "container";
 }
 
-export function is_section_label(item: RecipeItem): item is SectionLabel {
-  return item.kind === "section_label";
+export function is_section_header(item: RecipeItem): item is SectionHeader {
+  return item.kind === "section_header";
 }
 
-export function is_instruction_block(item: RecipeItem): item is InstructionBlock {
-  return item.kind === "instruction_block";
+export function is_text_block(item: RecipeItem): item is TextBlock {
+  return item.kind === "text_block";
 }
 
-export function is_equipment_instruction(item: RecipeItem): item is EquipmentInstruction {
-  return item.kind === "equipment_instruction";
+export function is_instruction(item: RecipeItem): item is Instruction {
+  return item.kind === "instruction";
 }

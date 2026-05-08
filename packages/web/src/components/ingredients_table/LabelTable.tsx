@@ -1,14 +1,15 @@
+import type { KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { useState, type FormEvent } from "react";
-import type { ItemLabel } from "@recipe-book/shared";
+import { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
 
 export interface LabelTableProps {
-  readonly labels: readonly ItemLabel[];
-  readonly on_filter_all: (label_ids: readonly ItemLabel.Id[]) => void;
-  readonly on_filter_any: (label_ids: readonly ItemLabel.Id[]) => void;
-  readonly on_delete: (label_ids: readonly ItemLabel.Id[]) => void;
-  readonly on_merge: (label_ids: readonly ItemLabel.Id[], new_name: string) => void;
-  readonly on_rename: (id: ItemLabel.Id, name: string) => void;
+  readonly labels: ReadonlyDeep<KitchenwareLabel[]>;
+  readonly on_filter_all: (label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly on_filter_any: (label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly on_delete: (label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly on_merge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
+  readonly on_rename: (id: KitchenwareLabelId, name: string) => void;
 }
 
 export function LabelTable({
@@ -20,10 +21,10 @@ export function LabelTable({
   on_rename,
 }: LabelTableProps) {
   const [expanded, set_expanded] = useState(false);
-  const [selected_ids, set_selected_ids] = useState<Set<ItemLabel.Id>>(new Set());
+  const [selected_ids, set_selected_ids] = useState<ReadonlySet<KitchenwareLabelId>>(new Set());
   const [merge_name, set_merge_name] = useState("");
   const [show_merge_input, set_show_merge_input] = useState(false);
-  const [editing_id, set_editing_id] = useState<ItemLabel.Id | null>(null);
+  const [editing_id, set_editing_id] = useState<KitchenwareLabelId | null>(null);
   const [editing_name, set_editing_name] = useState("");
 
   const selected_array = [...selected_ids];
@@ -31,7 +32,7 @@ export function LabelTable({
     labels.length > 0 && labels.every((l) => selected_ids.has(l.id));
   const some_selected = labels.some((l) => selected_ids.has(l.id));
 
-  function toggle(id: ItemLabel.Id): void {
+  function toggle(id: KitchenwareLabelId): void {
     set_selected_ids((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -71,7 +72,7 @@ export function LabelTable({
     set_selected_ids(new Set());
   }
 
-  function begin_edit(label: ItemLabel): void {
+  function begin_edit(label: ReadonlyDeep<KitchenwareLabel>): void {
     set_editing_id(label.id);
     set_editing_name(label.name);
   }

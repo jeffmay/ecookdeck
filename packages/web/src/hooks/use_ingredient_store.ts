@@ -1,43 +1,35 @@
-import { useState, useEffect } from "react";
-import type { Ingredient, ItemKind } from "@recipe-book/shared";
 import type { MeasurementType } from "@recipe-book/shared";
-import type { ItemLabel } from "@recipe-book/shared";
 import {
-  get_ingredients,
-  init_ingredients_from_defaults,
   add_ingredient,
-  add_labels_to_ingredients,
-  remove_labels_from_ingredients,
-  set_measurement_type_for_ingredients,
-  set_parent_for_ingredients,
-  rename_ingredient as rename_ingredient_in_doc,
-  set_labels_for_ingredient,
-  make_ingredient_id,
-  find_or_create_label,
+  add_labels_to_ingredients, find_or_create_label, get_ingredients, Ingredient, IngredientId, init_ingredients_from_defaults, KitchenwareKind, KitchenwareLabelId, remove_labels_from_ingredients, rename_ingredient as rename_ingredient_in_doc,
+  set_labels_for_ingredient, set_measurement_type_for_ingredients,
+  set_parent_for_ingredients
 } from "@recipe-book/shared";
+import { random_id } from "@recipe-book/shared/src/types/ids.js";
+import { useEffect, useState } from "react";
 import { use_doc } from "../contexts/doc_context.js";
 
-const INGREDIENT_KINDS: ReadonlySet<ItemKind> = new Set(["ingredient"]);
+const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
 export interface NewIngredientInput {
   readonly name: string;
   readonly default_measurement_type: MeasurementType;
   readonly label_names: readonly string[];
-  readonly parent_id?: Ingredient.Id;
+  readonly parent_id?: IngredientId;
 }
 
 export interface UseIngredientStoreResult {
   readonly ingredients: readonly Ingredient[];
-  readonly create_ingredient: (input: NewIngredientInput) => Ingredient.Id;
-  readonly rename_ingredient: (id: Ingredient.Id, name: string) => void;
-  readonly add_labels: (ids: readonly Ingredient.Id[], label_ids: readonly ItemLabel.Id[]) => void;
+  readonly create_ingredient: (input: NewIngredientInput) => IngredientId;
+  readonly rename_ingredient: (id: IngredientId, name: string) => void;
+  readonly add_labels: (ids: readonly IngredientId[], label_ids: readonly KitchenwareLabelId[]) => void;
   readonly remove_labels: (
-    ids: readonly Ingredient.Id[],
-    label_ids: readonly ItemLabel.Id[],
+    ids: readonly IngredientId[],
+    label_ids: readonly KitchenwareLabelId[],
   ) => void;
-  readonly set_labels: (id: Ingredient.Id, label_ids: readonly ItemLabel.Id[]) => void;
-  readonly set_measurement_type: (ids: readonly Ingredient.Id[], type: MeasurementType) => void;
-  readonly set_parent: (ids: readonly Ingredient.Id[], parent_id: Ingredient.Id | undefined) => void;
+  readonly set_labels: (id: IngredientId, label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly set_measurement_type: (ids: readonly IngredientId[], type: MeasurementType) => void;
+  readonly set_parent: (ids: readonly IngredientId[], parent_id: IngredientId | undefined) => void;
 }
 
 export function use_ingredient_store(): UseIngredientStoreResult {
@@ -57,7 +49,7 @@ export function use_ingredient_store(): UseIngredientStoreResult {
   return {
     ingredients,
     create_ingredient(input) {
-      const id = make_ingredient_id();
+      const id = random_id(IngredientId);
       // Resolve label names to IDs, creating new labels as needed
       const label_ids = new Set(
         input.label_names.map((name) => find_or_create_label(doc, name, INGREDIENT_KINDS)),
