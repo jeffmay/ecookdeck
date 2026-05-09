@@ -250,6 +250,9 @@ npm run lint
 - [x] ArkType v2 schemas replace manual validation in `ingredient_store.ts` and `label_store.ts`; `MeasurementType` exported as both ArkType schema value and TypeScript type alias from `measurement.ts`
 - [x] PapaParse replaces hand-written CSV parser in `parse_kitchenware_csv.ts`; per-kind ArkType schemas (`IngredientRow`, `ContainerRow`, `EquipmentRow`) with pipe morphs for "+" delimited label fields
 - [x] `LabelEditor` component (`react-select` `CreatableSelect isMulti`) — add/remove existing labels from a dropdown or type to create a new one; replaces the plain text-input in the `IngredientsTable` Labels cell editor; cancel via ✗ button or Escape (when dropdown is closed)
+- [x] `LabelEditor` bug fixes — `menuPlacement="auto"` prevents bottom cutoff; custom `LabelEditorMenu` component intercepts non-left-click mousedown to prevent right-click closing the dropdown; hover color updated to `#ebebeb`, active to `#c4c4c4`; bulk add/remove label actions in `IngredientsTable` now use `LabelEditor` instead of plain text inputs
+- [x] `FractionEditor` component — inline fraction display (`integer<sup>num</sup>⁄<sub>denom</sub>` with aria-label); ± opens editor (replaced by <); < resets to pre-edit value (keeps editor open); ÷/×/−/+ radio buttons switch operation rows; op buttons apply math (simplified after each); `extra_controls` slot between op buttons and OK; 20 component tests
+- [x] `MeasurementEditor` component — same editing UX as FractionEditor sharing `FractionDisplay`, `OP_ROWS`, `OP_MODES`; adds type selector (volume/weight/count) and unit selector with US/metric optgroups; unit change converts fraction within same system (cross-system keeps value unchanged); OK converts to largest whole-number unit before committing; 20 component tests
 
 ---
 
