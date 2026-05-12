@@ -8,7 +8,9 @@ A local-first single-page web app (built on Yjs) that makes it easy to create an
 - ESLint for linting
 - Functional components with hooks for React
 - 2-space indentation
-- TitleCase for component, classes, and enum names and snake_case for everything else
+- TitleCase for components, classes, and enum type names
+- camelCase for function names (including hooks, event handlers, and utility functions)
+- snake_case for data: object/interface field names, Yjs map keys, file names, and CSS class names
 
 ## Common Development Tasks
 

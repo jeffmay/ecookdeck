@@ -234,6 +234,15 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - **Typecheck:** `tsc --noEmit`
 - **Lint:** ESLint + Prettier
 
+### Naming Conventions
+
+| Category | Convention | Examples |
+|---|---|---|
+| Components, classes, enums | TitleCase | `RecipeEditorPage`, `SectionItem`, `SortOrder` |
+| Functions (hooks, handlers, utilities) | camelCase | `useRecipeStore`, `handleSave`, `buildFolderTree` |
+| Object / interface fields | snake_case | `recipe_id`, `created_at`, `parent_folder_id` |
+| Yjs map keys, file names, CSS classes | snake_case | `"recipe_folders"`, `recipe_store.ts`, `.re-editor` |
+
 Run order before every commit:
 ```
 npm run typecheck
