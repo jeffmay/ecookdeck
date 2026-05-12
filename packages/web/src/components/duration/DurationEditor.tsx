@@ -18,7 +18,7 @@ const HUMANIZE_OPTS: HumanizeDurationOptions = {
   round: true,
 };
 
-function humanize_seconds(seconds: number): string {
+function humanizeSeconds(seconds: number): string {
   return humanize(seconds * 1000, HUMANIZE_OPTS);
 }
 
@@ -28,10 +28,10 @@ function humanize_seconds(seconds: number): string {
 
 export interface DurationEditorProps {
   readonly value: number; // seconds
-  readonly on_commit: (seconds: number) => void;
+  readonly onCommit: (seconds: number) => void;
 }
 
-export function DurationEditor({ value, on_commit }: DurationEditorProps) {
+export function DurationEditor({ value, onCommit }: DurationEditorProps) {
   const [editing, set_editing] = useState(false);
   const [original, set_original] = useState(value);
   const [current, set_current] = useState(value);
@@ -39,16 +39,16 @@ export function DurationEditor({ value, on_commit }: DurationEditorProps) {
   const [input_text, set_input_text] = useState("");
   const [input_error, set_input_error] = useState(false);
 
-  function open_editor() {
+  function openEditor() {
     set_original(value);
     set_current(value);
     set_unit("min");
-    set_input_text(humanize_seconds(value));
+    set_input_text(humanizeSeconds(value));
     set_input_error(false);
     set_editing(true);
   }
 
-  function handle_input_change(text: string) {
+  function handleInputChange(text: string) {
     set_input_text(text);
     if (text.trim() === "") {
       set_input_error(false);
@@ -66,29 +66,29 @@ export function DurationEditor({ value, on_commit }: DurationEditorProps) {
   function adjust(delta_seconds: number) {
     const new_value = Math.max(0, current + delta_seconds);
     set_current(new_value);
-    set_input_text(humanize_seconds(new_value));
+    set_input_text(humanizeSeconds(new_value));
     set_input_error(false);
   }
 
   function revert() {
     set_current(original);
-    set_input_text(humanize_seconds(original));
+    set_input_text(humanizeSeconds(original));
     set_input_error(false);
   }
 
   function commit() {
-    on_commit(current);
+    onCommit(current);
     set_editing(false);
   }
 
   if (!editing) {
     return (
       <span className="de-root de-root--closed">
-        <span className="de-display">{humanize_seconds(value)}</span>
+        <span className="de-display">{humanizeSeconds(value)}</span>
         <button
           type="button"
           className="de-toggle-btn"
-          onClick={open_editor}
+          onClick={openEditor}
           aria-label="Edit duration"
         >
           ±
@@ -114,7 +114,7 @@ export function DurationEditor({ value, on_commit }: DurationEditorProps) {
           className={`de-input${input_error ? " de-input--error" : ""}`}
           type="text"
           value={input_text}
-          onChange={(e) => handle_input_change(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           aria-label="Duration"
           aria-invalid={input_error}
           placeholder="e.g. 5 min, 1h 30m"

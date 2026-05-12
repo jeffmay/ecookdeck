@@ -2,23 +2,23 @@ import { useState, type FormEvent } from "react";
 import "./SelectUserPage.css";
 
 interface SelectUserPageProps {
-  readonly on_select: (name: string) => void;
+  readonly onSelect: (name: string) => void;
 }
 
-export function SelectUserPage({ on_select }: SelectUserPageProps) {
+export function SelectUserPage({ onSelect }: SelectUserPageProps) {
   const [name, set_name] = useState("");
 
-  function handle_submit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
-    if (trimmed !== "") on_select(trimmed);
+    if (trimmed !== "") onSelect(trimmed);
   }
 
   return (
     <main className="select-user-page">
       <h1 className="select-user-title">Recipe Book</h1>
       <p className="select-user-subtitle">Enter your name to get started.</p>
-      <form className="select-user-form" onSubmit={handle_submit}>
+      <form className="select-user-form" onSubmit={handleSubmit}>
         <label className="select-user-label" htmlFor="user-name-input">
           Your name
         </label>

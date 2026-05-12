@@ -3,28 +3,28 @@ import "./ProfileSettingsPage.css";
 
 interface ProfileSettingsPageProps {
   readonly current_name: string;
-  readonly on_save: (name: string) => void;
-  readonly on_cancel: () => void;
+  readonly onSave: (name: string) => void;
+  readonly onCancel: () => void;
 }
 
 export function ProfileSettingsPage({
   current_name,
-  on_save,
-  on_cancel,
+  onSave,
+  onCancel,
 }: ProfileSettingsPageProps) {
   const [name, set_name] = useState(current_name);
   const trimmed = name.trim();
   const is_unchanged = trimmed === current_name;
 
-  function handle_submit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (trimmed !== "" && !is_unchanged) on_save(trimmed);
+    if (trimmed !== "" && !is_unchanged) onSave(trimmed);
   }
 
   return (
     <main className="profile-settings-page">
       <h1 className="profile-settings-title">Profile Settings</h1>
-      <form className="profile-settings-form" onSubmit={handle_submit}>
+      <form className="profile-settings-form" onSubmit={handleSubmit}>
         <label className="profile-settings-label" htmlFor="profile-name-input">
           Your name
         </label>
@@ -44,7 +44,7 @@ export function ProfileSettingsPage({
           >
             Save
           </button>
-          <button type="button" className="profile-settings-cancel" onClick={on_cancel}>
+          <button type="button" className="profile-settings-cancel" onClick={onCancel}>
             Cancel
           </button>
         </div>

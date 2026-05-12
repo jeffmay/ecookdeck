@@ -1,6 +1,6 @@
 import type { Ingredient, IngredientId, KitchenwareKind, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { describe, expect, it } from "vitest";
-import { build_ingredient_tree } from "../build_ingredient_tree.js";
+import { buildIngredientTree } from "../build_ingredient_tree.js";
 import { ReadonlyDeep } from "type-fest";
 
 // Label fixtures
@@ -59,19 +59,19 @@ const FLOUR: ReadonlyDeep<Ingredient> = {
   labels: new Set([BAKING_LABEL.id]),
 };
 
-describe("build_ingredient_tree", () => {
+describe("buildIngredientTree", () => {
   it("returns empty array for empty input", () => {
-    expect(build_ingredient_tree([], [])).toEqual([]);
+    expect(buildIngredientTree([], [])).toEqual([]);
   });
 
   it("returns a flat list when no parents are set", () => {
-    const rows = build_ingredient_tree([FLOUR, BUTTER], ALL_LABELS);
+    const rows = buildIngredientTree([FLOUR, BUTTER], ALL_LABELS);
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.subRows.length === 0)).toBe(true);
   });
 
   it("nests children under their parent", () => {
-    const rows = build_ingredient_tree([DAIRY, BUTTER, MILK], ALL_LABELS);
+    const rows = buildIngredientTree([DAIRY, BUTTER, MILK], ALL_LABELS);
     expect(rows).toHaveLength(1);
     const dairy_row = rows[0]!;
     expect(dairy_row.id).toBe("dairy");
@@ -80,14 +80,14 @@ describe("build_ingredient_tree", () => {
   });
 
   it("populates parent_name from sibling data", () => {
-    const rows = build_ingredient_tree([DAIRY, BUTTER], ALL_LABELS);
+    const rows = buildIngredientTree([DAIRY, BUTTER], ALL_LABELS);
     const dairy_row = rows[0]!;
     const butter_row = dairy_row.subRows[0]!;
     expect(butter_row.parent_name).toBe("Dairy");
   });
 
   it("leaves parent_name empty when no parent_id", () => {
-    const rows = build_ingredient_tree([FLOUR], ALL_LABELS);
+    const rows = buildIngredientTree([FLOUR], ALL_LABELS);
     expect(rows[0]!.parent_name).toBe("");
   });
 
@@ -97,31 +97,31 @@ describe("build_ingredient_tree", () => {
       id: "salted_butter" as IngredientId,
       parent_id: "nonexistent" as IngredientId,
     };
-    const rows = build_ingredient_tree([orphan], []);
+    const rows = buildIngredientTree([orphan], []);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.parent_name).toBe("nonexistent");
   });
 
   it("sorts root rows alphabetically by name", () => {
-    const rows = build_ingredient_tree([FLOUR, DAIRY], ALL_LABELS);
+    const rows = buildIngredientTree([FLOUR, DAIRY], ALL_LABELS);
     expect(rows.map((r) => r.name)).toEqual(["Dairy", "Flour"]);
   });
 
   it("sorts child rows alphabetically within each parent", () => {
-    const rows = build_ingredient_tree([DAIRY, MILK, BUTTER], ALL_LABELS);
+    const rows = buildIngredientTree([DAIRY, MILK, BUTTER], ALL_LABELS);
     const children = rows[0]!.subRows.map((r) => r.name);
     expect(children).toEqual(["Butter", "Milk"]);
   });
 
   it("resolves label IDs to names on each row", () => {
-    const rows = build_ingredient_tree([BUTTER, DAIRY], ALL_LABELS);
+    const rows = buildIngredientTree([BUTTER, DAIRY], ALL_LABELS);
     const dairy_row = rows.find((r) => r.id === "dairy")!;
     const butter_row = dairy_row.subRows[0]!;
     expect(butter_row.labels).toEqual(["fat", "solid"]);
   });
 
   it("preserves all Ingredient fields on each row", () => {
-    const rows = build_ingredient_tree([BUTTER, DAIRY], ALL_LABELS);
+    const rows = buildIngredientTree([BUTTER, DAIRY], ALL_LABELS);
     const dairy_row = rows.find((r) => r.id === "dairy")!;
     const butter_row = dairy_row.subRows[0]!;
     expect(butter_row.name).toBe("Butter");

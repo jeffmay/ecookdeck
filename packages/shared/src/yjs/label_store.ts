@@ -1,10 +1,10 @@
 import { type } from "arktype";
 import { ReadonlyDeep } from "type-fest";
 import * as Y from "yjs";
-import { is_type_error } from "../assertions/index.js";
+import { isTypeError } from "../assertions/index.js";
 import { KitchenwareKind, KitchenwareLabelId, type KitchenwareLabel } from "../types/kitchenware.js";
 import { setOf } from "../types/sets.js";
-import { random_id } from "../types/ids.js";
+import { randomId } from "../types/ids.js";
 
 const LABELS_MAP_KEY = "labels";
 
@@ -13,55 +13,55 @@ const StoredLabel = type({
   kinds: setOf(KitchenwareKind),
 });
 
-export function get_labels_ymap(doc: Y.Doc): Y.Map<unknown> {
+export function getLabelsYmap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(LABELS_MAP_KEY);
 }
 
-function validate_label(id: string, raw: unknown): KitchenwareLabel | type.errors {
+function validateLabel(id: string, raw: unknown): KitchenwareLabel | type.errors {
   const result = StoredLabel(raw);
   if (result instanceof type.errors) {
     return result;
   }
   const labelId = KitchenwareLabelId.type(id);
-  if (is_type_error(labelId)) {
+  if (isTypeError(labelId)) {
     return labelId;
   }
   return { id: labelId, name: result.name, kinds: result.kinds };
 }
 
-function to_stored(label: ReadonlyDeep<KitchenwareLabel>) {
+function toStored(label: ReadonlyDeep<KitchenwareLabel>) {
   return {
     name: label.name,
     kinds: [...label.kinds],
   };
 }
 
-export function get_labels(doc: Y.Doc): KitchenwareLabel[] {
-  const map = get_labels_ymap(doc);
+export function getLabels(doc: Y.Doc): KitchenwareLabel[] {
+  const map = getLabelsYmap(doc);
   const results: KitchenwareLabel[] = [];
   map.forEach((value, id) => {
-    const label = validate_label(id, value);
-    if (!is_type_error(label)) results.push(label);
+    const label = validateLabel(id, value);
+    if (!isTypeError(label)) results.push(label);
   });
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function add_label(
+export function addLabel(
   doc: Y.Doc,
   name: string,
   kinds: ReadonlySet<KitchenwareKind>,
 ): KitchenwareLabelId {
-  const id = random_id(KitchenwareLabelId);
-  get_labels_ymap(doc).set(id, to_stored({ id, name, kinds }));
+  const id = randomId(KitchenwareLabelId);
+  getLabelsYmap(doc).set(id, toStored({ id, name, kinds }));
   return id;
 }
 
-export function find_label_by_name(doc: Y.Doc, name: string): KitchenwareLabel | null {
-  const map = get_labels_ymap(doc);
+export function findLabelByName(doc: Y.Doc, name: string): KitchenwareLabel | null {
+  const map = getLabelsYmap(doc);
   let found: KitchenwareLabel | null = null;
   for (const [id, value] of map) {
-    const label = validate_label(id, value);
-    if (!is_type_error(label) && label.name === name) {
+    const label = validateLabel(id, value);
+    if (!isTypeError(label) && label.name === name) {
       found = label;
       break;
     }
@@ -69,18 +69,18 @@ export function find_label_by_name(doc: Y.Doc, name: string): KitchenwareLabel |
   return found;
 }
 
-export function find_or_create_label(
+export function findOrCreateLabel(
   doc: Y.Doc,
   name: string,
   kinds: ReadonlySet<KitchenwareKind>,
 ): KitchenwareLabelId {
-  const existing = find_label_by_name(doc, name);
+  const existing = findLabelByName(doc, name);
   if (existing !== null) return existing.id;
-  return add_label(doc, name, kinds);
+  return addLabel(doc, name, kinds);
 }
 
-export function delete_labels(doc: Y.Doc, ids: readonly KitchenwareLabelId[]): void {
-  const map = get_labels_ymap(doc);
+export function deleteLabels(doc: Y.Doc, ids: readonly KitchenwareLabelId[]): void {
+  const map = getLabelsYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
       map.delete(id);
@@ -88,9 +88,9 @@ export function delete_labels(doc: Y.Doc, ids: readonly KitchenwareLabelId[]): v
   });
 }
 
-export function rename_label(doc: Y.Doc, id: KitchenwareLabelId, name: string): void {
-  const map = get_labels_ymap(doc);
-  const label = validate_label(id, map.get(id));
-  if (is_type_error(label)) return;
-  map.set(id, to_stored({ ...label, name }));
+export function renameLabel(doc: Y.Doc, id: KitchenwareLabelId, name: string): void {
+  const map = getLabelsYmap(doc);
+  const label = validateLabel(id, map.get(id));
+  if (isTypeError(label)) return;
+  map.set(id, toStored({ ...label, name }));
 }

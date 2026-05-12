@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { padded_id } from "../ids.js";
-import { is_active_session, is_completed_session, SessionId, type Session } from "../session.js";
+import { paddedId } from "../ids.js";
+import { isActiveSession, isCompletedSession, SessionId, type Session } from "../session.js";
 
 describe("session type guards", () => {
   const active_session: Session = {
-    id: padded_id(SessionId, "sess-1"),
+    id: paddedId(SessionId, "sess-1"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
     started_at: 1000,
@@ -13,7 +13,7 @@ describe("session type guards", () => {
   };
 
   const completed_session: Session = {
-    id: padded_id(SessionId, "sess-2"),
+    id: paddedId(SessionId, "sess-2"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
     started_at: 1000,
@@ -22,13 +22,13 @@ describe("session type guards", () => {
     item_states: {},
   };
 
-  it("is_active_session identifies active sessions", () => {
-    expect(is_active_session(active_session)).toBe(true);
-    expect(is_active_session(completed_session)).toBe(false);
+  it("isActiveSession identifies active sessions", () => {
+    expect(isActiveSession(active_session)).toBe(true);
+    expect(isActiveSession(completed_session)).toBe(false);
   });
 
-  it("is_completed_session identifies completed sessions", () => {
-    expect(is_completed_session(active_session)).toBe(false);
-    expect(is_completed_session(completed_session)).toBe(true);
+  it("isCompletedSession identifies completed sessions", () => {
+    expect(isCompletedSession(active_session)).toBe(false);
+    expect(isCompletedSession(completed_session)).toBe(true);
   });
 });

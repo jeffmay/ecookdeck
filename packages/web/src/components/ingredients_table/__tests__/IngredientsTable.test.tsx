@@ -34,33 +34,33 @@ const CHEESE: Ingredient = {
   labels: new Set(["sol0000" as KitchenwareLabelId]),
 };
 
-const on_rename = vi.fn();
-const on_set_type = vi.fn();
-const on_set_labels = vi.fn();
-const on_set_parent = vi.fn();
-const on_add_labels = vi.fn();
-const on_remove_labels = vi.fn();
-const on_bulk_set_type = vi.fn();
-const on_bulk_set_parent = vi.fn();
+const onRename = vi.fn();
+const onSetType = vi.fn();
+const onSetLabels = vi.fn();
+const onSetParent = vi.fn();
+const onAddLabels = vi.fn();
+const onRemoveLabels = vi.fn();
+const onBulkSetType = vi.fn();
+const onBulkSetParent = vi.fn();
 
 function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
   return render(
     <IngredientsTable
       ingredients={ingredients}
       labels={[]}
-      on_rename={on_rename}
-      on_set_type={on_set_type}
-      on_set_labels={on_set_labels}
-      on_set_parent={on_set_parent}
-      on_add_labels={on_add_labels}
-      on_remove_labels={on_remove_labels}
-      on_bulk_set_type={on_bulk_set_type}
-      on_bulk_set_parent={on_bulk_set_parent}
+      onRename={onRename}
+      onSetType={onSetType}
+      onSetLabels={onSetLabels}
+      onSetParent={onSetParent}
+      onAddLabels={onAddLabels}
+      onRemoveLabels={onRemoveLabels}
+      onBulkSetType={onBulkSetType}
+      onBulkSetParent={onBulkSetParent}
     />,
   );
 }
 
-function get_table() {
+function getTable() {
   return screen.getByRole("region", { name: "Ingredient list" });
 }
 
@@ -71,7 +71,7 @@ beforeEach(() => {
 describe("IngredientsTable — rendering", () => {
   it("renders the ingredient list region", () => {
     setup();
-    expect(get_table()).toBeInTheDocument();
+    expect(getTable()).toBeInTheDocument();
   });
 
   it("renders root-level ingredients", async () => {
@@ -215,7 +215,7 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "Bread Flour");
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(on_rename).toHaveBeenCalledWith("flour", "Bread Flour");
+    expect(onRename).toHaveBeenCalledWith("flour", "Bread Flour");
   });
 
   it("confirms name edit on Enter key", async () => {
@@ -225,7 +225,7 @@ describe("IngredientsTable — editable cells", () => {
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.clear(input);
     await userEvent.type(input, "Rice Flour{Enter}");
-    expect(on_rename).toHaveBeenCalledWith("flour", "Rice Flour");
+    expect(onRename).toHaveBeenCalledWith("flour", "Rice Flour");
   });
 
   it("cancels edit on ✗ button click without calling callback", async () => {
@@ -236,7 +236,7 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "Changed");
     await userEvent.click(screen.getByRole("button", { name: "Cancel edit" }));
-    expect(on_rename).not.toHaveBeenCalled();
+    expect(onRename).not.toHaveBeenCalled();
     expect(screen.queryByRole("textbox", { name: "Edit name for Flour" })).not.toBeInTheDocument();
   });
 
@@ -246,20 +246,20 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.type(input, "{Escape}");
-    expect(on_rename).not.toHaveBeenCalled();
+    expect(onRename).not.toHaveBeenCalled();
   });
 
-  it("calls on_set_type when committing type edit", async () => {
+  it("calls onSetType when committing type edit", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit type for Flour" });
     await userEvent.click(screen.getByRole("button", { name: "Edit type for Flour" }));
     const select = screen.getByRole("combobox", { name: "Edit type for Flour" });
     await userEvent.selectOptions(select, "weight");
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(on_set_type).toHaveBeenCalledWith("flour", "weight");
+    expect(onSetType).toHaveBeenCalledWith("flour", "weight");
   });
 
-  it("calls on_set_labels when committing labels edit", async () => {
+  it("calls onSetLabels when committing labels edit", async () => {
     setup([DAIRY]);
     await screen.findByRole("button", { name: "Edit labels for Dairy" });
     await userEvent.click(screen.getByRole("button", { name: "Edit labels for Dairy" }));
@@ -268,7 +268,7 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.type(input, "baking");
     await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(on_set_labels).toHaveBeenCalledWith("dairy", ["baking"]);
+    expect(onSetLabels).toHaveBeenCalledWith("dairy", ["baking"]);
   });
 });
 
@@ -352,58 +352,58 @@ describe("IngredientsTable — row selection", () => {
 });
 
 describe("IngredientsTable — bulk actions", () => {
-  async function select_flour() {
+  async function selectFlour() {
     setup([FLOUR, CHEESE]);
     await screen.findByText("Flour");
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
   }
 
-  it("calls on_add_labels with selected ids and created labels", async () => {
-    await select_flour();
+  it("calls onAddLabels with selected ids and created labels", async () => {
+    await selectFlour();
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "organic");
     await userEvent.click(await screen.findByText(/Create "organic"/));
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "fresh");
     await userEvent.click(await screen.findByText(/Create "fresh"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
-    expect(on_add_labels).toHaveBeenCalledWith(["flour"], ["organic", "fresh"]);
+    expect(onAddLabels).toHaveBeenCalledWith(["flour"], ["organic", "fresh"]);
   });
 
-  it("calls on_remove_labels with selected ids and created labels", async () => {
-    await select_flour();
+  it("calls onRemoveLabels with selected ids and created labels", async () => {
+    await selectFlour();
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to remove" }), "baking");
     await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
-    expect(on_remove_labels).toHaveBeenCalledWith(["flour"], ["baking"]);
+    expect(onRemoveLabels).toHaveBeenCalledWith(["flour"], ["baking"]);
   });
 
-  it("calls on_bulk_set_type when type is selected and applied", async () => {
-    await select_flour();
+  it("calls onBulkSetType when type is selected and applied", async () => {
+    await selectFlour();
     await userEvent.selectOptions(screen.getByLabelText("Bulk measurement type"), "weight");
     await userEvent.click(screen.getByRole("button", { name: "Apply type change" }));
-    expect(on_bulk_set_type).toHaveBeenCalledWith(["flour"], "weight");
+    expect(onBulkSetType).toHaveBeenCalledWith(["flour"], "weight");
   });
 
-  it("calls on_bulk_set_parent when parent is selected and applied", async () => {
-    await select_flour();
+  it("calls onBulkSetParent when parent is selected and applied", async () => {
+    await selectFlour();
     await userEvent.selectOptions(screen.getByLabelText("Bulk parent"), "Cheese");
     await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
-    expect(on_bulk_set_parent).toHaveBeenCalledWith(["flour"], "cheese");
+    expect(onBulkSetParent).toHaveBeenCalledWith(["flour"], "cheese");
   });
 
-  it("calls on_bulk_set_parent with undefined when Clear parent is selected", async () => {
-    await select_flour();
+  it("calls onBulkSetParent with undefined when Clear parent is selected", async () => {
+    await selectFlour();
     await userEvent.selectOptions(screen.getByLabelText("Bulk parent"), "Clear parent");
     await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
-    expect(on_bulk_set_parent).toHaveBeenCalledWith(["flour"], undefined);
+    expect(onBulkSetParent).toHaveBeenCalledWith(["flour"], undefined);
   });
 
   it("Add labels Apply button is disabled when no labels selected", async () => {
-    await select_flour();
+    await selectFlour();
     expect(screen.getByRole("button", { name: "Apply add labels" })).toBeDisabled();
   });
 
   it("Change type Apply button is disabled when no type selected", async () => {
-    await select_flour();
+    await selectFlour();
     expect(screen.getByRole("button", { name: "Apply type change" })).toBeDisabled();
   });
 });

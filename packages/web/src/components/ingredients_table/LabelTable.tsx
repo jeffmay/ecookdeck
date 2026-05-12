@@ -5,20 +5,20 @@ import "./LabelTable.css";
 
 export interface LabelTableProps {
   readonly labels: ReadonlyDeep<KitchenwareLabel[]>;
-  readonly on_filter_all: (label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly on_filter_any: (label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly on_delete: (label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly on_merge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
-  readonly on_rename: (id: KitchenwareLabelId, name: string) => void;
+  readonly onFilterAll: (label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly onFilterAny: (label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly onMerge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
+  readonly onRename: (id: KitchenwareLabelId, name: string) => void;
 }
 
 export function LabelTable({
   labels,
-  on_filter_all,
-  on_filter_any,
-  on_delete,
-  on_merge,
-  on_rename,
+  onFilterAll,
+  onFilterAny,
+  onDelete,
+  onMerge,
+  onRename,
 }: LabelTableProps) {
   const [expanded, set_expanded] = useState(false);
   const [selected_ids, set_selected_ids] = useState<ReadonlySet<KitchenwareLabelId>>(new Set());
@@ -41,7 +41,7 @@ export function LabelTable({
     });
   }
 
-  function toggle_all(): void {
+  function toggleAll(): void {
     if (all_selected) {
       set_selected_ids(new Set());
     } else {
@@ -49,44 +49,44 @@ export function LabelTable({
     }
   }
 
-  function handle_filter_all(): void {
-    on_filter_all(selected_array);
+  function handleFilterAll(): void {
+    onFilterAll(selected_array);
   }
 
-  function handle_filter_any(): void {
-    on_filter_any(selected_array);
+  function handleFilterAny(): void {
+    onFilterAny(selected_array);
   }
 
-  function handle_delete(): void {
-    on_delete(selected_array);
+  function handleDelete(): void {
+    onDelete(selected_array);
     set_selected_ids(new Set());
   }
 
-  function handle_merge_submit(e: FormEvent): void {
+  function handleMergeSubmit(e: FormEvent): void {
     e.preventDefault();
     const name = merge_name.trim();
     if (name === "" || selected_array.length < 2) return;
-    on_merge(selected_array, name);
+    onMerge(selected_array, name);
     set_merge_name("");
     set_show_merge_input(false);
     set_selected_ids(new Set());
   }
 
-  function begin_edit(label: ReadonlyDeep<KitchenwareLabel>): void {
+  function beginEdit(label: ReadonlyDeep<KitchenwareLabel>): void {
     set_editing_id(label.id);
     set_editing_name(label.name);
   }
 
-  function commit_edit(): void {
+  function commitEdit(): void {
     const name = editing_name.trim();
     if (name !== "" && editing_id !== null) {
-      on_rename(editing_id, name);
+      onRename(editing_id, name);
     }
     set_editing_id(null);
     set_editing_name("");
   }
 
-  function cancel_edit(): void {
+  function cancelEdit(): void {
     set_editing_id(null);
     set_editing_name("");
   }
@@ -120,7 +120,7 @@ export function LabelTable({
               <button
                 type="button"
                 className="lt-bulk-btn"
-                onClick={handle_filter_all}
+                onClick={handleFilterAll}
                 aria-label="Filter ingredients with all selected labels"
               >
                 Filter: All
@@ -128,7 +128,7 @@ export function LabelTable({
               <button
                 type="button"
                 className="lt-bulk-btn"
-                onClick={handle_filter_any}
+                onClick={handleFilterAny}
                 aria-label="Filter ingredients with any selected labels"
               >
                 Filter: Any
@@ -136,7 +136,7 @@ export function LabelTable({
               <button
                 type="button"
                 className="lt-bulk-btn lt-bulk-btn--danger"
-                onClick={handle_delete}
+                onClick={handleDelete}
                 aria-label="Delete selected labels"
               >
                 Delete
@@ -144,7 +144,7 @@ export function LabelTable({
               {selected_array.length >= 2 && (
                 <>
                   {show_merge_input ? (
-                    <form className="lt-merge-form" onSubmit={handle_merge_submit}>
+                    <form className="lt-merge-form" onSubmit={handleMergeSubmit}>
                       <input
                         type="text"
                         className="lt-merge-input"
@@ -215,7 +215,7 @@ export function LabelTable({
                       ref={(el) => {
                         if (el) el.indeterminate = some_selected && !all_selected;
                       }}
-                      onChange={toggle_all}
+                      onChange={toggleAll}
                       aria-label="Select all labels"
                     />
                   </th>
@@ -248,14 +248,14 @@ export function LabelTable({
                             aria-label={`Edit label name ${label.name}`}
                             onChange={(e) => set_editing_name(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") commit_edit();
-                              if (e.key === "Escape") cancel_edit();
+                              if (e.key === "Enter") commitEdit();
+                              if (e.key === "Escape") cancelEdit();
                             }}
                           />
                           <button
                             type="button"
                             className="lt-edit-btn"
-                            onClick={commit_edit}
+                            onClick={commitEdit}
                             aria-label="Confirm rename"
                           >
                             ✔︎
@@ -263,7 +263,7 @@ export function LabelTable({
                           <button
                             type="button"
                             className="lt-edit-btn"
-                            onClick={cancel_edit}
+                            onClick={cancelEdit}
                             aria-label="Cancel rename"
                           >
                             ✗
@@ -275,9 +275,9 @@ export function LabelTable({
                           role="button"
                           tabIndex={0}
                           aria-label={`Rename label ${label.name}`}
-                          onClick={() => begin_edit(label)}
+                          onClick={() => beginEdit(label)}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") begin_edit(label);
+                            if (e.key === "Enter" || e.key === " ") beginEdit(label);
                           }}
                         >
                           {label.name}

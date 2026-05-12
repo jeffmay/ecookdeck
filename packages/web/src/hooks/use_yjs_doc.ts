@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 
-export function use_yjs_doc(user_name: string): Y.Doc {
+export function useYjsDoc(user_name: string): Y.Doc {
   const doc_ref = useRef<Y.Doc>(new Y.Doc());
 
   useEffect(() => {

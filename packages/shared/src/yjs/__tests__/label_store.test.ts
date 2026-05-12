@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import * as Y from "yjs";
 import {
-  get_labels,
-  add_label,
-  find_label_by_name,
-  find_or_create_label,
-  delete_labels,
-  rename_label,
+  getLabels,
+  addLabel,
+  findLabelByName,
+  findOrCreateLabel,
+  deleteLabels,
+  renameLabel,
 } from "../label_store.js";
 import { KitchenwareLabelId } from "../../types/kitchenware.js";
 
@@ -18,122 +18,122 @@ beforeEach(() => {
 
 const INGREDIENT_KINDS = new Set<"ingredient" | "container" | "equipment">(["ingredient"]);
 
-describe("get_labels", () => {
+describe("getLabels", () => {
   it("returns empty array for empty doc", () => {
-    expect(get_labels(doc)).toEqual([]);
+    expect(getLabels(doc)).toEqual([]);
   });
 
   it("returns sorted labels after add", () => {
-    add_label(doc, "solid", INGREDIENT_KINDS);
-    add_label(doc, "fat", INGREDIENT_KINDS);
-    const result = get_labels(doc);
+    addLabel(doc, "solid", INGREDIENT_KINDS);
+    addLabel(doc, "fat", INGREDIENT_KINDS);
+    const result = getLabels(doc);
     expect(result.map((l) => l.name)).toEqual(["fat", "solid"]);
   });
 });
 
-describe("add_label", () => {
+describe("addLabel", () => {
   it("returns an ID and stores the label", () => {
-    const id = add_label(doc, "liquid", INGREDIENT_KINDS);
+    const id = addLabel(doc, "liquid", INGREDIENT_KINDS);
     expect(typeof id).toBe("string");
     expect(id).toHaveLength(7);
-    const labels = get_labels(doc);
+    const labels = getLabels(doc);
     expect(labels).toHaveLength(1);
     expect(labels[0]!.name).toBe("liquid");
     expect(labels[0]!.id).toBe(id);
   });
 
   it("stores kinds as a ReadonlySet", () => {
-    add_label(doc, "liquid", INGREDIENT_KINDS);
-    const label = get_labels(doc)[0]!;
+    addLabel(doc, "liquid", INGREDIENT_KINDS);
+    const label = getLabels(doc)[0]!;
     expect(label.kinds instanceof Set).toBe(true);
     expect(label.kinds.has("ingredient")).toBe(true);
   });
 
   it("creates unique IDs for different labels", () => {
-    const a = add_label(doc, "fat", INGREDIENT_KINDS);
-    const b = add_label(doc, "solid", INGREDIENT_KINDS);
+    const a = addLabel(doc, "fat", INGREDIENT_KINDS);
+    const b = addLabel(doc, "solid", INGREDIENT_KINDS);
     expect(a).not.toBe(b);
   });
 });
 
-describe("find_label_by_name", () => {
+describe("findLabelByName", () => {
   it("returns null when no label matches", () => {
-    expect(find_label_by_name(doc, "missing")).toBeNull();
+    expect(findLabelByName(doc, "missing")).toBeNull();
   });
 
   it("returns the label when found", () => {
-    const id = add_label(doc, "fat", INGREDIENT_KINDS);
-    const found = find_label_by_name(doc, "fat");
+    const id = addLabel(doc, "fat", INGREDIENT_KINDS);
+    const found = findLabelByName(doc, "fat");
     expect(found).not.toBeNull();
     expect(found!.id).toBe(id);
     expect(found!.name).toBe("fat");
   });
 
   it("returns null for a different name", () => {
-    add_label(doc, "fat", INGREDIENT_KINDS);
-    expect(find_label_by_name(doc, "solid")).toBeNull();
+    addLabel(doc, "fat", INGREDIENT_KINDS);
+    expect(findLabelByName(doc, "solid")).toBeNull();
   });
 });
 
-describe("find_or_create_label", () => {
+describe("findOrCreateLabel", () => {
   it("creates a new label when one does not exist", () => {
-    const id = find_or_create_label(doc, "baking", INGREDIENT_KINDS);
-    expect(get_labels(doc)).toHaveLength(1);
-    expect(get_labels(doc)[0]!.id).toBe(id);
+    const id = findOrCreateLabel(doc, "baking", INGREDIENT_KINDS);
+    expect(getLabels(doc)).toHaveLength(1);
+    expect(getLabels(doc)[0]!.id).toBe(id);
   });
 
   it("returns the existing id when a label with that name already exists", () => {
-    const first_id = add_label(doc, "baking", INGREDIENT_KINDS);
-    const second_id = find_or_create_label(doc, "baking", INGREDIENT_KINDS);
+    const first_id = addLabel(doc, "baking", INGREDIENT_KINDS);
+    const second_id = findOrCreateLabel(doc, "baking", INGREDIENT_KINDS);
     expect(second_id).toBe(first_id);
-    expect(get_labels(doc)).toHaveLength(1);
+    expect(getLabels(doc)).toHaveLength(1);
   });
 });
 
-describe("delete_labels", () => {
+describe("deleteLabels", () => {
   it("removes specified labels", () => {
-    const fat_id = add_label(doc, "fat", INGREDIENT_KINDS);
-    add_label(doc, "solid", INGREDIENT_KINDS);
-    delete_labels(doc, [fat_id]);
-    const remaining = get_labels(doc);
+    const fat_id = addLabel(doc, "fat", INGREDIENT_KINDS);
+    addLabel(doc, "solid", INGREDIENT_KINDS);
+    deleteLabels(doc, [fat_id]);
+    const remaining = getLabels(doc);
     expect(remaining).toHaveLength(1);
     expect(remaining[0]!.name).toBe("solid");
   });
 
   it("silently ignores unknown ids", () => {
-    add_label(doc, "fat", INGREDIENT_KINDS);
-    expect(() => delete_labels(doc, ["nonexist" as KitchenwareLabelId])).not.toThrow();
-    expect(get_labels(doc)).toHaveLength(1);
+    addLabel(doc, "fat", INGREDIENT_KINDS);
+    expect(() => deleteLabels(doc, ["nonexist" as KitchenwareLabelId])).not.toThrow();
+    expect(getLabels(doc)).toHaveLength(1);
   });
 
   it("deletes multiple labels atomically", () => {
-    const a_id = add_label(doc, "a", INGREDIENT_KINDS);
-    const b_id = add_label(doc, "b", INGREDIENT_KINDS);
-    add_label(doc, "c", INGREDIENT_KINDS);
-    delete_labels(doc, [a_id, b_id]);
-    const remaining = get_labels(doc);
+    const a_id = addLabel(doc, "a", INGREDIENT_KINDS);
+    const b_id = addLabel(doc, "b", INGREDIENT_KINDS);
+    addLabel(doc, "c", INGREDIENT_KINDS);
+    deleteLabels(doc, [a_id, b_id]);
+    const remaining = getLabels(doc);
     expect(remaining).toHaveLength(1);
     expect(remaining[0]!.name).toBe("c");
   });
 });
 
-describe("rename_label", () => {
+describe("renameLabel", () => {
   it("updates the label name", () => {
-    const id = add_label(doc, "fat", INGREDIENT_KINDS);
-    rename_label(doc, id, "saturated fat");
-    const label = find_label_by_name(doc, "saturated fat");
+    const id = addLabel(doc, "fat", INGREDIENT_KINDS);
+    renameLabel(doc, id, "saturated fat");
+    const label = findLabelByName(doc, "saturated fat");
     expect(label).not.toBeNull();
     expect(label!.id).toBe(id);
   });
 
   it("preserves kinds when renaming", () => {
-    const id = add_label(doc, "fat", INGREDIENT_KINDS);
-    rename_label(doc, id, "saturated fat");
-    const label = get_labels(doc).find((l) => l.id === id)!;
+    const id = addLabel(doc, "fat", INGREDIENT_KINDS);
+    renameLabel(doc, id, "saturated fat");
+    const label = getLabels(doc).find((l) => l.id === id)!;
     expect(label.kinds.has("ingredient")).toBe(true);
   });
 
   it("silently skips unknown id", () => {
-    expect(() => rename_label(doc, "nonexist" as KitchenwareLabelId, "new name")).not.toThrow();
+    expect(() => renameLabel(doc, "nonexist" as KitchenwareLabelId, "new name")).not.toThrow();
   });
 });

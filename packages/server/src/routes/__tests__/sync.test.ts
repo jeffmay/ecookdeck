@@ -2,11 +2,11 @@ import { describe, it, expect } from "vitest";
 import express from "express";
 import request from "supertest";
 import * as Y from "yjs";
-import { sync_router } from "../sync.js";
+import { syncRouter } from "../sync.js";
 
 const app = express();
 app.use(express.json());
-app.use("/sync", sync_router);
+app.use("/sync", syncRouter);
 
 describe("POST /sync/:user_id", () => {
   it("returns a base64-encoded Yjs state update for a new user", async () => {

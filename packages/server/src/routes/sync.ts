@@ -1,19 +1,19 @@
 import { Router, type Request, type Response } from "express";
 import * as Y from "yjs";
 
-export const sync_router = Router();
+export const syncRouter = Router();
 
-const user_docs = new Map<string, Y.Doc>();
+const userDocs = new Map<string, Y.Doc>();
 
-function get_or_create_doc(user_id: string): Y.Doc {
-  const existing = user_docs.get(user_id);
+function getOrCreateDoc(user_id: string): Y.Doc {
+  const existing = userDocs.get(user_id);
   if (existing !== undefined) return existing;
   const doc = new Y.Doc();
-  user_docs.set(user_id, doc);
+  userDocs.set(user_id, doc);
   return doc;
 }
 
-sync_router.post("/:user_id", (req: Request, res: Response) => {
+syncRouter.post("/:user_id", (req: Request, res: Response) => {
   const raw_user_id = req.params["user_id"];
   const user_id = typeof raw_user_id === "string" ? raw_user_id : undefined;
   if (user_id === undefined || user_id === "") {
@@ -22,7 +22,7 @@ sync_router.post("/:user_id", (req: Request, res: Response) => {
   }
 
   const body = req.body as { update?: string };
-  const doc = get_or_create_doc(user_id);
+  const doc = getOrCreateDoc(user_id);
 
   if (body.update !== undefined) {
     const update = Buffer.from(body.update, "base64");

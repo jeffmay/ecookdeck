@@ -46,9 +46,9 @@ export function branded<const N extends string, const S extends string>(_compani
  * @param id the short string to pad (must not exceed companion.length)
  * @returns the left-padded and branded identifier
  *
- * @note use this for deterministic IDs (typically for fixtures/testing); use random_id for new production IDs.
+ * @note use this for deterministic IDs (typically for fixtures/testing); use randomId for new production IDs.
  */
-export function padded_id<S extends string, N extends string, L extends number>(companion: IdCompanion<N, L>, id: S): type.brand<PadStart<S, L, "-">, N> {
+export function paddedId<S extends string, N extends string, L extends number>(companion: IdCompanion<N, L>, id: S): type.brand<PadStart<S, L, "-">, N> {
   return branded(companion, padStart(id, companion.length, "-"));
 }
 
@@ -58,7 +58,7 @@ export function padded_id<S extends string, N extends string, L extends number>(
  * @param companion the IdCompanion object containing the length and type information for the identifier
  * @returns a random identifier of the type specified by the companion's type function.
  */
-export function random_id<N extends string, L extends number>(companion: IdCompanion<N, L>): type.brand<string, N> {
+export function randomId<N extends string, L extends number>(companion: IdCompanion<N, L>): type.brand<string, N> {
   return branded(companion, nanoid(companion.length));
 }
 
@@ -71,7 +71,7 @@ export function random_id<N extends string, L extends number>(companion: IdCompa
  * @note this function simply avoids casting a string directly, with a small amount of
  *       type-safety by ensuring that the expected type is a string.
  */
-export function load_id<N extends string>(_companion: IdCompanion<N>, id: string): type.brand<string, N> {
+export function loadId<N extends string>(_companion: IdCompanion<N>, id: string): type.brand<string, N> {
   // TODO: Add this back after converting the default ids to match the expected format
   // const result = tpe(id);
   // if (result instanceof type.errors) {

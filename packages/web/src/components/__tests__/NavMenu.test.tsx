@@ -5,21 +5,21 @@ import { NavMenu } from "../NavMenu.js";
 
 describe("NavMenu", () => {
   it("renders the trigger button", () => {
-    render(<NavMenu on_navigate={vi.fn()} />);
+    render(<NavMenu onNavigate={vi.fn()} />);
     expect(screen.getByLabelText("Navigation menu")).toBeInTheDocument();
   });
 
   it("shows Ingredients link when opened", async () => {
-    render(<NavMenu on_navigate={vi.fn()} />);
+    render(<NavMenu onNavigate={vi.fn()} />);
     await userEvent.click(screen.getByLabelText("Navigation menu"));
     expect(screen.getByRole("button", { name: "Ingredients" })).toBeInTheDocument();
   });
 
-  it("calls on_navigate with bulk_ingredient_editor when Ingredients clicked", async () => {
-    const on_navigate = vi.fn();
-    render(<NavMenu on_navigate={on_navigate} />);
+  it("calls onNavigate with bulk_ingredient_editor when Ingredients clicked", async () => {
+    const onNavigate = vi.fn();
+    render(<NavMenu onNavigate={onNavigate} />);
     await userEvent.click(screen.getByLabelText("Navigation menu"));
     await userEvent.click(screen.getByRole("button", { name: "Ingredients" }));
-    expect(on_navigate).toHaveBeenCalledWith("bulk_ingredient_editor");
+    expect(onNavigate).toHaveBeenCalledWith("bulk_ingredient_editor");
   });
 });

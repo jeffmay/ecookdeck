@@ -11,7 +11,7 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------flour,ingredient,Flour,volume,dry
 `;
 
-function make_wrapper(doc: Y.Doc) {
+function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(DocContext.Provider, { value: doc }, children);
   };
@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 function setup() {
-  return render(<RecipeEditorPage user_name="test-user" />, { wrapper: make_wrapper(doc) });
+  return render(<RecipeEditorPage user_name="test-user" />, { wrapper: makeWrapper(doc) });
 }
 
 describe("RecipeEditorPage — list view", () => {

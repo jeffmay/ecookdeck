@@ -21,7 +21,7 @@ import {
 import type { Ingredient, IngredientId, KitchenwareLabel, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
 import { MultiSelectFilter } from "./MultiSelectFilter.js";
 import { LabelEditor } from "./LabelEditor.js";
-import { build_ingredient_tree, type IngredientRow } from "./build_ingredient_tree.js";
+import { buildIngredientTree, type IngredientRow } from "./build_ingredient_tree.js";
 import "./IngredientsTable.css";
 
 // ---------------------------------------------------------------------------
@@ -41,20 +41,20 @@ declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
     pending_edits: ReadonlyMap<string, string>;
-    on_begin_edit: (ingredient_id: IngredientId, col_id: string, initial: string) => void;
-    on_update_edit: (ingredient_id: IngredientId, col_id: string, value: string) => void;
-    on_commit_edit: (ingredient_id: IngredientId, col_id: string) => void;
-    on_cancel_edit: (ingredient_id: IngredientId, col_id: string) => void;
+    onBeginEdit: (ingredient_id: IngredientId, col_id: string, initial: string) => void;
+    onUpdateEdit: (ingredient_id: IngredientId, col_id: string, value: string) => void;
+    onCommitEdit: (ingredient_id: IngredientId, col_id: string) => void;
+    onCancelEdit: (ingredient_id: IngredientId, col_id: string) => void;
     all_ingredients: readonly Ingredient[];
     all_label_names: readonly string[];
     selected_ids: ReadonlySet<IngredientId>;
-    on_toggle_select: (id: IngredientId) => void;
-    on_toggle_select_all: (ids: readonly IngredientId[]) => void;
+    onToggleSelect: (id: IngredientId) => void;
+    onToggleSelectAll: (ids: readonly IngredientId[]) => void;
   }
   interface FilterFns {
-    fuzzy_text: FilterFn<IngredientRow>;
-    multi_select: FilterFn<IngredientRow>;
-    name_recursive_fuzzy: FilterFn<IngredientRow>;
+    fuzzyText: FilterFn<IngredientRow>;
+    multiSelect: FilterFn<IngredientRow>;
+    nameRecursiveFuzzy: FilterFn<IngredientRow>;
   }
 }
 
@@ -62,13 +62,13 @@ declare module "@tanstack/react-table" {
 // Filter functions
 // ---------------------------------------------------------------------------
 
-const fuzzy_text: FilterFn<IngredientRow> = (row, col_id, value) => {
+const fuzzyText: FilterFn<IngredientRow> = (row, col_id, value) => {
   if (typeof value !== "string" || value === "") return true;
   return String(row.getValue(col_id)).toLowerCase().includes(value.toLowerCase());
 };
-fuzzy_text.autoRemove = (v) => typeof v !== "string" || v === "";
+fuzzyText.autoRemove = (v) => typeof v !== "string" || v === "";
 
-const multi_select: FilterFn<IngredientRow> = (row, col_id, value) => {
+const multiSelect: FilterFn<IngredientRow> = (row, col_id, value) => {
   if (!Array.isArray(value) || value.length === 0) return true;
   const selected = value.filter((v): v is string => typeof v === "string");
   if (selected.length === 0) return true;
@@ -78,18 +78,18 @@ const multi_select: FilterFn<IngredientRow> = (row, col_id, value) => {
     : [String(cell)];
   return selected.some((s) => values.includes(s));
 };
-multi_select.autoRemove = (v) => !Array.isArray(v) || v.length === 0;
+multiSelect.autoRemove = (v) => !Array.isArray(v) || v.length === 0;
 
-function row_name_matches(row_data: IngredientRow, query: string): boolean {
+function rowNameMatches(row_data: IngredientRow, query: string): boolean {
   if (row_data.name.toLowerCase().includes(query)) return true;
-  return row_data.subRows.some((child) => row_name_matches(child, query));
+  return row_data.subRows.some((child) => rowNameMatches(child, query));
 }
 
-const name_recursive_fuzzy: FilterFn<IngredientRow> = (row, _col_id, value) => {
+const nameRecursiveFuzzy: FilterFn<IngredientRow> = (row, _col_id, value) => {
   if (typeof value !== "string" || value === "") return true;
-  return row_name_matches(row.original, value.toLowerCase());
+  return rowNameMatches(row.original, value.toLowerCase());
 };
-name_recursive_fuzzy.autoRemove = (v) => typeof v !== "string" || v === "";
+nameRecursiveFuzzy.autoRemove = (v) => typeof v !== "string" || v === "";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -101,12 +101,12 @@ function pkey(ingredient_id: IngredientId, col_id: string): string {
 
 const MEASUREMENT_TYPES: readonly MeasurementType[] = ["count", "volume", "weight"];
 
-function validate_type(v: string): MeasurementType | undefined {
+function validateType(v: string): MeasurementType | undefined {
   if (v === "volume" || v === "weight" || v === "count") return v;
   return undefined;
 }
 
-function parse_labels(raw: string): string[] {
+function parseLabels(raw: string): string[] {
   return raw
     .split(",")
     .map((l) => l.trim())
@@ -132,16 +132,16 @@ function NameCell({ getValue, row, column, table }: CellContext<IngredientRow, s
           className="it-edit-input"
           autoFocus
           aria-label={`Edit name for ${value}`}
-          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onChange={(e) => meta.onUpdateEdit(row.original.id, column.id, e.target.value)}
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Enter") meta.on_commit_edit(row.original.id, column.id);
-            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+            if (e.key === "Enter") meta.onCommitEdit(row.original.id, column.id);
+            if (e.key === "Escape") meta.onCancelEdit(row.original.id, column.id);
           }}
         />
         <button
           type="button"
           className="it-confirm-btn"
-          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          onClick={() => meta.onCommitEdit(row.original.id, column.id)}
           aria-label="Confirm edit"
         >
           ✔︎
@@ -149,7 +149,7 @@ function NameCell({ getValue, row, column, table }: CellContext<IngredientRow, s
         <button
           type="button"
           className="it-cancel-btn"
-          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          onClick={() => meta.onCancelEdit(row.original.id, column.id)}
           aria-label="Cancel edit"
         >
           ✗
@@ -163,10 +163,10 @@ function NameCell({ getValue, row, column, table }: CellContext<IngredientRow, s
       role="button"
       tabIndex={0}
       aria-label={`Edit name for ${value}`}
-      onClick={() => meta.on_begin_edit(row.original.id, column.id, value)}
+      onClick={() => meta.onBeginEdit(row.original.id, column.id, value)}
       onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
         if (e.key === "Enter" || e.key === " ")
-          meta.on_begin_edit(row.original.id, column.id, value);
+          meta.onBeginEdit(row.original.id, column.id, value);
       }}
     >
       {value}
@@ -187,9 +187,9 @@ function TypeCell({ getValue, row, column, table }: CellContext<IngredientRow, M
           value={pending}
           autoFocus
           aria-label={`Edit type for ${row.original.name}`}
-          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onChange={(e) => meta.onUpdateEdit(row.original.id, column.id, e.target.value)}
           onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
-            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+            if (e.key === "Escape") meta.onCancelEdit(row.original.id, column.id);
           }}
         >
           {MEASUREMENT_TYPES.map((t) => (
@@ -201,7 +201,7 @@ function TypeCell({ getValue, row, column, table }: CellContext<IngredientRow, M
         <button
           type="button"
           className="it-confirm-btn"
-          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          onClick={() => meta.onCommitEdit(row.original.id, column.id)}
           aria-label="Confirm edit"
         >
           ✔︎
@@ -209,7 +209,7 @@ function TypeCell({ getValue, row, column, table }: CellContext<IngredientRow, M
         <button
           type="button"
           className="it-cancel-btn"
-          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          onClick={() => meta.onCancelEdit(row.original.id, column.id)}
           aria-label="Cancel edit"
         >
           ✗
@@ -223,10 +223,10 @@ function TypeCell({ getValue, row, column, table }: CellContext<IngredientRow, M
       role="button"
       tabIndex={0}
       aria-label={`Edit type for ${row.original.name}`}
-      onClick={() => meta.on_begin_edit(row.original.id, column.id, value)}
+      onClick={() => meta.onBeginEdit(row.original.id, column.id, value)}
       onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
         if (e.key === "Enter" || e.key === " ")
-          meta.on_begin_edit(row.original.id, column.id, value);
+          meta.onBeginEdit(row.original.id, column.id, value);
       }}
     >
       {value}
@@ -248,14 +248,14 @@ function LabelsCell({
   if (pending !== undefined) {
     return (
       <LabelEditor
-        selected_label_names={parse_labels(pending)}
+        selected_label_names={parseLabels(pending)}
         all_label_names={meta.all_label_names}
         aria_label={`Edit labels for ${row.original.name}`}
-        on_change={(names) =>
-          meta.on_update_edit(row.original.id, column.id, names.join(", "))
+        onChange={(names) =>
+          meta.onUpdateEdit(row.original.id, column.id, names.join(", "))
         }
-        on_commit={() => meta.on_commit_edit(row.original.id, column.id)}
-        on_cancel={() => meta.on_cancel_edit(row.original.id, column.id)}
+        onCommit={() => meta.onCommitEdit(row.original.id, column.id)}
+        onCancel={() => meta.onCancelEdit(row.original.id, column.id)}
       />
     );
   }
@@ -267,10 +267,10 @@ function LabelsCell({
       role="button"
       tabIndex={0}
       aria-label={`Edit labels for ${row.original.name}`}
-      onClick={() => meta.on_begin_edit(row.original.id, column.id, display)}
+      onClick={() => meta.onBeginEdit(row.original.id, column.id, display)}
       onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
         if (e.key === "Enter" || e.key === " ")
-          meta.on_begin_edit(row.original.id, column.id, display);
+          meta.onBeginEdit(row.original.id, column.id, display);
       }}
     >
       {display || <span className="it-muted">—</span>}
@@ -291,9 +291,9 @@ function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) 
           value={pending}
           autoFocus
           aria-label={`Edit parent for ${row.original.name}`}
-          onChange={(e) => meta.on_update_edit(row.original.id, column.id, e.target.value)}
+          onChange={(e) => meta.onUpdateEdit(row.original.id, column.id, e.target.value)}
           onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
-            if (e.key === "Escape") meta.on_cancel_edit(row.original.id, column.id);
+            if (e.key === "Escape") meta.onCancelEdit(row.original.id, column.id);
           }}
         >
           <option value="">— None —</option>
@@ -308,7 +308,7 @@ function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) 
         <button
           type="button"
           className="it-confirm-btn"
-          onClick={() => meta.on_commit_edit(row.original.id, column.id)}
+          onClick={() => meta.onCommitEdit(row.original.id, column.id)}
           aria-label="Confirm edit"
         >
           ✔︎
@@ -316,7 +316,7 @@ function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) 
         <button
           type="button"
           className="it-cancel-btn"
-          onClick={() => meta.on_cancel_edit(row.original.id, column.id)}
+          onClick={() => meta.onCancelEdit(row.original.id, column.id)}
           aria-label="Cancel edit"
         >
           ✗
@@ -331,11 +331,11 @@ function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) 
       tabIndex={0}
       aria-label={`Edit parent for ${row.original.name}`}
       onClick={() =>
-        meta.on_begin_edit(row.original.id, column.id, row.original.parent_id ?? "")
+        meta.onBeginEdit(row.original.id, column.id, row.original.parent_id ?? "")
       }
       onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
         if (e.key === "Enter" || e.key === " ")
-          meta.on_begin_edit(row.original.id, column.id, row.original.parent_id ?? "");
+          meta.onBeginEdit(row.original.id, column.id, row.original.parent_id ?? "");
       }}
     >
       {display}
@@ -368,7 +368,7 @@ function SelectAllCheckbox({ table }: { table: Table<IngredientRow> }) {
       ref={ref}
       type="checkbox"
       checked={all_selected}
-      onChange={() => meta.on_toggle_select_all(all_ids)}
+      onChange={() => meta.onToggleSelectAll(all_ids)}
       aria-label="Select all ingredients"
     />
   );
@@ -470,7 +470,7 @@ const COLUMNS = [
         <input
           type="checkbox"
           checked={meta.selected_ids.has(row.original.id)}
-          onChange={() => meta.on_toggle_select(row.original.id)}
+          onChange={() => meta.onToggleSelect(row.original.id)}
           aria-label={`Select ${row.original.name}`}
         />
       );
@@ -509,20 +509,20 @@ const COLUMNS = [
   }),
   col.accessor("name", {
     header: "Name",
-    filterFn: "name_recursive_fuzzy",
+    filterFn: "nameRecursiveFuzzy",
     enableGrouping: true,
     cell: NameCell,
   }),
   col.accessor("default_measurement_type", {
     header: "Type",
-    filterFn: "multi_select",
+    filterFn: "multiSelect",
     enableGrouping: true,
     cell: TypeCell,
   }),
   col.accessor((row) => row.labels, {
     id: "labels",
     header: "Labels",
-    filterFn: "multi_select",
+    filterFn: "multiSelect",
     enableGrouping: false,
     enableSorting: false,
     cell: LabelsCell,
@@ -543,17 +543,17 @@ export interface IngredientsTableProps {
   readonly ingredients: readonly Ingredient[];
   readonly labels: readonly KitchenwareLabel[];
   readonly external_label_filter?: ExternalLabelFilter;
-  readonly on_rename: (id: IngredientId, name: string) => void;
-  readonly on_set_type: (id: IngredientId, type: MeasurementType) => void;
-  readonly on_set_labels: (id: IngredientId, label_names: readonly string[]) => void;
-  readonly on_set_parent: (id: IngredientId, parent_id: IngredientId | undefined) => void;
-  readonly on_add_labels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
-  readonly on_remove_labels: (
+  readonly onRename: (id: IngredientId, name: string) => void;
+  readonly onSetType: (id: IngredientId, type: MeasurementType) => void;
+  readonly onSetLabels: (id: IngredientId, label_names: readonly string[]) => void;
+  readonly onSetParent: (id: IngredientId, parent_id: IngredientId | undefined) => void;
+  readonly onAddLabels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
+  readonly onRemoveLabels: (
     ids: readonly IngredientId[],
     label_names: readonly string[],
   ) => void;
-  readonly on_bulk_set_type: (ids: readonly IngredientId[], type: MeasurementType) => void;
-  readonly on_bulk_set_parent: (
+  readonly onBulkSetType: (ids: readonly IngredientId[], type: MeasurementType) => void;
+  readonly onBulkSetParent: (
     ids: readonly IngredientId[],
     parent_id: IngredientId | undefined,
   ) => void;
@@ -563,14 +563,14 @@ export function IngredientsTable({
   ingredients,
   labels,
   external_label_filter,
-  on_rename,
-  on_set_type,
-  on_set_labels,
-  on_set_parent,
-  on_add_labels,
-  on_remove_labels,
-  on_bulk_set_type,
-  on_bulk_set_parent,
+  onRename,
+  onSetType,
+  onSetLabels,
+  onSetParent,
+  onAddLabels,
+  onRemoveLabels,
+  onBulkSetType,
+  onBulkSetParent,
 }: IngredientsTableProps) {
   const [column_filters, set_column_filters] = useState<ColumnFiltersState>([]);
   const [sorting, set_sorting] = useState<SortingState>([]);
@@ -598,7 +598,7 @@ export function IngredientsTable({
   }, [ingredients, external_label_filter]);
 
   const data = useMemo(
-    () => build_ingredient_tree(filtered_ingredients, labels),
+    () => buildIngredientTree(filtered_ingredients, labels),
     [filtered_ingredients, labels],
   );
 
@@ -612,11 +612,11 @@ export function IngredientsTable({
     }
   }, [column_filters]);
 
-  function on_begin_edit(ingredient_id: IngredientId, col_id: string, initial: string): void {
+  function onBeginEdit(ingredient_id: IngredientId, col_id: string, initial: string): void {
     set_pending_edits((prev) => new Map(prev).set(pkey(ingredient_id, col_id), initial));
   }
 
-  function on_update_edit(ingredient_id: IngredientId, col_id: string, value: string): void {
+  function onUpdateEdit(ingredient_id: IngredientId, col_id: string, value: string): void {
     const key = pkey(ingredient_id, col_id);
     set_pending_edits((prev) => {
       if (!prev.has(key)) return prev;
@@ -624,21 +624,21 @@ export function IngredientsTable({
     });
   }
 
-  function on_commit_edit(ingredient_id: IngredientId, col_id: string): void {
+  function onCommitEdit(ingredient_id: IngredientId, col_id: string): void {
     const key = pkey(ingredient_id, col_id);
     const value = pending_edits.get(key);
     if (value === undefined) return;
 
     if (col_id === "name") {
       const trimmed = value.trim();
-      if (trimmed !== "") on_rename(ingredient_id, trimmed);
+      if (trimmed !== "") onRename(ingredient_id, trimmed);
     } else if (col_id === "default_measurement_type") {
-      const type = validate_type(value);
-      if (type !== undefined) on_set_type(ingredient_id, type);
+      const type = validateType(value);
+      if (type !== undefined) onSetType(ingredient_id, type);
     } else if (col_id === "labels") {
-      on_set_labels(ingredient_id, parse_labels(value));
+      onSetLabels(ingredient_id, parseLabels(value));
     } else if (col_id === "parent_name") {
-      on_set_parent(ingredient_id, value !== "" ? (value as IngredientId) : undefined);
+      onSetParent(ingredient_id, value !== "" ? (value as IngredientId) : undefined);
     }
 
     set_pending_edits((prev) => {
@@ -648,7 +648,7 @@ export function IngredientsTable({
     });
   }
 
-  function on_cancel_edit(ingredient_id: IngredientId, col_id: string): void {
+  function onCancelEdit(ingredient_id: IngredientId, col_id: string): void {
     const key = pkey(ingredient_id, col_id);
     set_pending_edits((prev) => {
       const next = new Map(prev);
@@ -657,7 +657,7 @@ export function IngredientsTable({
     });
   }
 
-  function toggle_select(id: IngredientId): void {
+  function toggleSelect(id: IngredientId): void {
     set_selected_ids((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -666,7 +666,7 @@ export function IngredientsTable({
     });
   }
 
-  function toggle_select_all(ids: readonly IngredientId[]): void {
+  function toggleSelectAll(ids: readonly IngredientId[]): void {
     set_selected_ids((prev) => {
       const all_selected = ids.length > 0 && ids.every((id) => prev.has(id));
       const next = new Set(prev);
@@ -689,7 +689,7 @@ export function IngredientsTable({
     onExpandedChange: set_expanded,
     getSubRows: (row) => row.subRows,
     autoResetExpanded: false,
-    filterFns: { fuzzy_text, multi_select, name_recursive_fuzzy },
+    filterFns: { fuzzyText, multiSelect, nameRecursiveFuzzy },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -697,49 +697,49 @@ export function IngredientsTable({
     getExpandedRowModel: getExpandedRowModel(),
     meta: {
       pending_edits: pending_edits,
-      on_begin_edit,
-      on_update_edit,
-      on_commit_edit,
-      on_cancel_edit,
+      onBeginEdit,
+      onUpdateEdit,
+      onCommitEdit,
+      onCancelEdit,
       all_ingredients: ingredients,
       all_label_names: all_label_names,
       selected_ids,
-      on_toggle_select: toggle_select,
-      on_toggle_select_all: toggle_select_all,
+      onToggleSelect: toggleSelect,
+      onToggleSelectAll: toggleSelectAll,
     },
   });
 
   const rows = table.getRowModel().rows;
   const selected_array = [...selected_ids];
 
-  function apply_add_labels(): void {
+  function applyAddLabels(): void {
     if (bulk_add_labels.length > 0) {
-      on_add_labels(selected_array, bulk_add_labels);
+      onAddLabels(selected_array, bulk_add_labels);
       set_bulk_add_labels([]);
     }
   }
 
-  function apply_remove_labels(): void {
+  function applyRemoveLabels(): void {
     if (bulk_remove_labels.length > 0) {
-      on_remove_labels(selected_array, bulk_remove_labels);
+      onRemoveLabels(selected_array, bulk_remove_labels);
       set_bulk_remove_labels([]);
     }
   }
 
-  function apply_bulk_type(): void {
-    const type = validate_type(bulk_type);
+  function applyBulkType(): void {
+    const type = validateType(bulk_type);
     if (type !== undefined) {
-      on_bulk_set_type(selected_array, type);
+      onBulkSetType(selected_array, type);
       set_bulk_type("");
     }
   }
 
-  function apply_bulk_parent(): void {
+  function applyBulkParent(): void {
     if (bulk_parent_id === "__none__") {
-      on_bulk_set_parent(selected_array, undefined);
+      onBulkSetParent(selected_array, undefined);
     } else if (bulk_parent_id !== "") {
       // TODO: validate parent ID matches a real id?
-      on_bulk_set_parent(selected_array, bulk_parent_id as IngredientId);
+      onBulkSetParent(selected_array, bulk_parent_id as IngredientId);
     }
     set_bulk_parent_id("");
   }
@@ -765,9 +765,9 @@ export function IngredientsTable({
               placeholder="Labels to add…"
               commit_aria_label="Apply add labels"
               commit_disabled={bulk_add_labels.length === 0}
-              on_change={(names) => set_bulk_add_labels(names)}
-              on_commit={apply_add_labels}
-              on_cancel={() => set_bulk_add_labels([])}
+              onChange={(names) => set_bulk_add_labels(names)}
+              onCommit={applyAddLabels}
+              onCancel={() => set_bulk_add_labels([])}
             />
           </span>
 
@@ -779,9 +779,9 @@ export function IngredientsTable({
               placeholder="Labels to remove…"
               commit_aria_label="Apply remove labels"
               commit_disabled={bulk_remove_labels.length === 0}
-              on_change={(names) => set_bulk_remove_labels(names)}
-              on_commit={apply_remove_labels}
-              on_cancel={() => set_bulk_remove_labels([])}
+              onChange={(names) => set_bulk_remove_labels(names)}
+              onCommit={applyRemoveLabels}
+              onCancel={() => set_bulk_remove_labels([])}
             />
           </span>
 
@@ -803,7 +803,7 @@ export function IngredientsTable({
               type="button"
               className="it-bulk-apply"
               disabled={bulk_type === ""}
-              onClick={apply_bulk_type}
+              onClick={applyBulkType}
               aria-label="Apply type change"
             >
               Change type
@@ -829,7 +829,7 @@ export function IngredientsTable({
               type="button"
               className="it-bulk-apply"
               disabled={bulk_parent_id === ""}
-              onClick={apply_bulk_parent}
+              onClick={applyBulkParent}
               aria-label="Apply parent change"
             >
               Change parent

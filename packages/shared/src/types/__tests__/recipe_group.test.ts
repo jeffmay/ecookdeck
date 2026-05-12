@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { type } from "arktype";
-import { padded_id } from "../ids.js";
+import { paddedId } from "../ids.js";
 import { RecipeFolder, RecipeFolderId, SortOrder } from "../recipe_group.js";
 
-const ROOT_ID = padded_id(RecipeFolderId, "root");
-const CHILD_ID = padded_id(RecipeFolderId, "child");
-const GRANDCHILD_ID = padded_id(RecipeFolderId, "grandchild");
+const ROOT_ID = paddedId(RecipeFolderId, "root");
+const CHILD_ID = paddedId(RecipeFolderId, "child");
+const GRANDCHILD_ID = paddedId(RecipeFolderId, "grandchild");
 
 describe("RecipeFolder", () => {
   it("accepts a minimal folder (no parent, no children)", () => {

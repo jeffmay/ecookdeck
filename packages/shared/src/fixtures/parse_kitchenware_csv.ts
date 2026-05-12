@@ -1,7 +1,7 @@
 import { type } from "arktype";
 import Papa from "papaparse";
-import { valid_or_throw } from "../assertions/index.js";
-import { padded_id } from "../types/ids.js";
+import { validOrThrow } from "../assertions/index.js";
+import { paddedId } from "../types/ids.js";
 import { KitchenwareId } from "../types/kitchenware.js";
 import { MeasurementType } from "../types/measurement.js";
 
@@ -45,7 +45,7 @@ const IngredientRow = type({
 }).pipe(
   (row): IngredientTemplate => ({
     kind: "ingredient",
-    id: padded_id(KitchenwareId, row["Unique ID"].trim()),
+    id: paddedId(KitchenwareId, row["Unique ID"].trim()),
     name: row["Description"],
     default_measurement_type: row["Default Measurement Type"],
     label_names: row["Labels"],
@@ -59,7 +59,7 @@ const ContainerRow = type({
 }).pipe(
   (row): ContainerTemplate => ({
     kind: "container",
-    id: padded_id(KitchenwareId, row["Unique ID"].trim()),
+    id: paddedId(KitchenwareId, row["Unique ID"].trim()),
     name: row["Description"],
     label_names: row["Labels"],
   }),
@@ -72,13 +72,13 @@ const EquipmentRow = type({
 }).pipe(
   (row): EquipmentTemplate => ({
     kind: "equipment",
-    id: padded_id(KitchenwareId, row["Unique ID"].trim()),
+    id: paddedId(KitchenwareId, row["Unique ID"].trim()),
     name: row["Description"],
     label_names: row["Labels"],
   }),
 );
 
-export function parse_kitchenware_csv(csv: string): KitchenwareTemplate[] {
+export function parseKitchenwareCsv(csv: string): KitchenwareTemplate[] {
   const { data, errors } = Papa.parse<Record<string, string>>(csv, {
     header: true,
     skipEmptyLines: true,
@@ -89,7 +89,7 @@ export function parse_kitchenware_csv(csv: string): KitchenwareTemplate[] {
   for (const raw_row of data) {
     const type_val = (raw_row["Type"] ?? "").trim();
     const raw_id = (raw_row["Unique ID"] ?? "unknown").trim();
-    const row_id = valid_or_throw(KitchenwareId.type(padded_id(KitchenwareId, raw_id)));
+    const row_id = validOrThrow(KitchenwareId.type(paddedId(KitchenwareId, raw_id)));
 
     if (type_val === "ingredient") {
       const mtype = (raw_row["Default Measurement Type"] ?? "").trim();

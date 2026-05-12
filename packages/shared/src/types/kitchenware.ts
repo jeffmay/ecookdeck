@@ -69,14 +69,14 @@ export type Equipment = typeof Equipment.infer;
 export const Kitchenware = type.or(Ingredient, Container, Equipment);
 export type Kitchenware = typeof Kitchenware.infer;
 
-export function is_ingredient(item: Kitchenware): item is Ingredient {
+export function isIngredient(item: Kitchenware): item is Ingredient {
   return item.kind === "ingredient";
 }
 
-export function is_container(item: Kitchenware): item is Container {
+export function isContainer(item: Kitchenware): item is Container {
   return item.kind === "container";
 }
 
-export function is_equipment(item: Kitchenware): item is Equipment {
+export function isEquipment(item: Kitchenware): item is Equipment {
   return item.kind === "equipment";
 }

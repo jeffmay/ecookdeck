@@ -3,7 +3,7 @@ import type { Column } from "@tanstack/react-table";
 import type { IngredientRow } from "./build_ingredient_tree.js";
 import "./MultiSelectFilter.css";
 
-export function to_string_array(v: unknown): string[] {
+export function toStringArray(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return v.filter((item): item is string => typeof item === "string");
 }
@@ -21,9 +21,9 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
   const container_ref = useRef<HTMLDivElement>(null);
   const search_ref = useRef<HTMLInputElement>(null);
 
-  const active = to_string_array(column.getFilterValue());
+  const active = toStringArray(column.getFilterValue());
 
-  function open_dropdown() {
+  function openDropdown() {
     if (open) return;
     set_snapshot(active.slice());
     set_open(true);
@@ -31,19 +31,19 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
     setTimeout(() => search_ref.current?.focus(), 0);
   }
 
-  function toggle_option(opt: string) {
+  function toggleOption(opt: string) {
     const next = active.includes(opt)
       ? active.filter((v) => v !== opt)
       : [...active, opt];
     column.setFilterValue(next.length > 0 ? next : undefined);
   }
 
-  function handle_accept() {
+  function handleAccept() {
     set_open(false);
     set_search("");
   }
 
-  function handle_revert() {
+  function handleRevert() {
     column.setFilterValue(snapshot.length > 0 ? snapshot : undefined);
     set_open(false);
     set_search("");
@@ -52,7 +52,7 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
   // Close on outside click (auto-accept)
   useEffect(() => {
     if (!open) return;
-    function on_mousedown(e: MouseEvent) {
+    function onMousedown(e: MouseEvent) {
       if (
         container_ref.current instanceof Node &&
         !container_ref.current.contains(e.target instanceof Node ? e.target : null)
@@ -61,8 +61,8 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
         set_search("");
       }
     }
-    document.addEventListener("mousedown", on_mousedown);
-    return () => document.removeEventListener("mousedown", on_mousedown);
+    document.addEventListener("mousedown", onMousedown);
+    return () => document.removeEventListener("mousedown", onMousedown);
   }, [open]);
 
   const visible_options =
@@ -81,8 +81,8 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
           className="msf-input"
           value={summary}
           readOnly
-          onClick={open_dropdown}
-          onFocus={open_dropdown}
+          onClick={openDropdown}
+          onFocus={openDropdown}
           placeholder="Filter…"
           aria-label={aria_label}
           aria-haspopup="listbox"
@@ -122,17 +122,17 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
               <input
                 type="checkbox"
                 checked={active.includes(opt)}
-                onChange={() => toggle_option(opt)}
+                onChange={() => toggleOption(opt)}
                 aria-label={opt}
               />
               {opt}
             </label>
           ))}
           <div className="msf-actions">
-            <button type="button" onClick={handle_accept} aria-label="Accept filter">
+            <button type="button" onClick={handleAccept} aria-label="Accept filter">
               ✔︎
             </button>
-            <button type="button" onClick={handle_revert} aria-label="Revert filter">
+            <button type="button" onClick={handleRevert} aria-label="Revert filter">
               ✗
             </button>
           </div>

@@ -138,22 +138,22 @@ export interface Recipe {
   updated_at: number;
 }
 
-export function is_ingredient_item(item: SectionItem): item is IngredientItem {
+export function isIngredientItem(item: SectionItem): item is IngredientItem {
   return item.kind === "ingredient";
 }
 
-export function is_container_item(item: SectionItem): item is ContainerItem {
+export function isContainerItem(item: SectionItem): item is ContainerItem {
   return item.kind === "container";
 }
 
-export function is_text_block(item: SectionItem): item is TextBlock {
+export function isTextBlock(item: SectionItem): item is TextBlock {
   return item.kind === "text_block";
 }
 
-export function is_instruction(item: SectionItem): item is Instruction {
+export function isInstruction(item: SectionItem): item is Instruction {
   return item.kind === "instruction";
 }
 
-export function is_section(item: SectionItem): item is Section {
+export function isSection(item: SectionItem): item is Section {
   return item.kind === "section";
 }

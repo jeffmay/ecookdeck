@@ -32,9 +32,9 @@ export interface LabelEditorProps {
   readonly all_label_names: readonly string[];
   readonly aria_label: string;
   readonly placeholder?: string;
-  readonly on_change: (names: readonly string[]) => void;
-  readonly on_commit: () => void;
-  readonly on_cancel?: () => void;
+  readonly onChange: (names: readonly string[]) => void;
+  readonly onCommit: () => void;
+  readonly onCancel?: () => void;
   readonly commit_aria_label?: string;
   readonly commit_disabled?: boolean;
 }
@@ -44,9 +44,9 @@ export function LabelEditor({
   all_label_names,
   aria_label,
   placeholder,
-  on_change,
-  on_commit,
-  on_cancel,
+  onChange,
+  onCommit,
+  onCancel,
   commit_aria_label,
   commit_disabled,
 }: LabelEditorProps) {
@@ -62,8 +62,8 @@ export function LabelEditor({
     [all_label_names],
   );
 
-  function handle_change(new_value: MultiValue<LabelOption>): void {
-    on_change(new_value.map((opt) => opt.value));
+  function handleChange(new_value: MultiValue<LabelOption>): void {
+    onChange(new_value.map((opt) => opt.value));
   }
 
   return (
@@ -72,7 +72,7 @@ export function LabelEditor({
         isMulti
         value={selected_options}
         options={all_options}
-        onChange={handle_change}
+        onChange={handleChange}
         aria-label={aria_label}
         placeholder={placeholder}
         menuPortalTarget={document.body}
@@ -85,24 +85,24 @@ export function LabelEditor({
         onKeyDown={(e) => {
           if (e.key === "Escape" && !menu_open) {
             e.preventDefault();
-            on_cancel?.();
+            onCancel?.();
           }
         }}
       />
       <button
         type="button"
         className="it-confirm-btn"
-        onClick={on_commit}
+        onClick={onCommit}
         disabled={commit_disabled}
         aria-label={commit_aria_label ?? "Confirm edit"}
       >
         ✔︎
       </button>
-      {on_cancel !== undefined && (
+      {onCancel !== undefined && (
         <button
           type="button"
           className="it-cancel-btn"
-          onClick={on_cancel}
+          onClick={onCancel}
           aria-label="Cancel edit"
         >
           ✗

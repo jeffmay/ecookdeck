@@ -1,27 +1,27 @@
 import { describe, it, expect } from "vitest";
 import { type } from "arktype";
-import { unit_type, VolumeUnit, WeightUnit, CountUnit, Fraction, Measurement } from "../measurement.js";
+import { unitType, VolumeUnit, WeightUnit, CountUnit, Fraction, Measurement } from "../measurement.js";
 
-describe("unit_type", () => {
+describe("unitType", () => {
   it("classifies volume units", () => {
-    expect(unit_type("tsp")).toBe("volume");
-    expect(unit_type("tbsp")).toBe("volume");
-    expect(unit_type("cup")).toBe("volume");
-    expect(unit_type("ml")).toBe("volume");
-    expect(unit_type("l")).toBe("volume");
+    expect(unitType("tsp")).toBe("volume");
+    expect(unitType("tbsp")).toBe("volume");
+    expect(unitType("cup")).toBe("volume");
+    expect(unitType("ml")).toBe("volume");
+    expect(unitType("l")).toBe("volume");
   });
 
   it("classifies weight units", () => {
-    expect(unit_type("oz")).toBe("weight");
-    expect(unit_type("lb")).toBe("weight");
-    expect(unit_type("g")).toBe("weight");
-    expect(unit_type("kg")).toBe("weight");
+    expect(unitType("oz")).toBe("weight");
+    expect(unitType("lb")).toBe("weight");
+    expect(unitType("g")).toBe("weight");
+    expect(unitType("kg")).toBe("weight");
   });
 
   it("classifies count units", () => {
-    expect(unit_type("whole")).toBe("count");
-    expect(unit_type("pinch")).toBe("count");
-    expect(unit_type("dash")).toBe("count");
+    expect(unitType("whole")).toBe("count");
+    expect(unitType("pinch")).toBe("count");
+    expect(unitType("dash")).toBe("count");
   });
 });
 

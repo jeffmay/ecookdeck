@@ -12,7 +12,7 @@ export interface IngredientRow {
   readonly subRows: IngredientRow[]; // readonly ref, mutable contents — safe to push during build
 }
 
-export function build_ingredient_tree(
+export function buildIngredientTree(
   ingredients: ReadonlyDeep<Ingredient[]>,
   item_labels: ReadonlyDeep<KitchenwareLabel[]>,
 ): IngredientRow[] {

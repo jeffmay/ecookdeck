@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
   simplify,
-  convert_volume,
-  convert_weight,
-  largest_whole_volume_unit,
-  largest_whole_weight_unit,
-  unit_type,
+  convertVolume,
+  convertWeight,
+  largestWholeVolumeUnit,
+  largestWholeWeightUnit,
+  unitType,
   type Fraction,
   type Measurement,
   type MeasurementType,
@@ -43,18 +43,18 @@ const DEFAULT_UNIT: Record<MeasurementType, MeasurementUnit> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function infer_type(unit: MeasurementUnit): MeasurementType {
-  return unit_type(unit) ?? "volume";
+function inferType(unit: MeasurementUnit): MeasurementType {
+  return unitType(unit) ?? "volume";
 }
 
 /** Convert between units of the same type and system; returns value unchanged on failure. */
-function try_convert(value: Fraction, from: MeasurementUnit, to: MeasurementUnit): Fraction {
+function tryConvert(value: Fraction, from: MeasurementUnit, to: MeasurementUnit): Fraction {
   if (from === to) return value;
   try {
-    const t = infer_type(from);
-    if (t !== infer_type(to)) return value;
-    if (t === "volume") return convert_volume(value, from as VolumeUnit, to as VolumeUnit);
-    if (t === "weight") return convert_weight(value, from as WeightUnit, to as WeightUnit);
+    const t = inferType(from);
+    if (t !== inferType(to)) return value;
+    if (t === "volume") return convertVolume(value, from as VolumeUnit, to as VolumeUnit);
+    if (t === "weight") return convertWeight(value, from as WeightUnit, to as WeightUnit);
     return value;
   } catch {
     return value; // cross-system (e.g. tsp → ml)
@@ -62,15 +62,15 @@ function try_convert(value: Fraction, from: MeasurementUnit, to: MeasurementUnit
 }
 
 /** Convert to the largest unit that makes the value a whole number. */
-function best_unit_conversion(value: Fraction, unit: MeasurementUnit): Measurement {
-  const t = infer_type(unit);
+function bestUnitConversion(value: Fraction, unit: MeasurementUnit): Measurement {
+  const t = inferType(unit);
   if (t === "volume") {
-    const best = largest_whole_volume_unit(value, unit as VolumeUnit);
-    return { value: convert_volume(value, unit as VolumeUnit, best), unit: best };
+    const best = largestWholeVolumeUnit(value, unit as VolumeUnit);
+    return { value: convertVolume(value, unit as VolumeUnit, best), unit: best };
   }
   if (t === "weight") {
-    const best = largest_whole_weight_unit(value, unit as WeightUnit);
-    return { value: convert_weight(value, unit as WeightUnit, best), unit: best };
+    const best = largestWholeWeightUnit(value, unit as WeightUnit);
+    return { value: convertWeight(value, unit as WeightUnit, best), unit: best };
   }
   return { value, unit };
 }
@@ -81,22 +81,22 @@ function best_unit_conversion(value: Fraction, unit: MeasurementUnit): Measureme
 
 export interface MeasurementEditorProps {
   readonly value: Measurement;
-  readonly on_commit: (value: Measurement) => void;
+  readonly onCommit: (value: Measurement) => void;
 }
 
-export function MeasurementEditor({ value, on_commit }: MeasurementEditorProps) {
+export function MeasurementEditor({ value, onCommit }: MeasurementEditorProps) {
   const [editing, set_editing] = useState(false);
   const [original, set_original] = useState<Fraction>(value.value);
   const [current, set_current] = useState<Fraction>(value.value);
   const [op_mode, set_op_mode] = useState<OpMode>("÷");
-  const [mtype, set_mtype] = useState<MeasurementType>(() => infer_type(value.unit));
+  const [mtype, set_mtype] = useState<MeasurementType>(() => inferType(value.unit));
   const [unit, set_unit] = useState<MeasurementUnit>(value.unit);
 
-  function open_editor() {
+  function openEditor() {
     set_original(value.value);
     set_current(value.value);
     set_op_mode("÷");
-    set_mtype(infer_type(value.unit));
+    set_mtype(inferType(value.unit));
     set_unit(value.unit);
     set_editing(true);
   }
@@ -105,26 +105,26 @@ export function MeasurementEditor({ value, on_commit }: MeasurementEditorProps) 
     set_current(original);
   }
 
-  function apply_op_button(label: string) {
+  function applyOpButton(label: string) {
     const op = OP_ROWS[op_mode].find((o) => o.label === label);
     if (op) set_current(simplify(op.apply(current)));
   }
 
-  function handle_type_change(new_type: MeasurementType) {
+  function handleTypeChange(new_type: MeasurementType) {
     set_mtype(new_type);
     set_unit(DEFAULT_UNIT[new_type]);
     // No fraction conversion when switching between measurement types
   }
 
-  function handle_unit_change(new_unit: MeasurementUnit) {
-    const converted = try_convert(current, unit, new_unit);
+  function handleUnitChange(new_unit: MeasurementUnit) {
+    const converted = tryConvert(current, unit, new_unit);
     set_current(converted);
     set_unit(new_unit);
   }
 
   function commit() {
-    const result = best_unit_conversion(current, unit);
-    on_commit({ value: simplify(result.value), unit: result.unit });
+    const result = bestUnitConversion(current, unit);
+    onCommit({ value: simplify(result.value), unit: result.unit });
     set_editing(false);
   }
 
@@ -136,7 +136,7 @@ export function MeasurementEditor({ value, on_commit }: MeasurementEditorProps) 
         <button
           type="button"
           className="fe-toggle-btn"
-          onClick={open_editor}
+          onClick={openEditor}
           aria-label="Edit measurement"
         >
           ±
@@ -185,7 +185,7 @@ export function MeasurementEditor({ value, on_commit }: MeasurementEditorProps) 
             key={op.label}
             type="button"
             className="fe-op-btn"
-            onClick={() => apply_op_button(op.label)}
+            onClick={() => applyOpButton(op.label)}
           >
             {op.label}
           </button>
@@ -199,7 +199,7 @@ export function MeasurementEditor({ value, on_commit }: MeasurementEditorProps) 
           <select
             className="me-select"
             value={mtype}
-            onChange={(e) => handle_type_change(e.target.value as MeasurementType)}
+            onChange={(e) => handleTypeChange(e.target.value as MeasurementType)}
             aria-label="Measurement type"
           >
             <option value="volume">Volume</option>
@@ -213,7 +213,7 @@ export function MeasurementEditor({ value, on_commit }: MeasurementEditorProps) 
           <select
             className="me-select"
             value={unit}
-            onChange={(e) => handle_unit_change(e.target.value as MeasurementUnit)}
+            onChange={(e) => handleUnitChange(e.target.value as MeasurementUnit)}
             aria-label="Measurement unit"
           >
             {mtype === "volume" && (

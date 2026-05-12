@@ -258,33 +258,34 @@ npm run lint
 - [x] Yjs data models in `shared` (Kitchenware, Recipe, Session, RecipeGroup, Measurement types with kind discriminators)
 - [x] Measurement fraction arithmetic (simplify, add, subtract, multiply, divide) with exact rational representation
 - [x] Unit conversion tables (US customary volume/weight and metric, exact within each system)
-- [x] Default kitchenware CSV static asset (`packages/web/public/kitchenware.csv`) with 11 ingredients, 5 containers, 3 equipment; IDs left-padded to 12 chars with `"-"`; fetched and loaded by `use_ingredient_store` on first page load if IndexedDB is empty
+- [x] Default kitchenware CSV static asset (`packages/web/public/kitchenware.csv`) with 11 ingredients, 5 containers, 3 equipment; IDs left-padded to 12 chars with `"-"`; fetched and loaded by `useIngredientStore` on first page load if IndexedDB is empty
 - [x] Vite + React 19 web app scaffold with e-ink CSS design system
 - [x] Node.js + Express 5 sync server with Yjs document store endpoint
 - [x] User selection (first-load page, localStorage persistence, per-user Yjs doc via y-indexeddb)
 - [x] Top nav bar: hamburger NavMenu, Undo button, UserMenu with profile settings link
 - [x] ProfileSettingsPage (rename user, persists to localStorage)
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
-- [x] `use_ingredient_store` hook + DocContext (React)
+- [x] `useIngredientStore` hook + DocContext (React)
 - [x] Ingredients Page — TanStack Table v8 tree view (expandable parent→child), column filters (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, groupable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), row checkboxes with select-all, bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
 - [x] `ItemLabel` type with branded `ItemLabelId` (7-char nanoid); `ItemKind`-scoped labels stored in `"labels"` Yjs map
 - [x] Branded IDs for all item types via `ts-brand` + TypeScript declaration merging (`IngredientId`, `ContainerId`, `EquipmentId`, `ItemLabelId`)
-- [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `use_label_store` React hook with cascade-delete observer and transactional merge
+- [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `useLabelStore` React hook with cascade-delete observer and transactional merge
 - [x] `LabelTable` expandable panel — multi-select checkboxes, bulk actions (Filter All, Filter Any, Delete, Merge with name prompt), inline rename; shown above `IngredientsTable` on the Bulk Ingredient Editor page
 - [x] External label filter: selecting labels in `LabelTable` and clicking Filter All/Any updates a filter passed to `IngredientsTable` that pre-filters ingredients before tree-building
 - [x] ArkType v2 schemas replace manual validation in `ingredient_store.ts` and `label_store.ts`; `MeasurementType` exported as both ArkType schema value and TypeScript type alias from `measurement.ts`
 - [x] PapaParse replaces hand-written CSV parser in `parse_kitchenware_csv.ts`; per-kind ArkType schemas (`IngredientRow`, `ContainerRow`, `EquipmentRow`) with pipe morphs for "+" delimited label fields
 - [x] `LabelEditor` component (`react-select` `CreatableSelect isMulti`) — add/remove existing labels from a dropdown or type to create a new one; replaces the plain text-input in the `IngredientsTable` Labels cell editor; cancel via ✗ button or Escape (when dropdown is closed)
 - [x] `LabelEditor` bug fixes — `menuPlacement="auto"` prevents bottom cutoff; custom `LabelEditorMenu` component intercepts non-left-click mousedown to prevent right-click closing the dropdown; hover color updated to `#ebebeb`, active to `#c4c4c4`; bulk add/remove label actions in `IngredientsTable` now use `LabelEditor` instead of plain text inputs
-- [x] `FractionEditor` component — inline fraction display (`integer<sup>num</sup>⁄<sub>denom</sub>` with aria-label); ± opens editor (replaced by <); < resets to pre-edit value (keeps editor open); ÷/×/−/+ radio buttons switch operation rows; op buttons apply math (simplified after each); `extra_controls` slot between op buttons and OK; 20 component tests
+- [x] `FractionEditor` component — inline fraction display (`integer<sup>num</sup>⁄<sub>denom</sub>` with aria-label); ± opens editor (replaced by <); < resets to pre-edit value (keeps editor open); ÷/×/−/+ radio buttons switch operation rows; op buttons apply math (simplified after each); `extraControls` slot between op buttons and OK; 20 component tests
 - [x] `MeasurementEditor` component — same editing UX as FractionEditor sharing `FractionDisplay`, `OP_ROWS`, `OP_MODES`; adds type selector (volume/weight/count) and unit selector with US/metric optgroups; unit change converts fraction within same system (cross-system keeps value unchanged); OK converts to largest whole-number unit before committing; 20 component tests
-- [x] `RecipeFolder` type — recursive ArkType scope; replaces flat `RecipeGroup`; `recipe_folder_store.ts` stores flat, builds tree via `build_folder_tree()`; backward-compat aliases exported
+- [x] `RecipeFolder` type — recursive ArkType scope; replaces flat `RecipeGroup`; `recipe_folder_store.ts` stores flat, builds tree via `buildFolderTree()`; backward-compat aliases exported
 - [x] `Recipe` type overhaul — `RecipeId`, `RecipeVersionId`, `RecipeIngredientId` branded IDs; `RecipeIngredient` (id + ingredient_id + optional amount); `RecipeVersion` with `ingredients[]`, `sections[]`, `created_by`; `Recipe` with `title`, `subtitle?`, `source_url?`, `parent_folder_id?`; explicit TypeScript interfaces ensure branded-ID types survive cross-package inference
-- [x] `recipe_store.ts` Yjs store — CRUD for recipes with structural validators; `create_recipe`, `save_recipe` (in-place or new version), `copy_recipe`, `delete_recipe`; all optional fields use conditional spread for `exactOptionalPropertyTypes` compatibility
+- [x] `recipe_store.ts` Yjs store — CRUD for recipes with structural validators; `createRecipe`, `saveRecipe` (in-place or new version), `copyRecipe`, `deleteRecipe`; all optional fields use conditional spread for `exactOptionalPropertyTypes` compatibility
 - [x] `DurationEditor` component — text input with humanized display (`humanize-duration`), min/sec unit toggle, ±delta buttons (−5/−1/+1/+5 min or −15/−5/+5/+15 sec), revert `<` and commit `OK`; parse input via `parse-duration`; 24 component tests
 - [x] `RecipeEditorPage` — full recipe CRUD UI; list view with `+ New recipe`; editor with title/subtitle/source URL/folder/version-description fields; top-level `RecipeIngredientsEditor`; `SectionEditor` (recursive, depth 1–5) with add/remove/edit for instruction/text-block/ingredient/container/sub-section items; version history table; `CopyRecipeDialog`; `DurationEditor` per instruction; `MeasurementEditor` per ingredient; NavMenu wired; 33 component tests
-- [x] `use_recipe_store` and `use_recipe_folder_store` React hooks — Yjs-reactive stores for recipes and folders
-- [x] ESLint config updated — `varsIgnorePattern: "^_"` and `ignoreRestSiblings: true` for destructure-discard patterns
+- [x] `useRecipeStore` and `useRecipeFolderStore` React hooks — Yjs-reactive stores for recipes and folders
+- [x] ESLint config updated — `varsIgnorePattern: "^_"`, `ignoreRestSiblings: true` for destructure-discard patterns; removed `rules-of-hooks` override for hooks/contexts (now that hooks are camelCase)
+- [x] All snake_case function names renamed to camelCase — `randomId`, `loadId`, `addFractions`, `getIngredients`, `useIngredientStore`, `buildFolderTree`, etc.; callback props renamed to camelCase (`onChange`, `onSave`, `onCancel`); file names remain snake_case
 
 ---
 

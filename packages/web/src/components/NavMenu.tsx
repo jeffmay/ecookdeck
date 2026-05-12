@@ -3,10 +3,10 @@ import "./NavMenu.css";
 type NavPage = "bulk_ingredient_editor" | "recipe_editor";
 
 interface NavMenuProps {
-  readonly on_navigate: (page: NavPage) => void;
+  readonly onNavigate: (page: NavPage) => void;
 }
 
-export function NavMenu({ on_navigate }: NavMenuProps) {
+export function NavMenu({ onNavigate }: NavMenuProps) {
   return (
     <details className="nav-menu">
       <summary className="nav-menu-trigger" aria-label="Navigation menu">
@@ -15,13 +15,13 @@ export function NavMenu({ on_navigate }: NavMenuProps) {
       <nav className="nav-menu-dropdown" aria-label="Main navigation">
         <button
           className="nav-menu-item"
-          onClick={() => on_navigate("recipe_editor")}
+          onClick={() => onNavigate("recipe_editor")}
         >
           Recipes
         </button>
         <button
           className="nav-menu-item"
-          onClick={() => on_navigate("bulk_ingredient_editor")}
+          onClick={() => onNavigate("bulk_ingredient_editor")}
         >
           Ingredients
         </button>

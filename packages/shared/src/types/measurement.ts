@@ -23,7 +23,7 @@ export type Fraction = typeof Fraction.infer;
 export const Measurement = type({ value: Fraction, unit: MeasurementUnit });
 export type Measurement = typeof Measurement.infer;
 
-export function unit_type(unit: MeasurementUnit): MeasurementType | undefined {
+export function unitType(unit: MeasurementUnit): MeasurementType | undefined {
   if (!(VolumeUnit(unit) instanceof type.errors)) return "volume";
   if (!(WeightUnit(unit) instanceof type.errors)) return "weight";
   if (!(CountUnit(unit) instanceof type.errors)) return "count";

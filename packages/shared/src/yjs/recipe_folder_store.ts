@@ -1,13 +1,13 @@
 import { type } from "arktype";
 import * as Y from "yjs";
-import { is_type_error } from "../assertions/index.js";
-import { load_id, random_id } from "../types/ids.js";
+import { isTypeError } from "../assertions/index.js";
+import { loadId, randomId } from "../types/ids.js";
 import { RecipeFolder, RecipeFolderId } from "../types/recipe_group.js";
 import { SortOrder } from "../types/recipe_group.js";
 
 const MAP_KEY = "recipe_folders";
 
-export function get_recipe_folder_ymap(doc: Y.Doc): Y.Map<unknown> {
+export function getRecipeFolderYmap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(MAP_KEY);
 }
 
@@ -21,7 +21,7 @@ const StoredRecipeFolder = type({
 });
 type StoredRecipeFolder = typeof StoredRecipeFolder.infer;
 
-function to_stored(folder: RecipeFolder): StoredRecipeFolder {
+function toStored(folder: RecipeFolder): StoredRecipeFolder {
   return {
     name: folder.name,
     tags: folder.tags,
@@ -31,9 +31,9 @@ function to_stored(folder: RecipeFolder): StoredRecipeFolder {
   };
 }
 
-function validate_stored(id: RecipeFolderId, raw: unknown): Omit<RecipeFolder, "children"> | null {
+function validateStored(id: RecipeFolderId, raw: unknown): Omit<RecipeFolder, "children"> | null {
   const result = StoredRecipeFolder(raw);
-  if (is_type_error(result)) return null;
+  if (isTypeError(result)) return null;
   return {
     id,
     name: result.name,
@@ -45,18 +45,18 @@ function validate_stored(id: RecipeFolderId, raw: unknown): Omit<RecipeFolder, "
 }
 
 /** Returns a flat list of all folders (without the children array). */
-export function get_recipe_folders_flat(doc: Y.Doc): Array<Omit<RecipeFolder, "children">> {
-  const map = get_recipe_folder_ymap(doc);
+export function getRecipeFoldersFlat(doc: Y.Doc): Array<Omit<RecipeFolder, "children">> {
+  const map = getRecipeFolderYmap(doc);
   const results: Array<Omit<RecipeFolder, "children">> = [];
   map.forEach((value, id) => {
-    const folder = validate_stored(load_id(RecipeFolderId, id), value);
+    const folder = validateStored(loadId(RecipeFolderId, id), value);
     if (folder !== null) results.push(folder);
   });
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Builds the folder hierarchy from a flat list. Returns root-level folders. */
-export function build_folder_tree(flat: Array<Omit<RecipeFolder, "children">>): RecipeFolder[] {
+export function buildFolderTree(flat: Array<Omit<RecipeFolder, "children">>): RecipeFolder[] {
   const by_id = new Map<string, RecipeFolder>();
   for (const f of flat) {
     by_id.set(f.id, { ...f, children: [] });
@@ -76,16 +76,16 @@ export function build_folder_tree(flat: Array<Omit<RecipeFolder, "children">>): 
 }
 
 /** Returns the full folder tree (root folders with nested children). */
-export function get_recipe_folders(doc: Y.Doc): RecipeFolder[] {
-  return build_folder_tree(get_recipe_folders_flat(doc));
+export function getRecipeFolders(doc: Y.Doc): RecipeFolder[] {
+  return buildFolderTree(getRecipeFoldersFlat(doc));
 }
 
-export function create_recipe_folder(
+export function createRecipeFolder(
   doc: Y.Doc,
   name: string,
   parent_folder_id?: RecipeFolderId,
 ): RecipeFolder {
-  const id = random_id(RecipeFolderId);
+  const id = randomId(RecipeFolderId);
   const folder: RecipeFolder = {
     id,
     name,
@@ -93,16 +93,16 @@ export function create_recipe_folder(
     sort_order: "manual",
     ...(parent_folder_id !== undefined && { parent_folder_id }),
   };
-  get_recipe_folder_ymap(doc).set(id, to_stored(folder));
+  getRecipeFolderYmap(doc).set(id, toStored(folder));
   return folder;
 }
 
-export function update_recipe_folder(doc: Y.Doc, folder: RecipeFolder): void {
-  const map = get_recipe_folder_ymap(doc);
+export function updateRecipeFolder(doc: Y.Doc, folder: RecipeFolder): void {
+  const map = getRecipeFolderYmap(doc);
   if (!map.has(folder.id)) return;
-  map.set(folder.id, to_stored(folder));
+  map.set(folder.id, toStored(folder));
 }
 
-export function delete_recipe_folder(doc: Y.Doc, id: RecipeFolderId): void {
-  get_recipe_folder_ymap(doc).delete(id);
+export function deleteRecipeFolder(doc: Y.Doc, id: RecipeFolderId): void {
+  getRecipeFolderYmap(doc).delete(id);
 }

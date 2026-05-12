@@ -31,11 +31,11 @@ export const Session = type({
 });
 export type Session = typeof Session.infer;
 
-export function is_active_session(session: Session): session is Session & { status: "active" } {
+export function isActiveSession(session: Session): session is Session & { status: "active" } {
   return session.status === "active";
 }
 
-export function is_completed_session(
+export function isCompletedSession(
   session: Session,
 ): session is Session & { status: "completed"; completed_at: number } {
   return session.status === "completed";

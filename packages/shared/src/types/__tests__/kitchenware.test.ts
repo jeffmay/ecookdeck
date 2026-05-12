@@ -1,6 +1,6 @@
 import { type } from "arktype";
 import { describe, expect, it } from "vitest";
-import { padded_id } from "../ids.js";
+import { paddedId } from "../ids.js";
 import {
   Container,
   ContainerId,
@@ -8,9 +8,9 @@ import {
   EquipmentId,
   Ingredient,
   IngredientId,
-  is_container,
-  is_equipment,
-  is_ingredient,
+  isContainer,
+  isEquipment,
+  isIngredient,
   KitchenwareKind,
   type Kitchenware,
   type KitchenwareLabelId,
@@ -39,22 +39,22 @@ describe("kitchenware type guards", () => {
     labels: new Set<KitchenwareLabelId>(),
   };
 
-  it("is_ingredient returns true only for ingredient", () => {
-    expect(is_ingredient(ingredient)).toBe(true);
-    expect(is_ingredient(container)).toBe(false);
-    expect(is_ingredient(equipment)).toBe(false);
+  it("isIngredient returns true only for ingredient", () => {
+    expect(isIngredient(ingredient)).toBe(true);
+    expect(isIngredient(container)).toBe(false);
+    expect(isIngredient(equipment)).toBe(false);
   });
 
-  it("is_container returns true only for container", () => {
-    expect(is_container(ingredient)).toBe(false);
-    expect(is_container(container)).toBe(true);
-    expect(is_container(equipment)).toBe(false);
+  it("isContainer returns true only for container", () => {
+    expect(isContainer(ingredient)).toBe(false);
+    expect(isContainer(container)).toBe(true);
+    expect(isContainer(equipment)).toBe(false);
   });
 
-  it("is_equipment returns true only for equipment", () => {
-    expect(is_equipment(ingredient)).toBe(false);
-    expect(is_equipment(container)).toBe(false);
-    expect(is_equipment(equipment)).toBe(true);
+  it("isEquipment returns true only for equipment", () => {
+    expect(isEquipment(ingredient)).toBe(false);
+    expect(isEquipment(container)).toBe(false);
+    expect(isEquipment(equipment)).toBe(true);
   });
 });
 
@@ -75,7 +75,7 @@ describe("Kitchenware constructors", () => {
   it("Ingredient accepts a valid ingredient", () => {
     const result = Ingredient({
       kind: "ingredient",
-      id: padded_id(IngredientId, "butter"),
+      id: paddedId(IngredientId, "butter"),
       name: "Butter",
       default_measurement_type: "volume",
       labels: [],
@@ -105,7 +105,7 @@ describe("Kitchenware constructors", () => {
   });
 
   it("Equipment accepts a valid equipment", () => {
-    const result = Equipment({ kind: "equipment", id: padded_id(EquipmentId, "oven"), name: "Oven", labels: new Set() });
+    const result = Equipment({ kind: "equipment", id: paddedId(EquipmentId, "oven"), name: "Oven", labels: new Set() });
     expect(result instanceof type.errors).toBe(false);
   });
 });

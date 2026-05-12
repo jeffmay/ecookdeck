@@ -1,10 +1,10 @@
-import { find_or_create_label, IngredientId, KitchenwareKind, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
+import { findOrCreateLabel, IngredientId, KitchenwareKind, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
 import { useState } from "react";
 import { IngredientsTable, type ExternalLabelFilter } from "../components/ingredients_table/IngredientsTable.js";
 import { LabelTable } from "../components/ingredients_table/LabelTable.js";
-import { use_doc } from "../contexts/doc_context.js";
-import { use_ingredient_store } from "../hooks/use_ingredient_store.js";
-import { use_label_store } from "../hooks/use_label_store.js";
+import { useDoc } from "../contexts/doc_context.js";
+import { useIngredientStore } from "../hooks/use_ingredient_store.js";
+import { useLabelStore } from "../hooks/use_label_store.js";
 import "./BulkIngredientEditorPage.css";
 
 const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
@@ -32,20 +32,20 @@ const EMPTY_ADD_FORM: AddFormState = {
 // ---------------------------------------------------------------------------
 
 export function BulkIngredientEditorPage() {
-  const doc = use_doc();
+  const doc = useDoc();
 
   const {
     ingredients,
     create_ingredient,
-    rename_ingredient,
+    renameIngredient,
     add_labels,
     remove_labels,
     set_labels,
     set_measurement_type,
     set_parent,
-  } = use_ingredient_store();
+  } = useIngredientStore();
 
-  const { labels, rename_label, delete_labels, merge_labels } = use_label_store();
+  const { labels, renameLabel, deleteLabels, merge_labels } = useLabelStore();
 
   const [show_add_form, set_show_add_form] = useState(false);
   const [add_form, set_add_form] = useState<AddFormState>(EMPTY_ADD_FORM);
@@ -53,15 +53,15 @@ export function BulkIngredientEditorPage() {
     ExternalLabelFilter | undefined
   >(undefined);
 
-  function resolve_label_names(label_names: readonly string[]): readonly KitchenwareLabelId[] {
-    return label_names.map((name) => find_or_create_label(doc, name, INGREDIENT_KINDS));
+  function resolveLabelNames(label_names: readonly string[]): readonly KitchenwareLabelId[] {
+    return label_names.map((name) => findOrCreateLabel(doc, name, INGREDIENT_KINDS));
   }
 
-  function handle_add_submit(e: { preventDefault(): void }): void {
+  function handleAddSubmit(e: { preventDefault(): void }): void {
     e.preventDefault();
     // TODO: Validate parent_id
     const valid_parent_id = add_form.parent_id as IngredientId;
-    // assert_valid(valid_parent_id, { message: "Invalid parent ingredient ID" });
+    // assertValid(valid_parent_id, { message: "Invalid parent ingredient ID" });
     const label_name = add_form.name.trim();
     if (label_name === "") return;
     const label_names = add_form.labels_raw
@@ -80,18 +80,18 @@ export function BulkIngredientEditorPage() {
     set_show_add_form(false);
   }
 
-  function handle_set_labels(id: IngredientId, label_names: readonly string[]): void {
-    set_labels(id, resolve_label_names(label_names));
+  function handleSetLabels(id: IngredientId, label_names: readonly string[]): void {
+    set_labels(id, resolveLabelNames(label_names));
   }
 
-  function handle_add_labels(
+  function handleAddLabels(
     ids: readonly IngredientId[],
     label_names: readonly string[],
   ): void {
-    add_labels(ids, resolve_label_names(label_names));
+    add_labels(ids, resolveLabelNames(label_names));
   }
 
-  function handle_remove_labels(
+  function handleRemoveLabels(
     ids: readonly IngredientId[],
     label_names: readonly string[],
   ): void {
@@ -103,14 +103,14 @@ export function BulkIngredientEditorPage() {
     }
   }
 
-  function handle_set_parent(
+  function handleSetParent(
     id: IngredientId,
     parent_id: IngredientId | undefined,
   ): void {
     set_parent([id], parent_id);
   }
 
-  function handle_filter_all(label_ids: readonly KitchenwareLabelId[]): void {
+  function handleFilterAll(label_ids: readonly KitchenwareLabelId[]): void {
     if (label_ids.length === 0) {
       set_external_label_filter(undefined);
     } else {
@@ -118,7 +118,7 @@ export function BulkIngredientEditorPage() {
     }
   }
 
-  function handle_filter_any(label_ids: readonly KitchenwareLabelId[]): void {
+  function handleFilterAny(label_ids: readonly KitchenwareLabelId[]): void {
     if (label_ids.length === 0) {
       set_external_label_filter(undefined);
     } else {
@@ -132,7 +132,7 @@ export function BulkIngredientEditorPage() {
 
       {/* Add ingredient form */}
       {show_add_form && (
-        <form className="bie-add-form" onSubmit={handle_add_submit} aria-label="Add ingredient">
+        <form className="bie-add-form" onSubmit={handleAddSubmit} aria-label="Add ingredient">
           <h2 className="bie-add-title">New Ingredient</h2>
           <label className="bie-add-label">
             Name
@@ -222,11 +222,11 @@ export function BulkIngredientEditorPage() {
       {/* Label table (expandable) */}
       <LabelTable
         labels={labels}
-        on_filter_all={handle_filter_all}
-        on_filter_any={handle_filter_any}
-        on_delete={(ids) => delete_labels([...ids])}
-        on_merge={merge_labels}
-        on_rename={rename_label}
+        onFilterAll={handleFilterAll}
+        onFilterAny={handleFilterAny}
+        onDelete={(ids) => deleteLabels([...ids])}
+        onMerge={merge_labels}
+        onRename={renameLabel}
       />
 
       {/* Ingredient table */}
@@ -234,14 +234,14 @@ export function BulkIngredientEditorPage() {
         ingredients={ingredients}
         labels={labels}
         {...(external_label_filter !== undefined && { external_label_filter })}
-        on_rename={rename_ingredient}
-        on_set_type={(id, type) => set_measurement_type([id], type)}
-        on_set_labels={handle_set_labels}
-        on_set_parent={handle_set_parent}
-        on_add_labels={handle_add_labels}
-        on_remove_labels={handle_remove_labels}
-        on_bulk_set_type={set_measurement_type}
-        on_bulk_set_parent={set_parent}
+        onRename={renameIngredient}
+        onSetType={(id, type) => set_measurement_type([id], type)}
+        onSetLabels={handleSetLabels}
+        onSetParent={handleSetParent}
+        onAddLabels={handleAddLabels}
+        onRemoveLabels={handleRemoveLabels}
+        onBulkSetType={set_measurement_type}
+        onBulkSetParent={set_parent}
       />
     </main>
   );

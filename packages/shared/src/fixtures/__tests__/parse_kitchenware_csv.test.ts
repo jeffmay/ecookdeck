@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parse_kitchenware_csv } from "../parse_kitchenware_csv.js";
+import { parseKitchenwareCsv } from "../parse_kitchenware_csv.js";
 
 // IDs are left-padded to 12 characters with "-" by the parser
 const SAMPLE_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -12,9 +12,9 @@ const BUTTER_ID = "------butter";
 const BOWL_ID   = "--------bowl";
 const OVEN_ID   = "--------oven";
 
-describe("parse_kitchenware_csv", () => {
+describe("parseKitchenwareCsv", () => {
   it("parses ingredient rows", () => {
-    const result = parse_kitchenware_csv(SAMPLE_CSV);
+    const result = parseKitchenwareCsv(SAMPLE_CSV);
     const ingredient = result.find((k) => k.id === BUTTER_ID);
     expect(ingredient).toBeDefined();
     if (ingredient === undefined) return;
@@ -26,7 +26,7 @@ describe("parse_kitchenware_csv", () => {
   });
 
   it("parses container rows", () => {
-    const result = parse_kitchenware_csv(SAMPLE_CSV);
+    const result = parseKitchenwareCsv(SAMPLE_CSV);
     const container = result.find((k) => k.id === BOWL_ID);
     expect(container).toBeDefined();
     if (container === undefined) return;
@@ -37,7 +37,7 @@ describe("parse_kitchenware_csv", () => {
   });
 
   it("parses equipment rows", () => {
-    const result = parse_kitchenware_csv(SAMPLE_CSV);
+    const result = parseKitchenwareCsv(SAMPLE_CSV);
     const equipment = result.find((k) => k.id === OVEN_ID);
     expect(equipment).toBeDefined();
     if (equipment === undefined) return;
@@ -48,7 +48,7 @@ describe("parse_kitchenware_csv", () => {
   });
 
   it("left-pads short IDs to 12 characters with '-'", () => {
-    const result = parse_kitchenware_csv(SAMPLE_CSV);
+    const result = parseKitchenwareCsv(SAMPLE_CSV);
     for (const item of result) {
       expect(item.id).toHaveLength(12);
       expect(item.id.endsWith("butter") || item.id.endsWith("bowl") || item.id.endsWith("oven")).toBe(true);
@@ -59,33 +59,33 @@ describe("parse_kitchenware_csv", () => {
     const csv = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,
 `;
-    const result = parse_kitchenware_csv(csv);
+    const result = parseKitchenwareCsv(csv);
     expect(result[0]?.id).toBe("------butter");
   });
 
   it("returns empty array for header-only CSV", () => {
-    expect(parse_kitchenware_csv("Unique ID,Type,Description,Default Measurement Type,Labels\n")).toEqual([]);
+    expect(parseKitchenwareCsv("Unique ID,Type,Description,Default Measurement Type,Labels\n")).toEqual([]);
   });
 
   it("throws on unknown type", () => {
     const bad = `Unique ID,Type,Description,Default Measurement Type,Labels
 x,widget,X,volume,
 `;
-    expect(() => parse_kitchenware_csv(bad)).toThrow("Unknown kitchenware type");
+    expect(() => parseKitchenwareCsv(bad)).toThrow("Unknown kitchenware type");
   });
 
   it("throws on unknown measurement type", () => {
     const bad = `Unique ID,Type,Description,Default Measurement Type,Labels
 x,ingredient,X,units,
 `;
-    expect(() => parse_kitchenware_csv(bad)).toThrow("Unknown measurement type");
+    expect(() => parseKitchenwareCsv(bad)).toThrow("Unknown measurement type");
   });
 
   it("handles empty labels", () => {
     const csv = `Unique ID,Type,Description,Default Measurement Type,Labels
 water,ingredient,Water,volume,
 `;
-    const result = parse_kitchenware_csv(csv);
+    const result = parseKitchenwareCsv(csv);
     const water = result.find((k) => k.id === "-------water");
     expect(water).toBeDefined();
     if (water === undefined) return;

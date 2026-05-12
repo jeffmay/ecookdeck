@@ -23,21 +23,21 @@ const BAKING: ReadonlyDeep<KitchenwareLabel> = {
   kinds: KIND_INGREDIENT,
 };
 
-const on_filter_all = vi.fn();
-const on_filter_any = vi.fn();
-const on_delete = vi.fn();
-const on_merge = vi.fn();
-const on_rename = vi.fn();
+const onFilterAll = vi.fn();
+const onFilterAny = vi.fn();
+const onDelete = vi.fn();
+const onMerge = vi.fn();
+const onRename = vi.fn();
 
 function setup(labels: ReadonlyDeep<KitchenwareLabel[]> = [FAT, SOLID, BAKING]) {
   return render(
     <LabelTable
       labels={labels}
-      on_filter_all={on_filter_all}
-      on_filter_any={on_filter_any}
-      on_delete={on_delete}
-      on_merge={on_merge}
-      on_rename={on_rename}
+      onFilterAll={onFilterAll}
+      onFilterAny={onFilterAny}
+      onDelete={onDelete}
+      onMerge={onMerge}
+      onRename={onRename}
     />,
   );
 }
@@ -80,11 +80,11 @@ describe("LabelTable — expanded state", () => {
     render(
       <LabelTable
         labels={[]}
-        on_filter_all={on_filter_all}
-        on_filter_any={on_filter_any}
-        on_delete={on_delete}
-        on_merge={on_merge}
-        on_rename={on_rename}
+        onFilterAll={onFilterAll}
+        onFilterAny={onFilterAny}
+        onDelete={onDelete}
+        onMerge={onMerge}
+        onRename={onRename}
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
@@ -108,11 +108,11 @@ describe("LabelTable — selection and bulk actions", () => {
     render(
       <LabelTable
         labels={labels}
-        on_filter_all={on_filter_all}
-        on_filter_any={on_filter_any}
-        on_delete={on_delete}
-        on_merge={on_merge}
-        on_rename={on_rename}
+        onFilterAll={onFilterAll}
+        onFilterAny={onFilterAny}
+        onDelete={onDelete}
+        onMerge={onMerge}
+        onRename={onRename}
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
@@ -131,22 +131,22 @@ describe("LabelTable — selection and bulk actions", () => {
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
-  it("calls on_filter_all with selected ids", async () => {
+  it("calls onFilterAll with selected ids", async () => {
     await expand_and_select();
     await userEvent.click(screen.getByRole("button", { name: "Filter ingredients with all selected labels" }));
-    expect(on_filter_all).toHaveBeenCalledWith([FAT.id]);
+    expect(onFilterAll).toHaveBeenCalledWith([FAT.id]);
   });
 
-  it("calls on_filter_any with selected ids", async () => {
+  it("calls onFilterAny with selected ids", async () => {
     await expand_and_select();
     await userEvent.click(screen.getByRole("button", { name: "Filter ingredients with any selected labels" }));
-    expect(on_filter_any).toHaveBeenCalledWith([FAT.id]);
+    expect(onFilterAny).toHaveBeenCalledWith([FAT.id]);
   });
 
-  it("calls on_delete with selected ids and clears selection", async () => {
+  it("calls onDelete with selected ids and clears selection", async () => {
     await expand_and_select();
     await userEvent.click(screen.getByRole("button", { name: "Delete selected labels" }));
-    expect(on_delete).toHaveBeenCalledWith([FAT.id]);
+    expect(onDelete).toHaveBeenCalledWith([FAT.id]);
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
@@ -182,12 +182,12 @@ describe("LabelTable — merge action", () => {
     expect(screen.getByRole("textbox", { name: "Merged label name" })).toBeInTheDocument();
   });
 
-  it("calls on_merge with selected ids and new name on Confirm", async () => {
+  it("calls onMerge with selected ids and new name on Confirm", async () => {
     await expand_and_select_two();
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Merged label name" }), "fatty solid");
     await userEvent.click(screen.getByRole("button", { name: "Confirm merge" }));
-    expect(on_merge).toHaveBeenCalledWith(
+    expect(onMerge).toHaveBeenCalledWith(
       expect.arrayContaining([FAT.id, SOLID.id]),
       "fatty solid",
     );
@@ -198,7 +198,7 @@ describe("LabelTable — merge action", () => {
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel merge" }));
     expect(screen.queryByRole("textbox", { name: "Merged label name" })).not.toBeInTheDocument();
-    expect(on_merge).not.toHaveBeenCalled();
+    expect(onMerge).not.toHaveBeenCalled();
   });
 
   it("hides merge form on Escape key", async () => {
@@ -224,23 +224,23 @@ describe("LabelTable — inline rename", () => {
     expect(screen.getByRole("textbox", { name: "Edit label name fat" })).toBeInTheDocument();
   });
 
-  it("calls on_rename on Enter", async () => {
+  it("calls onRename on Enter", async () => {
     await expand();
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     const input = screen.getByRole("textbox", { name: "Edit label name fat" });
     await userEvent.clear(input);
     await userEvent.type(input, "saturated fat{Enter}");
-    expect(on_rename).toHaveBeenCalledWith(FAT.id, "saturated fat");
+    expect(onRename).toHaveBeenCalledWith(FAT.id, "saturated fat");
   });
 
-  it("calls on_rename on confirm button click", async () => {
+  it("calls onRename on confirm button click", async () => {
     await expand();
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     const input = screen.getByRole("textbox", { name: "Edit label name fat" });
     await userEvent.clear(input);
     await userEvent.type(input, "new name");
     await userEvent.click(screen.getByRole("button", { name: "Confirm rename" }));
-    expect(on_rename).toHaveBeenCalledWith(FAT.id, "new name");
+    expect(onRename).toHaveBeenCalledWith(FAT.id, "new name");
   });
 
   it("cancels rename on Escape key", async () => {
@@ -250,7 +250,7 @@ describe("LabelTable — inline rename", () => {
       screen.getByRole("textbox", { name: "Edit label name fat" }),
       "{Escape}",
     );
-    expect(on_rename).not.toHaveBeenCalled();
+    expect(onRename).not.toHaveBeenCalled();
     expect(screen.queryByRole("textbox", { name: "Edit label name fat" })).not.toBeInTheDocument();
   });
 
@@ -258,6 +258,6 @@ describe("LabelTable — inline rename", () => {
     await expand();
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
-    expect(on_rename).not.toHaveBeenCalled();
+    expect(onRename).not.toHaveBeenCalled();
   });
 });

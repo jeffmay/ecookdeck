@@ -12,20 +12,20 @@ interface SetupOptions {
 }
 
 function setup(options: SetupOptions = {}) {
-  const on_change = vi.fn();
-  const on_commit = vi.fn();
-  const on_cancel = vi.fn();
+  const onChange = vi.fn();
+  const onCommit = vi.fn();
+  const onCancel = vi.fn();
   render(
     <LabelEditor
       selected_label_names={options.selected_label_names ?? []}
       all_label_names={options.all_label_names ?? ALL_LABELS}
       aria_label={options.aria_label ?? "Edit labels for Flour"}
-      on_change={on_change}
-      on_commit={on_commit}
-      on_cancel={on_cancel}
+      onChange={onChange}
+      onCommit={onCommit}
+      onCancel={onCancel}
     />,
   );
-  return { on_change, on_commit, on_cancel };
+  return { onChange, onCommit, onCancel };
 }
 
 beforeEach(() => {
@@ -57,16 +57,16 @@ describe("LabelEditor — rendering", () => {
 });
 
 describe("LabelEditor — confirm and cancel", () => {
-  it("calls on_commit when Confirm button is clicked", async () => {
-    const { on_commit } = setup();
+  it("calls onCommit when Confirm button is clicked", async () => {
+    const { onCommit } = setup();
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(on_commit).toHaveBeenCalledOnce();
+    expect(onCommit).toHaveBeenCalledOnce();
   });
 
-  it("calls on_cancel when Cancel button is clicked", async () => {
-    const { on_cancel } = setup();
+  it("calls onCancel when Cancel button is clicked", async () => {
+    const { onCancel } = setup();
     await userEvent.click(screen.getByRole("button", { name: "Cancel edit" }));
-    expect(on_cancel).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 });
 
@@ -78,24 +78,24 @@ describe("LabelEditor — selecting existing labels", () => {
     expect(await screen.findByText("dairy")).toBeInTheDocument();
   });
 
-  it("calls on_change with the new label when an existing option is selected", async () => {
-    const { on_change } = setup({ selected_label_names: [] });
+  it("calls onChange with the new label when an existing option is selected", async () => {
+    const { onChange } = setup({ selected_label_names: [] });
     await userEvent.click(screen.getByRole("combobox", { name: "Edit labels for Flour" }));
     await userEvent.click(await screen.findByText("baking"));
-    expect(on_change).toHaveBeenCalledWith(["baking"]);
+    expect(onChange).toHaveBeenCalledWith(["baking"]);
   });
 
-  it("calls on_change with accumulated labels when multiple are selected", async () => {
-    const { on_change } = setup({ selected_label_names: ["fat"] });
+  it("calls onChange with accumulated labels when multiple are selected", async () => {
+    const { onChange } = setup({ selected_label_names: ["fat"] });
     await userEvent.click(screen.getByRole("combobox", { name: "Edit labels for Flour" }));
     await userEvent.click(await screen.findByText("baking"));
-    expect(on_change).toHaveBeenCalledWith(["fat", "baking"]);
+    expect(onChange).toHaveBeenCalledWith(["fat", "baking"]);
   });
 
-  it("calls on_change without the label when a chip remove button is clicked", async () => {
-    const { on_change } = setup({ selected_label_names: ["baking", "fat"] });
+  it("calls onChange without the label when a chip remove button is clicked", async () => {
+    const { onChange } = setup({ selected_label_names: ["baking", "fat"] });
     await userEvent.click(screen.getByRole("button", { name: "Remove baking" }));
-    expect(on_change).toHaveBeenCalledWith(["fat"]);
+    expect(onChange).toHaveBeenCalledWith(["fat"]);
   });
 });
 
@@ -107,11 +107,11 @@ describe("LabelEditor — creating new labels", () => {
     expect(await screen.findByText(/Create "spicy"/)).toBeInTheDocument();
   });
 
-  it("calls on_change with the new label name when create option is clicked", async () => {
-    const { on_change } = setup({ all_label_names: [] });
+  it("calls onChange with the new label name when create option is clicked", async () => {
+    const { onChange } = setup({ all_label_names: [] });
     const input = screen.getByRole("combobox", { name: "Edit labels for Flour" });
     await userEvent.type(input, "spicy");
     await userEvent.click(await screen.findByText(/Create "spicy"/));
-    expect(on_change).toHaveBeenCalledWith(["spicy"]);
+    expect(onChange).toHaveBeenCalledWith(["spicy"]);
   });
 });

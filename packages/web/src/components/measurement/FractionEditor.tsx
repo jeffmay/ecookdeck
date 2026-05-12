@@ -1,14 +1,14 @@
 import { useState, type ReactNode } from "react";
 import {
-  make_fraction,
+  makeFraction,
   simplify,
-  integer_part,
-  fractional_part,
-  format_fraction,
-  add_fractions,
-  subtract_fractions,
-  multiply_fractions,
-  divide_fractions,
+  integerPart,
+  fractionalPart,
+  formatFraction,
+  addFractions,
+  subtractFractions,
+  multiplyFractions,
+  divideFractions,
   type Fraction,
 } from "@recipe-book/shared";
 import "./FractionEditor.css";
@@ -28,28 +28,28 @@ export const OP_MODES: readonly OpMode[] = ["÷", "×", "−", "+"];
 
 export const OP_ROWS: Record<OpMode, readonly OpButton[]> = {
   "÷": [
-    { label: "÷2", apply: (f) => divide_fractions(f, make_fraction(2, 1)) },
-    { label: "÷3", apply: (f) => divide_fractions(f, make_fraction(3, 1)) },
-    { label: "÷5", apply: (f) => divide_fractions(f, make_fraction(5, 1)) },
+    { label: "÷2", apply: (f) => divideFractions(f, makeFraction(2, 1)) },
+    { label: "÷3", apply: (f) => divideFractions(f, makeFraction(3, 1)) },
+    { label: "÷5", apply: (f) => divideFractions(f, makeFraction(5, 1)) },
   ],
   "×": [
-    { label: "×2", apply: (f) => multiply_fractions(f, make_fraction(2, 1)) },
-    { label: "×3", apply: (f) => multiply_fractions(f, make_fraction(3, 1)) },
-    { label: "×5", apply: (f) => multiply_fractions(f, make_fraction(5, 1)) },
+    { label: "×2", apply: (f) => multiplyFractions(f, makeFraction(2, 1)) },
+    { label: "×3", apply: (f) => multiplyFractions(f, makeFraction(3, 1)) },
+    { label: "×5", apply: (f) => multiplyFractions(f, makeFraction(5, 1)) },
   ],
   "−": [
-    { label: "−1", apply: (f) => subtract_fractions(f, make_fraction(1, 1)) },
-    { label: "−½", apply: (f) => subtract_fractions(f, make_fraction(1, 2)) },
-    { label: "−⅓", apply: (f) => subtract_fractions(f, make_fraction(1, 3)) },
-    { label: "−⅕", apply: (f) => subtract_fractions(f, make_fraction(1, 5)) },
-    { label: "−⅛", apply: (f) => subtract_fractions(f, make_fraction(1, 8)) },
+    { label: "−1", apply: (f) => subtractFractions(f, makeFraction(1, 1)) },
+    { label: "−½", apply: (f) => subtractFractions(f, makeFraction(1, 2)) },
+    { label: "−⅓", apply: (f) => subtractFractions(f, makeFraction(1, 3)) },
+    { label: "−⅕", apply: (f) => subtractFractions(f, makeFraction(1, 5)) },
+    { label: "−⅛", apply: (f) => subtractFractions(f, makeFraction(1, 8)) },
   ],
   "+": [
-    { label: "+⅛", apply: (f) => add_fractions(f, make_fraction(1, 8)) },
-    { label: "+⅕", apply: (f) => add_fractions(f, make_fraction(1, 5)) },
-    { label: "+⅓", apply: (f) => add_fractions(f, make_fraction(1, 3)) },
-    { label: "+½", apply: (f) => add_fractions(f, make_fraction(1, 2)) },
-    { label: "+1", apply: (f) => add_fractions(f, make_fraction(1, 1)) },
+    { label: "+⅛", apply: (f) => addFractions(f, makeFraction(1, 8)) },
+    { label: "+⅕", apply: (f) => addFractions(f, makeFraction(1, 5)) },
+    { label: "+⅓", apply: (f) => addFractions(f, makeFraction(1, 3)) },
+    { label: "+½", apply: (f) => addFractions(f, makeFraction(1, 2)) },
+    { label: "+1", apply: (f) => addFractions(f, makeFraction(1, 1)) },
   ],
 };
 
@@ -63,11 +63,11 @@ export interface FractionDisplayProps {
 
 export function FractionDisplay({ value }: FractionDisplayProps) {
   const s = simplify(value);
-  const int = integer_part(s);
-  const frac = fractional_part(s);
+  const int = integerPart(s);
+  const frac = fractionalPart(s);
 
   return (
-    <span className="fe-display" aria-label={format_fraction(s)}>
+    <span className="fe-display" aria-label={formatFraction(s)}>
       {(int !== 0 || frac.numerator === 0) && (
         <span className="fe-integer">{int === 0 ? "0" : int}</span>
       )}
@@ -88,18 +88,18 @@ export function FractionDisplay({ value }: FractionDisplayProps) {
 
 export interface FractionEditorProps {
   readonly value: Fraction;
-  readonly on_commit: (value: Fraction) => void;
+  readonly onCommit: (value: Fraction) => void;
   /** Rendered between the operation buttons and the OK button when editing. */
   readonly extra_controls?: ReactNode;
 }
 
-export function FractionEditor({ value, on_commit, extra_controls }: FractionEditorProps) {
+export function FractionEditor({ value, onCommit, extra_controls }: FractionEditorProps) {
   const [editing, set_editing] = useState(false);
   const [original, set_original] = useState<Fraction>(value);
   const [current, set_current] = useState<Fraction>(value);
   const [op_mode, set_op_mode] = useState<OpMode>("÷");
 
-  function open_editor() {
+  function openEditor() {
     set_original(value);
     set_current(value);
     set_op_mode("÷");
@@ -110,12 +110,12 @@ export function FractionEditor({ value, on_commit, extra_controls }: FractionEdi
     set_current(original);
   }
 
-  function apply_op(op: OpButton) {
+  function applyOp(op: OpButton) {
     set_current(simplify(op.apply(current)));
   }
 
   function commit() {
-    on_commit(current);
+    onCommit(current);
     set_editing(false);
   }
 
@@ -126,7 +126,7 @@ export function FractionEditor({ value, on_commit, extra_controls }: FractionEdi
         <button
           type="button"
           className="fe-toggle-btn"
-          onClick={open_editor}
+          onClick={openEditor}
           aria-label="Edit value"
         >
           ±
@@ -174,7 +174,7 @@ export function FractionEditor({ value, on_commit, extra_controls }: FractionEdi
             key={op.label}
             type="button"
             className="fe-op-btn"
-            onClick={() => apply_op(op)}
+            onClick={() => applyOp(op)}
           >
             {op.label}
           </button>

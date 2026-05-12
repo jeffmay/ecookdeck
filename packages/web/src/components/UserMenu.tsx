@@ -2,10 +2,10 @@ import "./UserMenu.css";
 
 interface UserMenuProps {
   readonly user_name: string;
-  readonly on_profile: () => void;
+  readonly onProfile: () => void;
 }
 
-export function UserMenu({ user_name, on_profile }: UserMenuProps) {
+export function UserMenu({ user_name, onProfile }: UserMenuProps) {
   return (
     <details className="user-menu">
       <summary className="user-menu-trigger" aria-label={`User menu for ${user_name}`}>
@@ -15,7 +15,7 @@ export function UserMenu({ user_name, on_profile }: UserMenuProps) {
         <button
           className="user-menu-item"
           role="menuitem"
-          onClick={on_profile}
+          onClick={onProfile}
         >
           Profile settings
         </button>

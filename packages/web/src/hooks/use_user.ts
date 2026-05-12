@@ -8,7 +8,7 @@ export interface UseUserResult {
   readonly clear_user: () => void;
 }
 
-export function use_user(): UseUserResult {
+export function useUser(): UseUserResult {
   const [user_name, set_state] = useState<string | null>(
     () => localStorage.getItem(USER_STORAGE_KEY),
   );

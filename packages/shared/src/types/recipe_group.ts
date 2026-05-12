@@ -10,7 +10,7 @@ export const RecipeFolderId = IdCompanion("RecipeFolderId", 12);
 export type RecipeFolderId = typeof RecipeFolderId.type.infer;
 
 // Use scope syntax to allow recursive definition
-const folder_scope = type.scope({
+const folderScope = type.scope({
   RecipeFolder: {
     id: () => RecipeFolderId.type,
     name: "string",
@@ -22,8 +22,8 @@ const folder_scope = type.scope({
   },
 }).export();
 
-export const RecipeFolder = Companion("RecipeFolder", folder_scope.RecipeFolder);
-export type RecipeFolder = typeof folder_scope.RecipeFolder.infer;
+export const RecipeFolder = Companion("RecipeFolder", folderScope.RecipeFolder);
+export type RecipeFolder = typeof folderScope.RecipeFolder.infer;
 
 // Backward-compatibility aliases so any existing code referencing the old names still compiles
 export const RecipeGroupId = RecipeFolderId;

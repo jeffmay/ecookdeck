@@ -1,24 +1,24 @@
 import type { MeasurementType } from "@recipe-book/shared";
 import {
-  add_ingredient,
-  add_labels_to_ingredients,
-  find_or_create_label,
-  get_ingredients,
+  addIngredient,
+  addLabelsToIngredients,
+  findOrCreateLabel,
+  getIngredients,
   Ingredient,
   IngredientId,
-  init_from_kitchenware_templates,
+  initFromKitchenwareTemplates,
   KitchenwareKind,
   KitchenwareLabelId,
-  parse_kitchenware_csv,
-  remove_labels_from_ingredients,
-  rename_ingredient as rename_ingredient_in_doc,
-  set_labels_for_ingredient,
-  set_measurement_type_for_ingredients,
-  set_parent_for_ingredients,
+  parseKitchenwareCsv,
+  removeLabelsFromIngredients,
+  renameIngredient as rename_ingredient_in_doc,
+  setLabelsForIngredient,
+  setMeasurementTypeForIngredients,
+  setParentForIngredients,
 } from "@recipe-book/shared";
-import { random_id } from "@recipe-book/shared";
+import { randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { use_doc } from "../contexts/doc_context.js";
+import { useDoc } from "../contexts/doc_context.js";
 
 const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
@@ -32,7 +32,7 @@ export interface NewIngredientInput {
 export interface UseIngredientStoreResult {
   readonly ingredients: readonly Ingredient[];
   readonly create_ingredient: (input: NewIngredientInput) => IngredientId;
-  readonly rename_ingredient: (id: IngredientId, name: string) => void;
+  readonly renameIngredient: (id: IngredientId, name: string) => void;
   readonly add_labels: (ids: readonly IngredientId[], label_ids: readonly KitchenwareLabelId[]) => void;
   readonly remove_labels: (
     ids: readonly IngredientId[],
@@ -43,9 +43,9 @@ export interface UseIngredientStoreResult {
   readonly set_parent: (ids: readonly IngredientId[], parent_id: IngredientId | undefined) => void;
 }
 
-export function use_ingredient_store(): UseIngredientStoreResult {
-  const doc = use_doc();
-  const [ingredients, set_ingredients] = useState<Ingredient[]>(() => get_ingredients(doc));
+export function useIngredientStore(): UseIngredientStoreResult {
+  const doc = useDoc();
+  const [ingredients, set_ingredients] = useState<Ingredient[]>(() => getIngredients(doc));
 
   // Load defaults from static CSV asset if the store is empty
   useEffect(() => {
@@ -56,15 +56,15 @@ export function use_ingredient_store(): UseIngredientStoreResult {
     fetch("/kitchenware.csv")
       .then((r) => r.text())
       .then((csv) => {
-        const templates = parse_kitchenware_csv(csv);
-        init_from_kitchenware_templates(doc, templates);
+        const templates = parseKitchenwareCsv(csv);
+        initFromKitchenwareTemplates(doc, templates);
       })
       .catch((err) => console.error("Failed to load default kitchenware:", err));
   }, [doc]);
 
   useEffect(() => {
     const map = doc.getMap("ingredients");
-    const handler = () => set_ingredients(get_ingredients(doc));
+    const handler = () => set_ingredients(getIngredients(doc));
     map.observe(handler);
     return () => map.unobserve(handler);
   }, [doc]);
@@ -72,9 +72,9 @@ export function use_ingredient_store(): UseIngredientStoreResult {
   return {
     ingredients,
     create_ingredient(input) {
-      const id = random_id(IngredientId);
+      const id = randomId(IngredientId);
       const label_ids = new Set(
-        input.label_names.map((name) => find_or_create_label(doc, name, INGREDIENT_KINDS)),
+        input.label_names.map((name) => findOrCreateLabel(doc, name, INGREDIENT_KINDS)),
       );
       const ingredient: Ingredient = {
         kind: "ingredient",
@@ -84,26 +84,26 @@ export function use_ingredient_store(): UseIngredientStoreResult {
         labels: label_ids,
         ...(input.parent_id !== undefined && { parent_id: input.parent_id }),
       };
-      add_ingredient(doc, ingredient);
+      addIngredient(doc, ingredient);
       return id;
     },
-    rename_ingredient(id, name) {
+    renameIngredient(id, name) {
       rename_ingredient_in_doc(doc, id, name);
     },
     add_labels(ids, label_ids) {
-      add_labels_to_ingredients(doc, ids, label_ids);
+      addLabelsToIngredients(doc, ids, label_ids);
     },
     remove_labels(ids, label_ids) {
-      remove_labels_from_ingredients(doc, ids, label_ids);
+      removeLabelsFromIngredients(doc, ids, label_ids);
     },
     set_labels(id, label_ids) {
-      set_labels_for_ingredient(doc, id, label_ids);
+      setLabelsForIngredient(doc, id, label_ids);
     },
     set_measurement_type(ids, type) {
-      set_measurement_type_for_ingredients(doc, ids, type);
+      setMeasurementTypeForIngredients(doc, ids, type);
     },
     set_parent(ids, parent_id) {
-      set_parent_for_ingredients(doc, ids, parent_id);
+      setParentForIngredients(doc, ids, parent_id);
     },
   };
 }

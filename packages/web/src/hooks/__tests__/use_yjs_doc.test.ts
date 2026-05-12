@@ -2,40 +2,40 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import * as Y from "yjs";
 
-const mock_destroy = vi.fn();
+const mockDestroy = vi.fn();
 const MockIndexeddbPersistence = vi.fn().mockImplementation(() => ({
-  destroy: mock_destroy,
+  destroy: mockDestroy,
 }));
 
 vi.mock("y-indexeddb", () => ({
   IndexeddbPersistence: MockIndexeddbPersistence,
 }));
 
-const { use_yjs_doc } = await import("../use_yjs_doc.js");
+const { useYjsDoc } = await import("../use_yjs_doc.js");
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("use_yjs_doc", () => {
+describe("useYjsDoc", () => {
   it("returns a Y.Doc instance", () => {
-    const { result } = renderHook(() => use_yjs_doc("Alice"));
+    const { result } = renderHook(() => useYjsDoc("Alice"));
     expect(result.current).toBeInstanceOf(Y.Doc);
   });
 
   it("creates IndexeddbPersistence keyed by user_name", () => {
-    renderHook(() => use_yjs_doc("Alice"));
+    renderHook(() => useYjsDoc("Alice"));
     expect(MockIndexeddbPersistence).toHaveBeenCalledWith("Alice", expect.any(Y.Doc));
   });
 
   it("destroys persistence on unmount", () => {
-    const { unmount } = renderHook(() => use_yjs_doc("Alice"));
+    const { unmount } = renderHook(() => useYjsDoc("Alice"));
     unmount();
-    expect(mock_destroy).toHaveBeenCalledOnce();
+    expect(mockDestroy).toHaveBeenCalledOnce();
   });
 
   it("returns the same doc instance across re-renders", () => {
-    const { result, rerender } = renderHook(() => use_yjs_doc("Alice"));
+    const { result, rerender } = renderHook(() => useYjsDoc("Alice"));
     const first = result.current;
     rerender();
     expect(result.current).toBe(first);

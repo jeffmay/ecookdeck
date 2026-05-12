@@ -3,25 +3,25 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import type { Column } from "@tanstack/react-table";
 import type { IngredientRow } from "../build_ingredient_tree.js";
-import { MultiSelectFilter, to_string_array } from "../MultiSelectFilter.js";
+import { MultiSelectFilter, toStringArray } from "../MultiSelectFilter.js";
 
 // ---------------------------------------------------------------------------
-// to_string_array helper
+// toStringArray helper
 // ---------------------------------------------------------------------------
 
-describe("to_string_array", () => {
+describe("toStringArray", () => {
   it("returns empty array for non-array input", () => {
-    expect(to_string_array(null)).toEqual([]);
-    expect(to_string_array("foo")).toEqual([]);
-    expect(to_string_array(42)).toEqual([]);
+    expect(toStringArray(null)).toEqual([]);
+    expect(toStringArray("foo")).toEqual([]);
+    expect(toStringArray(42)).toEqual([]);
   });
 
   it("filters out non-string values", () => {
-    expect(to_string_array(["a", 1, null, "b"])).toEqual(["a", "b"]);
+    expect(toStringArray(["a", 1, null, "b"])).toEqual(["a", "b"]);
   });
 
   it("returns all strings unchanged", () => {
-    expect(to_string_array(["x", "y", "z"])).toEqual(["x", "y", "z"]);
+    expect(toStringArray(["x", "y", "z"])).toEqual(["x", "y", "z"]);
   });
 });
 
@@ -29,7 +29,7 @@ describe("to_string_array", () => {
 // MultiSelectFilter component
 // ---------------------------------------------------------------------------
 
-function make_column(initial: string[] = []): Column<IngredientRow, unknown> {
+function makeColumn(initial: string[] = []): Column<IngredientRow, unknown> {
   let filter_value: unknown = initial.length > 0 ? initial : undefined;
   return {
     getFilterValue: () => filter_value,
@@ -42,7 +42,7 @@ function make_column(initial: string[] = []): Column<IngredientRow, unknown> {
 const OPTIONS = ["dairy", "fat", "solid", "liquid"];
 
 function setup(initial: string[] = []) {
-  const column = make_column(initial);
+  const column = makeColumn(initial);
   render(
     <MultiSelectFilter column={column} all_options={OPTIONS} aria_label="Filter by labels" />,
   );
