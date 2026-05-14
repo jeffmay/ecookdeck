@@ -1,52 +1,25 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import type { Column } from "@tanstack/react-table";
-import type { IngredientRow } from "../build_ingredient_tree.js";
-import { MultiSelectFilter, toStringArray } from "../MultiSelectFilter.js";
-
-// ---------------------------------------------------------------------------
-// toStringArray helper
-// ---------------------------------------------------------------------------
-
-describe("toStringArray", () => {
-  it("returns empty array for non-array input", () => {
-    expect(toStringArray(null)).toEqual([]);
-    expect(toStringArray("foo")).toEqual([]);
-    expect(toStringArray(42)).toEqual([]);
-  });
-
-  it("filters out non-string values", () => {
-    expect(toStringArray(["a", 1, null, "b"])).toEqual(["a", "b"]);
-  });
-
-  it("returns all strings unchanged", () => {
-    expect(toStringArray(["x", "y", "z"])).toEqual(["x", "y", "z"]);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// MultiSelectFilter component
-// ---------------------------------------------------------------------------
-
-function makeColumn(initial: string[] = []): Column<IngredientRow, unknown> {
-  let filter_value: unknown = initial.length > 0 ? initial : undefined;
-  return {
-    getFilterValue: () => filter_value,
-    setFilterValue: (v: unknown) => {
-      filter_value = v;
-    },
-  } as unknown as Column<IngredientRow, unknown>;
-}
+import { MultiSelectFilter } from "../MultiSelectFilter.js";
 
 const OPTIONS = ["dairy", "fat", "solid", "liquid"];
 
-function setup(initial: string[] = []) {
-  const column = makeColumn(initial);
+interface SetupOptions {
+  initial?: string[];
+}
+
+function setup({ initial = [] }: SetupOptions = {}) {
+  const onChange = vi.fn();
   render(
-    <MultiSelectFilter column={column} all_options={OPTIONS} aria_label="Filter by labels" />,
+    <MultiSelectFilter
+      value={initial}
+      onChange={onChange}
+      all_options={OPTIONS}
+      aria_label="Filter by labels"
+    />,
   );
-  return { column };
+  return { onChange };
 }
 
 describe("MultiSelectFilter — closed state", () => {
@@ -56,19 +29,19 @@ describe("MultiSelectFilter — closed state", () => {
   });
 
   it("shows selected option name when one item selected", () => {
-    setup(["dairy"]);
+    setup({ initial: ["dairy"] });
     const input = screen.getByRole("textbox", { name: "Filter by labels" });
     expect((input as HTMLInputElement).value).toBe("dairy");
   });
 
   it("shows count when multiple selected", () => {
-    setup(["dairy", "fat"]);
+    setup({ initial: ["dairy", "fat"] });
     const input = screen.getByRole("textbox", { name: "Filter by labels" });
     expect((input as HTMLInputElement).value).toBe("2 selected");
   });
 
   it("shows clear button when items are selected", () => {
-    setup(["dairy"]);
+    setup({ initial: ["dairy"] });
     expect(screen.getByLabelText("Clear Filter by labels")).toBeInTheDocument();
   });
 
@@ -87,7 +60,7 @@ describe("MultiSelectFilter — opening the dropdown", () => {
   });
 
   it("pre-checks already-selected options on open", async () => {
-    setup(["dairy", "fat"]);
+    setup({ initial: ["dairy", "fat"] });
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     const dropdown = screen.getByRole("listbox");
     const dairy_cb = within(dropdown).getByRole("checkbox", { name: "dairy" });
@@ -100,18 +73,18 @@ describe("MultiSelectFilter — opening the dropdown", () => {
 });
 
 describe("MultiSelectFilter — toggling options", () => {
-  it("checking an option updates the filter immediately", async () => {
-    const { column } = setup();
+  it("checking an option calls onChange with the new value", async () => {
+    const { onChange } = setup();
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "fat" }));
-    expect(column.getFilterValue()).toEqual(["fat"]);
+    expect(onChange).toHaveBeenCalledWith(["fat"]);
   });
 
-  it("unchecking removes option from filter", async () => {
-    const { column } = setup(["fat"]);
+  it("unchecking an option calls onChange without that option", async () => {
+    const { onChange } = setup({ initial: ["fat"] });
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "fat" }));
-    expect(column.getFilterValue()).toBeUndefined();
+    expect(onChange).toHaveBeenCalledWith([]);
   });
 });
 
@@ -140,58 +113,45 @@ describe("MultiSelectFilter — search within dropdown", () => {
 });
 
 describe("MultiSelectFilter — accept and revert", () => {
-  it("closes on accept without reverting the filter", async () => {
-    const { column } = setup();
+  it("closes on accept", async () => {
+    setup();
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
-    await userEvent.click(screen.getByRole("checkbox", { name: "fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Accept filter" }));
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    expect(column.getFilterValue()).toEqual(["fat"]);
   });
 
   it("reverts to snapshot on revert button click", async () => {
-    const { column } = setup(["dairy"]);
+    const { onChange } = setup({ initial: ["dairy"] });
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Revert filter" }));
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    expect(column.getFilterValue()).toEqual(["dairy"]);
+    expect(onChange).toHaveBeenLastCalledWith(["dairy"]);
   });
 
-  it("reverts to undefined when snapshot was empty", async () => {
-    const { column } = setup();
+  it("reverts to empty array when snapshot was empty", async () => {
+    const { onChange } = setup();
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Revert filter" }));
-    expect(column.getFilterValue()).toBeUndefined();
+    expect(onChange).toHaveBeenLastCalledWith([]);
   });
 });
 
 describe("MultiSelectFilter — clear button", () => {
-  it("clears the filter and collapses to placeholder", async () => {
-    const { column } = setup(["dairy"]);
+  it("calls onChange with empty array on clear", async () => {
+    const { onChange } = setup({ initial: ["dairy"] });
     await userEvent.click(screen.getByLabelText("Clear Filter by labels"));
-    expect(column.getFilterValue()).toBeUndefined();
+    expect(onChange).toHaveBeenCalledWith([]);
   });
 });
 
 describe("MultiSelectFilter — outside click auto-accepts", () => {
   it("closes the dropdown when clicking outside", async () => {
-    setup(["fat"]);
+    setup({ initial: ["fat"] });
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     expect(screen.getByRole("listbox")).toBeInTheDocument();
     await userEvent.click(document.body);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
-
-  it("keeps current selection on outside click (auto-accept)", async () => {
-    const { column } = setup();
-    await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
-    await userEvent.click(screen.getByRole("checkbox", { name: "solid" }));
-    await userEvent.click(document.body);
-    expect(column.getFilterValue()).toEqual(["solid"]);
-  });
 });
-
-// suppress unused vi import warning
-void vi;

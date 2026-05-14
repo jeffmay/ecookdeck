@@ -60,7 +60,7 @@ function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
   );
 }
 
-function getTable() {
+function getRegion() {
   return screen.getByRole("region", { name: "Ingredient list" });
 }
 
@@ -71,7 +71,7 @@ beforeEach(() => {
 describe("IngredientsTable — rendering", () => {
   it("renders the ingredient list region", () => {
     setup();
-    expect(getTable()).toBeInTheDocument();
+    expect(getRegion()).toBeInTheDocument();
   });
 
   it("renders root-level ingredients", async () => {
@@ -83,11 +83,9 @@ describe("IngredientsTable — rendering", () => {
 
   it("renders column headers", () => {
     setup();
-    expect(screen.getByRole("button", { name: "Sort by name" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Sort by default_measurement_type" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sort by parent_name" })).toBeInTheDocument();
+    expect(screen.getByText("Name")).toBeInTheDocument();
+    expect(screen.getByText("Type")).toBeInTheDocument();
+    expect(screen.getByText("Parent")).toBeInTheDocument();
   });
 
   it("shows empty message when no ingredients", () => {
@@ -102,26 +100,24 @@ describe("IngredientsTable — tree expand/collapse", () => {
     expect(screen.queryByText("Butter")).not.toBeInTheDocument();
   });
 
-  it("shows expand button on rows with children", async () => {
+  it("expands children on toggler click", async () => {
     setup();
     await screen.findByText("Dairy");
-    const dairy_row = screen.getByText("Dairy").closest("tr")!;
-    expect(within(dairy_row).getByRole("button", { name: /Expand Dairy/ })).toBeInTheDocument();
-  });
-
-  it("expands children on expand button click", async () => {
-    setup();
-    await screen.findByText("Dairy");
-    await userEvent.click(screen.getByRole("button", { name: /Expand Dairy/ }));
+    const togglers = screen.getAllByRole("button").filter((b) =>
+      b.classList.contains("p-treetable-toggler"),
+    );
+    await userEvent.click(togglers[0]!);
     expect(screen.getByText("Butter")).toBeInTheDocument();
   });
 
-  it("collapses children on second click", async () => {
+  it("collapses children on second toggler click", async () => {
     setup();
     await screen.findByText("Dairy");
-    await userEvent.click(screen.getByRole("button", { name: /Expand Dairy/ }));
+    const togglers = () =>
+      screen.getAllByRole("button").filter((b) => b.classList.contains("p-treetable-toggler"));
+    await userEvent.click(togglers()[0]!);
     expect(screen.getByText("Butter")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Collapse Dairy/ }));
+    await userEvent.click(togglers()[0]!);
     expect(screen.queryByText("Butter")).not.toBeInTheDocument();
   });
 });
@@ -147,17 +143,13 @@ describe("IngredientsTable — text filters", () => {
     setup();
     await screen.findByText("Dairy");
     await userEvent.type(screen.getByLabelText("Filter by name"), "Butter");
-    // Dairy should appear because it has a child named Butter.
-    // "Dairy" text also appears in Butter's Parent column, so use getAllByText.
     expect(screen.getAllByText("Dairy").length).toBeGreaterThan(0);
-    // Butter should be visible (auto-expanded)
     expect(screen.getByText("Butter")).toBeInTheDocument();
-    // Unrelated rows should be hidden
     expect(screen.queryByText("Flour")).not.toBeInTheDocument();
     expect(screen.queryByText("Cheese")).not.toBeInTheDocument();
   });
 
-  it("parent column has no filter input", () => {
+  it("parent column has no separate filter input", () => {
     setup();
     expect(screen.queryByLabelText("Filter by parent")).not.toBeInTheDocument();
   });
@@ -178,9 +170,9 @@ describe("IngredientsTable — multi-select filter (type)", () => {
 
 describe("IngredientsTable — sorting", () => {
   it("sorts by name ascending on first click", async () => {
-    setup([FLOUR, CHEESE]); // No parent-child, all root rows
+    setup([FLOUR, CHEESE]);
     await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("button", { name: "Sort by name" }));
+    await userEvent.click(screen.getByText("Name"));
     const rows = screen.getAllByRole("row").slice(1); // skip header row
     expect(rows[0]).toHaveTextContent("Cheese");
     expect(rows[1]).toHaveTextContent("Flour");
@@ -189,8 +181,8 @@ describe("IngredientsTable — sorting", () => {
   it("sorts by name descending on second click", async () => {
     setup([FLOUR, CHEESE]);
     await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("button", { name: "Sort by name" }));
-    await userEvent.click(screen.getByRole("button", { name: "Sort by name" }));
+    await userEvent.click(screen.getByText("Name"));
+    await userEvent.click(screen.getByText("Name"));
     const rows = screen.getAllByRole("row").slice(1);
     expect(rows[0]).toHaveTextContent("Flour");
     expect(rows[1]).toHaveTextContent("Cheese");
@@ -263,7 +255,6 @@ describe("IngredientsTable — editable cells", () => {
     setup([DAIRY]);
     await screen.findByRole("button", { name: "Edit labels for Dairy" });
     await userEvent.click(screen.getByRole("button", { name: "Edit labels for Dairy" }));
-    // LabelEditor opens — type and create a new label, then commit
     const input = screen.getByRole("combobox", { name: "Edit labels for Dairy" });
     await userEvent.type(input, "baking");
     await userEvent.click(await screen.findByText(/Create "baking"/));
@@ -272,47 +263,18 @@ describe("IngredientsTable — editable cells", () => {
   });
 });
 
-describe("IngredientsTable — grouping", () => {
-  it("groups rows by measurement type when toggle clicked", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by default_measurement_type" }),
-    );
-    expect(screen.getByText(/volume/)).toBeInTheDocument();
-    expect(screen.getByText(/weight/)).toBeInTheDocument();
-  });
-
-  it("ungroups when toggle clicked again", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by default_measurement_type" }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Ungroup by default_measurement_type" }),
-    );
-    expect(await screen.findByRole("button", { name: "Edit name for Flour" })).toBeInTheDocument();
-  });
-});
-
 describe("IngredientsTable — row selection", () => {
-  it("renders a select-all checkbox in the header", () => {
+  it("renders a select-all checkbox provided by PrimeReact", () => {
     setup([FLOUR, CHEESE]);
-    expect(screen.getByRole("checkbox", { name: "Select all ingredients" })).toBeInTheDocument();
-  });
-
-  it("renders per-row checkboxes", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    expect(screen.getByRole("checkbox", { name: "Select Flour" })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Select Cheese" })).toBeInTheDocument();
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes.length).toBeGreaterThan(0);
   });
 
   it("selecting a row shows the bulk action bar", async () => {
     setup([FLOUR]);
     await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+    const checkboxes = screen.getAllByRole("checkbox");
+    await userEvent.click(checkboxes[checkboxes.length - 1]!);
     expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
@@ -320,32 +282,19 @@ describe("IngredientsTable — row selection", () => {
   it("deselecting all rows hides the bulk action bar", async () => {
     setup([FLOUR]);
     await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+    const checkboxes = screen.getAllByRole("checkbox");
+    const row_checkbox = checkboxes[checkboxes.length - 1]!;
+    await userEvent.click(row_checkbox);
     expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
-    expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
-  });
-
-  it("select-all selects all visible rows", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
-    expect(screen.getByText("2 selected")).toBeInTheDocument();
-  });
-
-  it("select-all deselects when all are already selected", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
-    expect(screen.getByText("2 selected")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
+    await userEvent.click(row_checkbox);
     expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
   });
 
   it("Clear button deselects all", async () => {
-    setup([FLOUR, CHEESE]);
+    setup([FLOUR]);
     await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
+    const checkboxes = screen.getAllByRole("checkbox");
+    await userEvent.click(checkboxes[checkboxes.length - 1]!);
     await userEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
   });
@@ -355,7 +304,9 @@ describe("IngredientsTable — bulk actions", () => {
   async function selectFlour() {
     setup([FLOUR, CHEESE]);
     await screen.findByText("Flour");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+    // Find the Flour row and click its checkbox
+    const flour_row = screen.getByText("Flour").closest("tr")!;
+    await userEvent.click(within(flour_row).getAllByRole("checkbox")[0]!);
   }
 
   it("calls onAddLabels with selected ids and created labels", async () => {

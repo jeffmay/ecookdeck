@@ -1,41 +1,32 @@
 import { useState, useRef, useEffect } from "react";
-import type { Column } from "@tanstack/react-table";
-import type { IngredientRow } from "./build_ingredient_tree.js";
 import "./MultiSelectFilter.css";
 
-export function toStringArray(v: unknown): string[] {
-  if (!Array.isArray(v)) return [];
-  return v.filter((item): item is string => typeof item === "string");
-}
-
 export interface MultiSelectFilterProps {
-  readonly column: Column<IngredientRow, unknown>;
+  readonly value: readonly string[];
+  readonly onChange: (values: string[]) => void;
   readonly all_options: readonly string[];
   readonly aria_label: string;
 }
 
-export function MultiSelectFilter({ column, all_options, aria_label }: MultiSelectFilterProps) {
+export function MultiSelectFilter({ value, onChange, all_options, aria_label }: MultiSelectFilterProps) {
   const [open, set_open] = useState(false);
   const [snapshot, set_snapshot] = useState<string[]>([]);
   const [search, set_search] = useState("");
   const container_ref = useRef<HTMLDivElement>(null);
   const search_ref = useRef<HTMLInputElement>(null);
 
-  const active = toStringArray(column.getFilterValue());
-
   function openDropdown() {
     if (open) return;
-    set_snapshot(active.slice());
+    set_snapshot([...value]);
     set_open(true);
-    // Focus search on next tick
     setTimeout(() => search_ref.current?.focus(), 0);
   }
 
   function toggleOption(opt: string) {
-    const next = active.includes(opt)
-      ? active.filter((v) => v !== opt)
-      : [...active, opt];
-    column.setFilterValue(next.length > 0 ? next : undefined);
+    const next = value.includes(opt)
+      ? value.filter((v) => v !== opt)
+      : [...value, opt];
+    onChange(next);
   }
 
   function handleAccept() {
@@ -44,12 +35,11 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
   }
 
   function handleRevert() {
-    column.setFilterValue(snapshot.length > 0 ? snapshot : undefined);
+    onChange(snapshot);
     set_open(false);
     set_search("");
   }
 
-  // Close on outside click (auto-accept)
   useEffect(() => {
     if (!open) return;
     function onMousedown(e: MouseEvent) {
@@ -71,7 +61,7 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
       : all_options.filter((o) => o.toLowerCase().includes(search.toLowerCase()));
 
   const summary =
-    active.length === 0 ? "" : active.length === 1 ? active[0]! : `${active.length} selected`;
+    value.length === 0 ? "" : value.length === 1 ? value[0]! : `${value.length} selected`;
 
   return (
     <div ref={container_ref} className="msf-wrapper">
@@ -88,13 +78,13 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
           aria-haspopup="listbox"
           aria-expanded={open}
         />
-        {active.length > 0 && (
+        {value.length > 0 && (
           <button
             type="button"
             className="msf-clear-btn"
             onClick={(e) => {
               e.stopPropagation();
-              column.setFilterValue(undefined);
+              onChange([]);
             }}
             aria-label={`Clear ${aria_label}`}
           >
@@ -121,7 +111,7 @@ export function MultiSelectFilter({ column, all_options, aria_label }: MultiSele
             <label key={opt} className="msf-option">
               <input
                 type="checkbox"
-                checked={active.includes(opt)}
+                checked={value.includes(opt)}
                 onChange={() => toggleOption(opt)}
                 aria-label={opt}
               />

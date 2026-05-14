@@ -2,6 +2,7 @@ import { useState, useMemo, type MouseEvent } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components as SelectComponents } from "react-select";
 import type { GroupBase, MenuProps, MultiValue } from "react-select";
+import "./LabelEditor.css"
 
 interface LabelOption {
   readonly label: string;
