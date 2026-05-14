@@ -166,14 +166,14 @@
   font-size: 0.85em;
 }
 
-.lt-row--selected > .lt-td {
+.lt-row--selected>.lt-td {
   background: #f0f0f0;
 }
 
 /* Inline name editing */
 .lt-name {
   cursor: pointer;
-  display: block;
+  display: inline;
   min-width: 4em;
 }
 

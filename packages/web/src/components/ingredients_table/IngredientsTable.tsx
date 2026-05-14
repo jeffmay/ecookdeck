@@ -1,31 +1,26 @@
-import { useState, useMemo, useEffect, useRef, type KeyboardEvent } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getGroupedRowModel,
-  getExpandedRowModel,
-  createColumnHelper,
-  flexRender,
-  type ColumnFiltersState,
-  type SortingState,
-  type GroupingState,
-  type ExpandedState,
-  type FilterFn,
-  type RowData,
-  type CellContext,
-  type Header,
-  type Table,
-} from "@tanstack/react-table";
-import type { Ingredient, IngredientId, KitchenwareLabel, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
-import { MultiSelectFilter } from "./MultiSelectFilter.js";
-import { LabelEditor } from "./LabelEditor.js";
+  IngredientId,
+  loadId,
+  type Ingredient,
+  type KitchenwareLabel,
+  type KitchenwareLabelId,
+  type MeasurementType,
+} from "@recipe-book/shared";
+import { Column } from "primereact/column";
+import type { TreeNode } from "primereact/treenode";
+import {
+  TreeTable,
+  type TreeTableExpandedKeysType,
+  type TreeTableSelectionKeysType,
+} from "primereact/treetable";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { buildIngredientTree, type IngredientRow } from "./build_ingredient_tree.js";
 import "./IngredientsTable.css";
+import { LabelEditor } from "./LabelEditor.js";
+import { MultiSelectFilter } from "./MultiSelectFilter.js";
 
 // ---------------------------------------------------------------------------
-// External label filter (driven by LabelTable)
+// External label filter
 // ---------------------------------------------------------------------------
 
 export interface ExternalLabelFilter {
@@ -34,72 +29,14 @@ export interface ExternalLabelFilter {
 }
 
 // ---------------------------------------------------------------------------
-// Module augmentations
-// ---------------------------------------------------------------------------
-
-declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface TableMeta<TData extends RowData> {
-    pending_edits: ReadonlyMap<string, string>;
-    onBeginEdit: (ingredient_id: IngredientId, col_id: string, initial: string) => void;
-    onUpdateEdit: (ingredient_id: IngredientId, col_id: string, value: string) => void;
-    onCommitEdit: (ingredient_id: IngredientId, col_id: string) => void;
-    onCancelEdit: (ingredient_id: IngredientId, col_id: string) => void;
-    all_ingredients: readonly Ingredient[];
-    all_label_names: readonly string[];
-    selected_ids: ReadonlySet<IngredientId>;
-    onToggleSelect: (id: IngredientId) => void;
-    onToggleSelectAll: (ids: readonly IngredientId[]) => void;
-  }
-  interface FilterFns {
-    fuzzyText: FilterFn<IngredientRow>;
-    multiSelect: FilterFn<IngredientRow>;
-    nameRecursiveFuzzy: FilterFn<IngredientRow>;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Filter functions
-// ---------------------------------------------------------------------------
-
-const fuzzyText: FilterFn<IngredientRow> = (row, col_id, value) => {
-  if (typeof value !== "string" || value === "") return true;
-  return String(row.getValue(col_id)).toLowerCase().includes(value.toLowerCase());
-};
-fuzzyText.autoRemove = (v) => typeof v !== "string" || v === "";
-
-const multiSelect: FilterFn<IngredientRow> = (row, col_id, value) => {
-  if (!Array.isArray(value) || value.length === 0) return true;
-  const selected = value.filter((v): v is string => typeof v === "string");
-  if (selected.length === 0) return true;
-  const cell = row.getValue(col_id);
-  const values: string[] = Array.isArray(cell)
-    ? cell.filter((v): v is string => typeof v === "string")
-    : [String(cell)];
-  return selected.some((s) => values.includes(s));
-};
-multiSelect.autoRemove = (v) => !Array.isArray(v) || v.length === 0;
-
-function rowNameMatches(row_data: IngredientRow, query: string): boolean {
-  if (row_data.name.toLowerCase().includes(query)) return true;
-  return row_data.subRows.some((child) => rowNameMatches(child, query));
-}
-
-const nameRecursiveFuzzy: FilterFn<IngredientRow> = (row, _col_id, value) => {
-  if (typeof value !== "string" || value === "") return true;
-  return rowNameMatches(row.original, value.toLowerCase());
-};
-nameRecursiveFuzzy.autoRemove = (v) => typeof v !== "string" || v === "";
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+const MEASUREMENT_TYPES = ["count", "volume", "weight"] as const satisfies readonly MeasurementType[];
 
 function pkey(ingredient_id: IngredientId, col_id: string): string {
   return `${ingredient_id}|${col_id}`;
 }
-
-const MEASUREMENT_TYPES: readonly MeasurementType[] = ["count", "volume", "weight"];
 
 function validateType(v: string): MeasurementType | undefined {
   if (v === "volume" || v === "weight" || v === "count") return v;
@@ -113,430 +50,54 @@ function parseLabels(raw: string): string[] {
     .filter((l) => l !== "");
 }
 
-// ---------------------------------------------------------------------------
-// Editable cell components
-// ---------------------------------------------------------------------------
-
-function NameCell({ getValue, row, column, table }: CellContext<IngredientRow, string>) {
-  const value = getValue();
-  const meta = table.options.meta!;
-  const key = pkey(row.original.id, column.id);
-  const pending = meta.pending_edits.get(key);
-
-  if (pending !== undefined) {
-    return (
-      <span className="it-editing">
-        <input
-          type="text"
-          value={pending}
-          className="it-edit-input"
-          autoFocus
-          aria-label={`Edit name for ${value}`}
-          onChange={(e) => meta.onUpdateEdit(row.original.id, column.id, e.target.value)}
-          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Enter") meta.onCommitEdit(row.original.id, column.id);
-            if (e.key === "Escape") meta.onCancelEdit(row.original.id, column.id);
-          }}
-        />
-        <button
-          type="button"
-          className="it-confirm-btn"
-          onClick={() => meta.onCommitEdit(row.original.id, column.id)}
-          aria-label="Confirm edit"
-        >
-          ✔︎
-        </button>
-        <button
-          type="button"
-          className="it-cancel-btn"
-          onClick={() => meta.onCancelEdit(row.original.id, column.id)}
-          aria-label="Cancel edit"
-        >
-          ✗
-        </button>
-      </span>
-    );
-  }
-  return (
-    <span
-      className="it-editable"
-      role="button"
-      tabIndex={0}
-      aria-label={`Edit name for ${value}`}
-      onClick={() => meta.onBeginEdit(row.original.id, column.id, value)}
-      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-        if (e.key === "Enter" || e.key === " ")
-          meta.onBeginEdit(row.original.id, column.id, value);
-      }}
-    >
-      {value}
-    </span>
-  );
+function toTreeNode(row: IngredientRow): TreeNode {
+  return {
+    key: row.id,
+    data: row,
+    children: row.subRows.length > 0 ? row.subRows.map(toTreeNode) : undefined,
+  };
 }
 
-function TypeCell({ getValue, row, column, table }: CellContext<IngredientRow, MeasurementType>) {
-  const value = getValue();
-  const meta = table.options.meta!;
-  const key = pkey(row.original.id, column.id);
-  const pending = meta.pending_edits.get(key);
-
-  if (pending !== undefined) {
-    return (
-      <span className="it-editing">
-        <select
-          value={pending}
-          autoFocus
-          aria-label={`Edit type for ${row.original.name}`}
-          onChange={(e) => meta.onUpdateEdit(row.original.id, column.id, e.target.value)}
-          onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
-            if (e.key === "Escape") meta.onCancelEdit(row.original.id, column.id);
-          }}
-        >
-          {MEASUREMENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          className="it-confirm-btn"
-          onClick={() => meta.onCommitEdit(row.original.id, column.id)}
-          aria-label="Confirm edit"
-        >
-          ✔︎
-        </button>
-        <button
-          type="button"
-          className="it-cancel-btn"
-          onClick={() => meta.onCancelEdit(row.original.id, column.id)}
-          aria-label="Cancel edit"
-        >
-          ✗
-        </button>
-      </span>
-    );
-  }
-  return (
-    <span
-      className="it-editable"
-      role="button"
-      tabIndex={0}
-      aria-label={`Edit type for ${row.original.name}`}
-      onClick={() => meta.onBeginEdit(row.original.id, column.id, value)}
-      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-        if (e.key === "Enter" || e.key === " ")
-          meta.onBeginEdit(row.original.id, column.id, value);
-      }}
-    >
-      {value}
-    </span>
-  );
+function rowNameMatches(row: IngredientRow, query: string): boolean {
+  if (row.name.toLowerCase().includes(query)) return true;
+  return row.subRows.some((child) => rowNameMatches(child, query));
 }
 
-function LabelsCell({
-  getValue,
-  row,
-  column,
-  table,
-}: CellContext<IngredientRow, readonly string[]>) {
-  const labels = getValue();
-  const meta = table.options.meta!;
-  const key = pkey(row.original.id, column.id);
-  const pending = meta.pending_edits.get(key);
-
-  if (pending !== undefined) {
-    return (
-      <LabelEditor
-        selected_label_names={parseLabels(pending)}
-        all_label_names={meta.all_label_names}
-        aria_label={`Edit labels for ${row.original.name}`}
-        onChange={(names) =>
-          meta.onUpdateEdit(row.original.id, column.id, names.join(", "))
-        }
-        onCommit={() => meta.onCommitEdit(row.original.id, column.id)}
-        onCancel={() => meta.onCancelEdit(row.original.id, column.id)}
-      />
-    );
-  }
-
-  const display = labels.join(", ");
-  return (
-    <span
-      className="it-editable"
-      role="button"
-      tabIndex={0}
-      aria-label={`Edit labels for ${row.original.name}`}
-      onClick={() => meta.onBeginEdit(row.original.id, column.id, display)}
-      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-        if (e.key === "Enter" || e.key === " ")
-          meta.onBeginEdit(row.original.id, column.id, display);
-      }}
-    >
-      {display || <span className="it-muted">—</span>}
-    </span>
-  );
-}
-
-function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) {
-  const meta = table.options.meta!;
-  const key = pkey(row.original.id, column.id);
-  const pending = meta.pending_edits.get(key);
-  const display = row.original.parent_name || "—";
-
-  if (pending !== undefined) {
-    return (
-      <span className="it-editing">
-        <select
-          value={pending}
-          autoFocus
-          aria-label={`Edit parent for ${row.original.name}`}
-          onChange={(e) => meta.onUpdateEdit(row.original.id, column.id, e.target.value)}
-          onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
-            if (e.key === "Escape") meta.onCancelEdit(row.original.id, column.id);
-          }}
-        >
-          <option value="">— None —</option>
-          {meta.all_ingredients
-            .filter((i) => i.id !== row.original.id)
-            .map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
-              </option>
-            ))}
-        </select>
-        <button
-          type="button"
-          className="it-confirm-btn"
-          onClick={() => meta.onCommitEdit(row.original.id, column.id)}
-          aria-label="Confirm edit"
-        >
-          ✔︎
-        </button>
-        <button
-          type="button"
-          className="it-cancel-btn"
-          onClick={() => meta.onCancelEdit(row.original.id, column.id)}
-          aria-label="Cancel edit"
-        >
-          ✗
-        </button>
-      </span>
-    );
-  }
-  return (
-    <span
-      className="it-editable"
-      role="button"
-      tabIndex={0}
-      aria-label={`Edit parent for ${row.original.name}`}
-      onClick={() =>
-        meta.onBeginEdit(row.original.id, column.id, row.original.parent_id ?? "")
-      }
-      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-        if (e.key === "Enter" || e.key === " ")
-          meta.onBeginEdit(row.original.id, column.id, row.original.parent_id ?? "");
-      }}
-    >
-      {display}
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Select-all checkbox (needs useRef for indeterminate state)
-// ---------------------------------------------------------------------------
-
-function SelectAllCheckbox({ table }: { table: Table<IngredientRow> }) {
-  const meta = table.options.meta!;
-  const all_ids = table
-    .getFilteredRowModel()
-    .flatRows.filter((r) => !r.getIsGrouped())
-    .map((r) => r.original.id);
-  const ref = useRef<HTMLInputElement>(null);
-  const all_selected = all_ids.length > 0 && all_ids.every((id) => meta.selected_ids.has(id));
-  const some_selected = all_ids.some((id) => meta.selected_ids.has(id));
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.indeterminate = some_selected && !all_selected;
+function filterNodes(
+  nodes: TreeNode[],
+  name_q: string,
+  type_q: string[],
+  label_q: string[],
+): TreeNode[] {
+  const result: TreeNode[] = [];
+  for (const node of nodes) {
+    const row = node.data as IngredientRow;
+    const filtered_children = filterNodes(node.children ?? [], name_q, type_q, label_q);
+    const name_ok = name_q === "" || rowNameMatches(row, name_q.toLowerCase());
+    const type_ok = type_q.length === 0 || type_q.includes(row.default_measurement_type);
+    const label_ok = label_q.length === 0 || label_q.some((l) => row.labels.includes(l));
+    if ((name_ok && type_ok && label_ok) || filtered_children.length > 0) {
+      result.push({
+        ...node,
+        children: filtered_children.length > 0 ? filtered_children : node.children,
+      });
     }
-  }, [some_selected, all_selected]);
+  }
+  return result;
+}
 
-  return (
-    <input
-      ref={ref}
-      type="checkbox"
-      checked={all_selected}
-      onChange={() => meta.onToggleSelectAll(all_ids)}
-      aria-label="Select all ingredients"
-    />
-  );
+function extractSelectedIds(keys: TreeTableSelectionKeysType): IngredientId[] {
+  const ids: IngredientId[] = [];
+  for (const [key, val] of Object.entries(keys)) {
+    if (typeof val === "object" && val !== null && val.checked === true) {
+      ids.push(key as IngredientId);
+    }
+  }
+  return ids;
 }
 
 // ---------------------------------------------------------------------------
-// Column header
-// ---------------------------------------------------------------------------
-
-interface ColumnHeaderProps {
-  readonly header: Header<IngredientRow, unknown>;
-  readonly all_labels: readonly string[];
-}
-
-function ColumnHeader({ header, all_labels }: ColumnHeaderProps) {
-  const col = header.column;
-  const sorted = col.getIsSorted();
-  const is_grouped = col.getIsGrouped();
-  const filter_value = col.getFilterValue();
-  const filter_str = typeof filter_value === "string" ? filter_value : "";
-
-  return (
-    <div className="it-col-header">
-      <div className="it-col-title">
-        {col.getCanSort() ? (
-          <button
-            type="button"
-            className="it-sort-btn"
-            onClick={col.getToggleSortingHandler()}
-            aria-label={`Sort by ${col.id}`}
-          >
-            {flexRender(col.columnDef.header, header.getContext())}
-            <span className="it-sort-icon" aria-hidden>
-              {sorted === "asc" ? " ↑" : sorted === "desc" ? " ↓" : " ↕"}
-            </span>
-          </button>
-        ) : (
-          <span>{flexRender(col.columnDef.header, header.getContext())}</span>
-        )}
-        {col.getCanGroup() && (
-          <button
-            type="button"
-            className={`it-group-btn${is_grouped ? " it-group-btn--on" : ""}`}
-            onClick={col.getToggleGroupingHandler()}
-            aria-label={`${is_grouped ? "Ungroup" : "Group"} by ${col.id}`}
-            title={is_grouped ? "Remove grouping" : "Group by this column"}
-          >
-            {is_grouped ? "⊟" : "⊞"}
-          </button>
-        )}
-      </div>
-      {col.getCanFilter() && (
-        <div className="it-filter-row">
-          {col.id === "default_measurement_type" ? (
-            <MultiSelectFilter
-              column={col}
-              all_options={MEASUREMENT_TYPES}
-              aria_label="Filter by type"
-            />
-          ) : col.id === "labels" ? (
-            <MultiSelectFilter
-              column={col}
-              all_options={all_labels}
-              aria_label="Filter by labels"
-            />
-          ) : (
-            <input
-              type="text"
-              className="it-text-filter"
-              value={filter_str}
-              onChange={(e) => col.setFilterValue(e.target.value || undefined)}
-              placeholder="Filter…"
-              aria-label={col.id === "name" ? "Filter by name" : `Filter by ${col.id}`}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Column definitions (static — dynamic data passed via meta / ColumnHeader props)
-// ---------------------------------------------------------------------------
-
-const col = createColumnHelper<IngredientRow>();
-
-const COLUMNS = [
-  col.display({
-    id: "select",
-    enableSorting: false,
-    enableGrouping: false,
-    enableColumnFilter: false,
-    header: ({ table }) => <SelectAllCheckbox table={table} />,
-    cell: ({ row, table }) => {
-      if (row.getIsGrouped()) return null;
-      const meta = table.options.meta!;
-      return (
-        <input
-          type="checkbox"
-          checked={meta.selected_ids.has(row.original.id)}
-          onChange={() => meta.onToggleSelect(row.original.id)}
-          aria-label={`Select ${row.original.name}`}
-        />
-      );
-    },
-  }),
-  col.display({
-    id: "expand",
-    enableSorting: false,
-    enableGrouping: false,
-    enableColumnFilter: false,
-    header: () => null,
-    cell: ({ row }) => {
-      const can = row.getCanExpand();
-      const open = row.getIsExpanded();
-      const name = row.getIsGrouped() ? "group" : row.original.name;
-      return (
-        <div
-          className="it-expand-cell"
-          style={row.getIsGrouped() ? undefined : { paddingLeft: `${row.depth * 1.5}em` }}
-        >
-          {can ? (
-            <button
-              type="button"
-              className="it-expand-btn"
-              onClick={row.getToggleExpandedHandler()}
-              aria-label={`${open ? "Collapse" : "Expand"} ${name}`}
-            >
-              {open ? "▼" : "▶"}
-            </button>
-          ) : (
-            <span className="it-expand-spacer" aria-hidden />
-          )}
-        </div>
-      );
-    },
-  }),
-  col.accessor("name", {
-    header: "Name",
-    filterFn: "nameRecursiveFuzzy",
-    enableGrouping: true,
-    cell: NameCell,
-  }),
-  col.accessor("default_measurement_type", {
-    header: "Type",
-    filterFn: "multiSelect",
-    enableGrouping: true,
-    cell: TypeCell,
-  }),
-  col.accessor((row) => row.labels, {
-    id: "labels",
-    header: "Labels",
-    filterFn: "multiSelect",
-    enableGrouping: false,
-    enableSorting: false,
-    cell: LabelsCell,
-  }),
-  col.accessor("parent_name", {
-    header: "Parent",
-    enableColumnFilter: false,
-    enableGrouping: true,
-    cell: ParentCell,
-  }),
-];
-
-// ---------------------------------------------------------------------------
-// Main component
+// Props
 // ---------------------------------------------------------------------------
 
 export interface IngredientsTableProps {
@@ -559,6 +120,10 @@ export interface IngredientsTableProps {
   ) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
 export function IngredientsTable({
   ingredients,
   labels,
@@ -572,12 +137,12 @@ export function IngredientsTable({
   onBulkSetType,
   onBulkSetParent,
 }: IngredientsTableProps) {
-  const [column_filters, set_column_filters] = useState<ColumnFiltersState>([]);
-  const [sorting, set_sorting] = useState<SortingState>([]);
-  const [grouping, set_grouping] = useState<GroupingState>([]);
-  const [expanded, set_expanded] = useState<ExpandedState>({});
+  const [expanded_keys, set_expanded_keys] = useState<TreeTableExpandedKeysType>({});
+  const [selection_keys, set_selection_keys] = useState<TreeTableSelectionKeysType>({});
   const [pending_edits, set_pending_edits] = useState<ReadonlyMap<string, string>>(new Map());
-  const [selected_ids, set_selected_ids] = useState<ReadonlySet<IngredientId>>(new Set());
+  const [name_filter, set_name_filter] = useState("");
+  const [type_filter, set_type_filter] = useState<string[]>([]);
+  const [label_filter, set_label_filter] = useState<string[]>([]);
   const [bulk_add_labels, set_bulk_add_labels] = useState<readonly string[]>([]);
   const [bulk_remove_labels, set_bulk_remove_labels] = useState<readonly string[]>([]);
   const [bulk_type, set_bulk_type] = useState("");
@@ -585,7 +150,6 @@ export function IngredientsTable({
 
   const all_label_names = useMemo(() => labels.map((l) => l.name).sort(), [labels]);
 
-  // Apply external label filter from LabelTable before building tree
   const filtered_ingredients = useMemo(() => {
     if (!external_label_filter || external_label_filter.label_ids.length === 0) {
       return ingredients;
@@ -597,20 +161,38 @@ export function IngredientsTable({
     });
   }, [ingredients, external_label_filter]);
 
-  const data = useMemo(
-    () => buildIngredientTree(filtered_ingredients, labels),
-    [filtered_ingredients, labels],
+  const tree_nodes = useMemo(() => {
+    const rows = buildIngredientTree(filtered_ingredients, labels);
+    return rows.map(toTreeNode);
+  }, [filtered_ingredients, labels]);
+
+  const visible_nodes = useMemo(
+    () => filterNodes(tree_nodes, name_filter, type_filter, label_filter),
+    [tree_nodes, name_filter, type_filter, label_filter],
   );
 
-  // Auto-expand rows when a name filter is active so matching children are visible
+  // Auto-expand all nodes when name filter is active so matched children are visible
   useEffect(() => {
-    const name_filter = column_filters.find((f) => f.id === "name")?.value;
-    if (typeof name_filter === "string" && name_filter !== "") {
-      set_expanded(true);
+    if (name_filter !== "") {
+      const all_keys: TreeTableExpandedKeysType = {};
+      function collectKeys(nodes: TreeNode[]) {
+        for (const n of nodes) {
+          if (n.children && n.children.length > 0) {
+            all_keys[String(n.key)] = true;
+            collectKeys(n.children);
+          }
+        }
+      }
+      collectKeys(tree_nodes);
+      set_expanded_keys(all_keys);
     } else {
-      set_expanded({});
+      set_expanded_keys({});
     }
-  }, [column_filters]);
+  }, [name_filter, tree_nodes]);
+
+  // ---------------------------------------------------------------------------
+  // Edit handlers
+  // ---------------------------------------------------------------------------
 
   function onBeginEdit(ingredient_id: IngredientId, col_id: string, initial: string): void {
     set_pending_edits((prev) => new Map(prev).set(pkey(ingredient_id, col_id), initial));
@@ -649,79 +231,238 @@ export function IngredientsTable({
   }
 
   function onCancelEdit(ingredient_id: IngredientId, col_id: string): void {
-    const key = pkey(ingredient_id, col_id);
     set_pending_edits((prev) => {
       const next = new Map(prev);
-      next.delete(key);
+      next.delete(pkey(ingredient_id, col_id));
       return next;
     });
   }
 
-  function toggleSelect(id: IngredientId): void {
-    set_selected_ids((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  // ---------------------------------------------------------------------------
+  // Column body templates
+  // ---------------------------------------------------------------------------
+
+  function nameBody(node: TreeNode) {
+    const row = node.data as IngredientRow;
+    const pending = pending_edits.get(pkey(row.id, "name"));
+    if (pending !== undefined) {
+      return (
+        <span className="it-editing">
+          <input
+            type="text"
+            value={pending}
+            className="it-edit-input"
+            autoFocus
+            aria-label={`Edit name for ${row.name}`}
+            onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
+            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === "Enter") onCommitEdit(row.id, "name");
+              if (e.key === "Escape") onCancelEdit(row.id, "name");
+            }}
+          />
+          <button
+            type="button"
+            className="it-confirm-btn"
+            onClick={() => onCommitEdit(row.id, "name")}
+            aria-label="Confirm edit"
+          >
+            ✔︎
+          </button>
+          <button
+            type="button"
+            className="it-cancel-btn"
+            onClick={() => onCancelEdit(row.id, "name")}
+            aria-label="Cancel edit"
+          >
+            ✗
+          </button>
+        </span>
+      );
+    }
+    return (
+      <span
+        className="it-editable"
+        role="button"
+        tabIndex={0}
+        aria-label={`Edit name for ${row.name}`}
+        onClick={() => onBeginEdit(row.id, "name", row.name)}
+        onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+          if (e.key === "Enter" || e.key === " ") onBeginEdit(row.id, "name", row.name);
+        }}
+      >
+        {row.name}
+      </span>
+    );
   }
 
-  function toggleSelectAll(ids: readonly IngredientId[]): void {
-    set_selected_ids((prev) => {
-      const all_selected = ids.length > 0 && ids.every((id) => prev.has(id));
-      const next = new Set(prev);
-      if (all_selected) {
-        for (const id of ids) next.delete(id);
-      } else {
-        for (const id of ids) next.add(id);
-      }
-      return next;
-    });
+  function typeBody(node: TreeNode) {
+    const row = node.data as IngredientRow;
+    const pending = pending_edits.get(pkey(row.id, "default_measurement_type"));
+    if (pending !== undefined) {
+      return (
+        <span className="it-editing">
+          <select
+            value={pending}
+            autoFocus
+            aria-label={`Edit type for ${row.name}`}
+            onChange={(e) => onUpdateEdit(row.id, "default_measurement_type", e.target.value)}
+            onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
+              if (e.key === "Escape") onCancelEdit(row.id, "default_measurement_type");
+            }}
+          >
+            {MEASUREMENT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="it-confirm-btn"
+            onClick={() => onCommitEdit(row.id, "default_measurement_type")}
+            aria-label="Confirm edit"
+          >
+            ✔︎
+          </button>
+          <button
+            type="button"
+            className="it-cancel-btn"
+            onClick={() => onCancelEdit(row.id, "default_measurement_type")}
+            aria-label="Cancel edit"
+          >
+            ✗
+          </button>
+        </span>
+      );
+    }
+    return (
+      <span
+        className="it-editable"
+        role="button"
+        tabIndex={0}
+        aria-label={`Edit type for ${row.name}`}
+        onClick={() =>
+          onBeginEdit(row.id, "default_measurement_type", row.default_measurement_type)
+        }
+        onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+          if (e.key === "Enter" || e.key === " ")
+            onBeginEdit(row.id, "default_measurement_type", row.default_measurement_type);
+        }}
+      >
+        {row.default_measurement_type}
+      </span>
+    );
   }
 
-  const table = useReactTable({
-    data,
-    columns: COLUMNS,
-    state: { columnFilters: column_filters, sorting, grouping, expanded },
-    onColumnFiltersChange: set_column_filters,
-    onSortingChange: set_sorting,
-    onGroupingChange: set_grouping,
-    onExpandedChange: set_expanded,
-    getSubRows: (row) => row.subRows,
-    autoResetExpanded: false,
-    filterFns: { fuzzyText, multiSelect, nameRecursiveFuzzy },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getGroupedRowModel: getGroupedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    meta: {
-      pending_edits: pending_edits,
-      onBeginEdit,
-      onUpdateEdit,
-      onCommitEdit,
-      onCancelEdit,
-      all_ingredients: ingredients,
-      all_label_names: all_label_names,
-      selected_ids,
-      onToggleSelect: toggleSelect,
-      onToggleSelectAll: toggleSelectAll,
-    },
-  });
+  function labelsBody(node: TreeNode) {
+    const row = node.data as IngredientRow;
+    const pending = pending_edits.get(pkey(row.id, "labels"));
+    const display = row.labels.join(", ");
+    if (pending !== undefined) {
+      return (
+        <LabelEditor
+          selected_label_names={parseLabels(pending)}
+          all_label_names={all_label_names}
+          aria_label={`Edit labels for ${row.name}`}
+          onChange={(names) => onUpdateEdit(row.id, "labels", names.join(", "))}
+          onCommit={() => onCommitEdit(row.id, "labels")}
+          onCancel={() => onCancelEdit(row.id, "labels")}
+        />
+      );
+    }
+    return (
+      <span
+        className="it-editable"
+        role="button"
+        tabIndex={0}
+        aria-label={`Edit labels for ${row.name}`}
+        onClick={() => onBeginEdit(row.id, "labels", display)}
+        onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+          if (e.key === "Enter" || e.key === " ") onBeginEdit(row.id, "labels", display);
+        }}
+      >
+        {display || <span className="it-muted">—</span>}
+      </span>
+    );
+  }
 
-  const rows = table.getRowModel().rows;
-  const selected_array = [...selected_ids];
+  function parentBody(node: TreeNode) {
+    const row = node.data as IngredientRow;
+    const pending = pending_edits.get(pkey(row.id, "parent_name"));
+    const display = row.parent_name || "—";
+    if (pending !== undefined) {
+      return (
+        <span className="it-editing">
+          <select
+            value={pending}
+            autoFocus
+            aria-label={`Edit parent for ${row.name}`}
+            onChange={(e) => onUpdateEdit(row.id, "parent_name", e.target.value)}
+            onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
+              if (e.key === "Escape") onCancelEdit(row.id, "parent_name");
+            }}
+          >
+            <option value="">— None —</option>
+            {ingredients
+              .filter((i) => i.id !== row.id)
+              .map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+          </select>
+          <button
+            type="button"
+            className="it-confirm-btn"
+            onClick={() => onCommitEdit(row.id, "parent_name")}
+            aria-label="Confirm edit"
+          >
+            ✔︎
+          </button>
+          <button
+            type="button"
+            className="it-cancel-btn"
+            onClick={() => onCancelEdit(row.id, "parent_name")}
+            aria-label="Cancel edit"
+          >
+            ✗
+          </button>
+        </span>
+      );
+    }
+    return (
+      <span
+        className="it-editable"
+        role="button"
+        tabIndex={0}
+        aria-label={`Edit parent for ${row.name}`}
+        onClick={() => onBeginEdit(row.id, "parent_name", row.parent_id ?? "")}
+        onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+          if (e.key === "Enter" || e.key === " ")
+            onBeginEdit(row.id, "parent_name", row.parent_id ?? "");
+        }}
+      >
+        {display}
+      </span>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bulk actions
+  // ---------------------------------------------------------------------------
+
+  const selected_ids = useMemo(() => extractSelectedIds(selection_keys), [selection_keys]);
 
   function applyAddLabels(): void {
     if (bulk_add_labels.length > 0) {
-      onAddLabels(selected_array, bulk_add_labels);
+      onAddLabels(selected_ids, bulk_add_labels);
       set_bulk_add_labels([]);
     }
   }
 
   function applyRemoveLabels(): void {
     if (bulk_remove_labels.length > 0) {
-      onRemoveLabels(selected_array, bulk_remove_labels);
+      onRemoveLabels(selected_ids, bulk_remove_labels);
       set_bulk_remove_labels([]);
     }
   }
@@ -729,30 +470,33 @@ export function IngredientsTable({
   function applyBulkType(): void {
     const type = validateType(bulk_type);
     if (type !== undefined) {
-      onBulkSetType(selected_array, type);
+      onBulkSetType(selected_ids, type);
       set_bulk_type("");
     }
   }
 
   function applyBulkParent(): void {
     if (bulk_parent_id === "__none__") {
-      onBulkSetParent(selected_array, undefined);
+      onBulkSetParent(selected_ids, undefined);
     } else if (bulk_parent_id !== "") {
-      // TODO: validate parent ID matches a real id?
-      onBulkSetParent(selected_array, bulk_parent_id as IngredientId);
+      onBulkSetParent(selected_ids, loadId(IngredientId, bulk_parent_id));
     }
     set_bulk_parent_id("");
   }
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
     <div className="it-wrapper" role="region" aria-label="Ingredient list">
-      {selected_ids.size > 0 && (
+      {selected_ids.length > 0 && (
         <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
-          <span className="it-bulk-count">{selected_ids.size} selected</span>
+          <span className="it-bulk-count">{selected_ids.length} selected</span>
           <button
             type="button"
             className="it-bulk-clear"
-            onClick={() => set_selected_ids(new Set())}
+            onClick={() => set_selection_keys({})}
           >
             Clear
           </button>
@@ -838,85 +582,57 @@ export function IngredientsTable({
         </div>
       )}
 
-      <table className="it-table">
-        <thead>
-          {table.getHeaderGroups().map((hg) => (
-            <tr key={hg.id}>
-              {hg.headers.map((h) => (
-                <th key={h.id} className="it-th">
-                  {h.isPlaceholder ||
-                    h.column.id === "expand" ||
-                    h.column.id === "select" ? (
-                    flexRender(h.column.columnDef.header, h.getContext())
-                  ) : (
-                    <ColumnHeader header={h} all_labels={all_label_names} />
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={COLUMNS.length} className="it-empty">
-                No ingredients match the current filter.
-              </td>
-            </tr>
-          ) : (
-            rows.map((row) => {
-              const is_selected = !row.getIsGrouped() && selected_ids.has(row.original.id);
-              return (
-                <tr
-                  key={row.id}
-                  className={[
-                    row.getIsGrouped() ? "it-row--group" : "",
-                    is_selected ? "it-row--selected" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    if (cell.column.id === "select") {
-                      return (
-                        <td key={cell.id} className="it-td it-td--select">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      );
-                    }
-                    if (cell.column.id === "expand") {
-                      return (
-                        <td key={cell.id} className="it-td it-td--expand">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      );
-                    }
-                    if (row.getIsGrouped()) {
-                      if (cell.getIsGrouped()) {
-                        return (
-                          <td key={cell.id} className="it-td it-td--group-value">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            <span className="it-group-count"> ({row.subRows.length})</span>
-                          </td>
-                        );
-                      }
-                      return <td key={cell.id} className="it-td" />;
-                    }
-                    if (grouping.length > 0 && (cell.getIsPlaceholder() || cell.getIsAggregated())) {
-                      return <td key={cell.id} className="it-td" />;
-                    }
-                    return (
-                      <td key={cell.id} className="it-td">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+      <div className="it-filter-bar">
+        <input
+          type="text"
+          className="it-name-filter"
+          value={name_filter}
+          onChange={(e) => set_name_filter(e.target.value)}
+          placeholder="Filter by name…"
+          aria-label="Filter by name"
+        />
+        <div className="it-filter-cell">
+          <MultiSelectFilter
+            value={type_filter}
+            onChange={set_type_filter}
+            all_options={MEASUREMENT_TYPES}
+            aria_label="Filter by type"
+          />
+        </div>
+        <div className="it-filter-cell">
+          <MultiSelectFilter
+            value={label_filter}
+            onChange={set_label_filter}
+            all_options={all_label_names}
+            aria_label="Filter by labels"
+          />
+        </div>
+      </div>
+
+      <TreeTable
+        value={visible_nodes}
+        expandedKeys={expanded_keys}
+        onToggle={(e) => set_expanded_keys(e.value)}
+        selectionMode="checkbox"
+        selectionKeys={selection_keys}
+        onSelectionChange={(e) => {
+          if (typeof e.value === "object" && e.value !== null && !Array.isArray(e.value)) {
+            set_selection_keys(e.value as TreeTableSelectionKeysType);
+          }
+        }}
+        tableClassName="it-table"
+        emptyMessage="No ingredients match the current filter."
+      >
+        <Column field="name" header="Name" expander sortable body={nameBody} />
+        <Column
+          field="default_measurement_type"
+          header="Type"
+          sortable
+          body={typeBody}
+        />
+        <Column field="labels" header="Labels" body={labelsBody} />
+        <Column field="parent_name" header="Parent" sortable body={parentBody} />
+      </TreeTable>
     </div>
   );
 }

@@ -266,7 +266,7 @@ npm run lint
 - [x] ProfileSettingsPage (rename user, persists to localStorage)
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
 - [x] `useIngredientStore` hook + DocContext (React)
-- [x] Ingredients Page — TanStack Table v8 tree view (expandable parent→child), column filters (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, groupable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), row checkboxes with select-all, bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
+- [x] Ingredients Page — PrimeReact TreeTable tree view (expandable parent→child), filter bar above table (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), PrimeReact checkbox selection with bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
 - [x] `ItemLabel` type with branded `ItemLabelId` (7-char nanoid); `ItemKind`-scoped labels stored in `"labels"` Yjs map
 - [x] Branded IDs for all item types via `ts-brand` + TypeScript declaration merging (`IngredientId`, `ContainerId`, `EquipmentId`, `ItemLabelId`)
 - [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `useLabelStore` React hook with cascade-delete observer and transactional merge
@@ -286,6 +286,7 @@ npm run lint
 - [x] `useRecipeStore` and `useRecipeFolderStore` React hooks — Yjs-reactive stores for recipes and folders
 - [x] ESLint config updated — `varsIgnorePattern: "^_"`, `ignoreRestSiblings: true` for destructure-discard patterns; removed `rules-of-hooks` override for hooks/contexts (now that hooks are camelCase)
 - [x] All snake_case function names renamed to camelCase — `randomId`, `loadId`, `addFractions`, `getIngredients`, `useIngredientStore`, `buildFolderTree`, etc.; callback props renamed to camelCase (`onChange`, `onSave`, `onCancel`); file names remain snake_case
+- [x] `IngredientsTable` migrated from `@tanstack/react-table` to PrimeReact `TreeTable` — removed grouping (no built-in equivalent), standalone `MultiSelectFilter` (no longer coupled to TanStack's `Column` type), filter bar above table instead of column-header filters, PrimeReact lara-light-indigo theme with CSS variable overrides to match the e-ink design system
 
 ---
 

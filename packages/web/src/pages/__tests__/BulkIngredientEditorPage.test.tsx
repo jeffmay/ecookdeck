@@ -110,17 +110,24 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
   });
 });
 
+async function selectButterRow() {
+  await setupAndWait();
+  // Find the row containing "Butter" and click its checkbox
+  const butter_cell = screen.getByText("Butter");
+  const butter_row = butter_cell.closest("tr")!;
+  const checkbox = within(butter_row).getAllByRole("checkbox")[0]!;
+  await userEvent.click(checkbox);
+}
+
 describe("BulkIngredientEditorPage — bulk actions", () => {
   it("shows bulk action bar after selecting a row", async () => {
-    await setupAndWait();
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
+    await selectButterRow();
     expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
   it("bulk add labels clears the selection after apply", async () => {
-    await setupAndWait();
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
+    await selectButterRow();
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "organic");
     await userEvent.click(await screen.findByText(/Create "organic"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
@@ -128,8 +135,7 @@ describe("BulkIngredientEditorPage — bulk actions", () => {
   });
 
   it("bulk remove labels clears the selection after apply", async () => {
-    await setupAndWait();
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
+    await selectButterRow();
     // "fat" already exists as a label — select it from the dropdown (no Create needed)
     await userEvent.click(screen.getByRole("combobox", { name: "Labels to remove" }));
     await userEvent.click(await screen.findByRole("option", { name: "fat" }));
