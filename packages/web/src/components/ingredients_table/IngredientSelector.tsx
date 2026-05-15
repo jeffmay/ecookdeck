@@ -1,4 +1,4 @@
-import { type IngredientId, type Ingredient, type KitchenwareLabel } from "@recipe-book/shared";
+import { IngredientId, loadId, type Ingredient, type KitchenwareLabel } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo } from "react";
@@ -32,7 +32,7 @@ export function IngredientSelector({
   placeholder = "— None —",
 }: IngredientSelectorProps) {
   const tree_nodes = useMemo(
-    () => buildIngredientTree(options as Ingredient[], labels as KitchenwareLabel[]).map(rowToNode),
+    () => buildIngredientTree(options, labels).map(rowToNode),
     [options, labels],
   );
 
@@ -41,7 +41,7 @@ export function IngredientSelector({
     if (v === null || v === undefined || v === "") {
       onChange(undefined);
     } else if (typeof v === "string") {
-      onChange(v as IngredientId);
+      onChange(loadId(IngredientId, v));
     }
   }
 

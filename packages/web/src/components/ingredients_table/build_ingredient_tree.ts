@@ -1,4 +1,4 @@
-import type { Ingredient, IngredientId, KitchenwareLabel, Measurement } from "@recipe-book/shared";
+import type { Ingredient, IngredientId, KitchenwareLabel, KitchenwareLabelId, Measurement } from "@recipe-book/shared";
 import { ReadonlyDeep } from "type-fest";
 
 export interface IngredientRow {
@@ -16,10 +16,10 @@ export function buildIngredientTree(
   ingredients: ReadonlyDeep<Ingredient[]>,
   item_labels: ReadonlyDeep<KitchenwareLabel[]>,
 ): IngredientRow[] {
-  const label_name_by_id = new Map<string, string>(item_labels.map((l) => [l.id, l.name]));
-  const id_to_name = new Map<string, string>(ingredients.map((i) => [i.id, i.name]));
+  const label_name_by_id = new Map<KitchenwareLabelId, string>(item_labels.map((l) => [l.id, l.name]));
+  const ingredient_name_by_id = new Map<IngredientId, string>(ingredients.map((i) => [i.id, i.name]));
 
-  const row_map = new Map<string, IngredientRow>();
+  const row_map = new Map<IngredientId, IngredientRow>();
 
   for (const i of ingredients) {
     const label_names = [...i.labels]
@@ -32,7 +32,7 @@ export function buildIngredientTree(
       default_measurement_value: i.default_measurement_value,
       labels: label_names,
       parent_name:
-        i.parent_id !== undefined ? (id_to_name.get(i.parent_id) ?? i.parent_id) : "",
+        i.parent_id !== undefined ? (ingredient_name_by_id.get(i.parent_id) ?? i.parent_id) : "",
       subRows: [],
       ...(i.parent_id !== undefined && { parent_id: i.parent_id }),
     };

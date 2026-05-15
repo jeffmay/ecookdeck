@@ -1,8 +1,8 @@
-import type { Ingredient, IngredientId, KitchenwareLabelId } from "@recipe-book/shared";
+import { IngredientId, KitchenwareLabelId, paddedId, type Ingredient } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
+import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IngredientsTable } from "../IngredientsTable.js";
 
@@ -50,35 +50,35 @@ vi.mock("primereact/treeselect", () => ({
   },
 }));
 
-const DAIRY: Ingredient = {
+const DAIRY = {
   kind: "ingredient",
-  id: "dairy" as IngredientId,
+  id: paddedId(IngredientId, "dairy"),
   name: "Dairy",
-  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
   labels: new Set<KitchenwareLabelId>(),
-};
-const BUTTER: Ingredient = {
+} as const satisfies Ingredient;
+const BUTTER = {
   kind: "ingredient",
-  id: "butter" as IngredientId,
+  id: paddedId(IngredientId, "butter"),
   name: "Butter",
-  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
-  labels: new Set(["fat0000" as KitchenwareLabelId, "sol0000" as KitchenwareLabelId]),
-  parent_id: "dairy" as IngredientId,
-};
-const FLOUR: Ingredient = {
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
+  labels: new Set([paddedId(KitchenwareLabelId, "fat"), paddedId(KitchenwareLabelId, "sol")]),
+  parent_id: paddedId(IngredientId, "dairy"),
+} as const satisfies Ingredient;
+const FLOUR = {
   kind: "ingredient",
-  id: "flour" as IngredientId,
+  id: paddedId(IngredientId, "flour"),
   name: "Flour",
-  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
-  labels: new Set(["bak0000" as KitchenwareLabelId]),
-};
-const CHEESE: Ingredient = {
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
+  labels: new Set([paddedId(KitchenwareLabelId, "bak")]),
+} as const satisfies Ingredient;
+const CHEESE = {
   kind: "ingredient",
-  id: "cheese" as IngredientId,
+  id: paddedId(IngredientId, "cheese"),
   name: "Cheese",
-  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" as const },
-  labels: new Set(["sol0000" as KitchenwareLabelId]),
-};
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" },
+  labels: new Set([paddedId(KitchenwareLabelId, "sol")]),
+} as const satisfies Ingredient;
 
 const onRename = vi.fn();
 const onSetMeasurementValue = vi.fn();
@@ -130,7 +130,7 @@ describe("IngredientsTable — rendering", () => {
   it("renders column headers", () => {
     setup();
     expect(screen.getByText("Name")).toBeInTheDocument();
-    expect(screen.getByText("Default")).toBeInTheDocument();
+    expect(screen.getByText("Default Value")).toBeInTheDocument();
     expect(screen.getByText("Parent")).toBeInTheDocument();
   });
 
@@ -253,7 +253,7 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "Bread Flour");
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(onRename).toHaveBeenCalledWith("flour", "Bread Flour");
+    expect(onRename).toHaveBeenCalledWith(FLOUR.id, "Bread Flour");
   });
 
   it("confirms name edit on Enter key", async () => {
@@ -263,7 +263,7 @@ describe("IngredientsTable — editable cells", () => {
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.clear(input);
     await userEvent.type(input, "Rice Flour{Enter}");
-    expect(onRename).toHaveBeenCalledWith("flour", "Rice Flour");
+    expect(onRename).toHaveBeenCalledWith(FLOUR.id, "Rice Flour");
   });
 
   it("cancels edit on ✗ button click without calling callback", async () => {
@@ -292,7 +292,7 @@ describe("IngredientsTable — editable cells", () => {
     await screen.findByRole("button", { name: "Edit default measurement for Flour" });
     await userEvent.click(screen.getByRole("button", { name: "Edit default measurement for Flour" }));
     await userEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(onSetMeasurementValue).toHaveBeenCalledWith("flour", expect.objectContaining({ unit: "cup" }));
+    expect(onSetMeasurementValue).toHaveBeenCalledWith(FLOUR.id, expect.objectContaining({ unit: "cup" }));
   });
 
   it("calls onSetLabels when committing labels edit", async () => {
@@ -303,7 +303,7 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.type(input, "baking");
     await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(onSetLabels).toHaveBeenCalledWith("dairy", ["baking"]);
+    expect(onSetLabels).toHaveBeenCalledWith(DAIRY.id, ["baking"]);
   });
 });
 
@@ -360,7 +360,7 @@ describe("IngredientsTable — bulk actions", () => {
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "fresh");
     await userEvent.click(await screen.findByText(/Create "fresh"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
-    expect(onAddLabels).toHaveBeenCalledWith(["flour"], ["organic", "fresh"]);
+    expect(onAddLabels).toHaveBeenCalledWith([FLOUR.id], ["organic", "fresh"]);
   });
 
   it("calls onRemoveLabels with selected ids and created labels", async () => {
@@ -368,27 +368,27 @@ describe("IngredientsTable — bulk actions", () => {
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to remove" }), "baking");
     await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
-    expect(onRemoveLabels).toHaveBeenCalledWith(["flour"], ["baking"]);
+    expect(onRemoveLabels).toHaveBeenCalledWith([FLOUR.id], ["baking"]);
   });
 
   it("calls onBulkSetMeasurementValue when measurement is committed", async () => {
     await selectFlour();
     await userEvent.click(screen.getByRole("button", { name: "Edit measurement" }));
     await userEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(onBulkSetMeasurementValue).toHaveBeenCalledWith(["flour"], expect.objectContaining({ unit: "cup" }));
+    expect(onBulkSetMeasurementValue).toHaveBeenCalledWith([FLOUR.id], expect.objectContaining({ unit: "cup" }));
   });
 
   it("calls onBulkSetParent when parent is selected and applied", async () => {
     await selectFlour();
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Bulk parent" }), "cheese");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Bulk parent" }), CHEESE.id);
     await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
-    expect(onBulkSetParent).toHaveBeenCalledWith(["flour"], "cheese");
+    expect(onBulkSetParent).toHaveBeenCalledWith([FLOUR.id], CHEESE.id);
   });
 
   it("calls onBulkSetParent with undefined when Clear parent is clicked", async () => {
     await selectFlour();
     await userEvent.click(screen.getByRole("button", { name: "Clear parent" }));
-    expect(onBulkSetParent).toHaveBeenCalledWith(["flour"], undefined);
+    expect(onBulkSetParent).toHaveBeenCalledWith([FLOUR.id], undefined);
   });
 
   it("Add labels Apply button is disabled when no labels selected", async () => {
