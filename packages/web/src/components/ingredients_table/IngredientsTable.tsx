@@ -11,6 +11,7 @@ import {
 } from "@recipe-book/shared";
 import { Column } from "primereact/column";
 import type { TreeNode } from "primereact/treenode";
+import type { type } from 'arktype';
 import {
   TreeTable,
   type TreeTableExpandedKeysType,
@@ -55,8 +56,10 @@ function formatMeasurement(m: Measurement): string {
   return `${val} ${UNIT_LABELS[m.unit]}`;
 }
 
-function pkey(ingredient_id: IngredientId, col_id: string): string {
-  return `${ingredient_id}|${col_id}`;
+type PKey = type.brand<string, "pkey">
+
+function pkey(ingredient_id: IngredientId, col_id: string): PKey {
+  return `${ingredient_id}|${col_id}` as PKey;
 }
 
 function parseLabels(raw: string): string[] {
@@ -156,7 +159,7 @@ export function IngredientsTable({
 }: IngredientsTableProps) {
   const [expanded_keys, set_expanded_keys] = useState<TreeTableExpandedKeysType>({});
   const [selection_keys, set_selection_keys] = useState<TreeTableSelectionKeysType>({});
-  const [pending_edits, set_pending_edits] = useState<ReadonlyMap<string, string>>(new Map());
+  const [pending_edits, set_pending_edits] = useState<ReadonlyMap<PKey, string>>(new Map());
   const [name_filter, set_name_filter] = useState("");
   const [type_filter, set_type_filter] = useState<string[]>([]);
   const [label_filter, set_label_filter] = useState<string[]>([]);
@@ -584,7 +587,7 @@ export function IngredientsTable({
         <Column field="name" header="Name" expander sortable body={nameBody} />
         <Column
           field="default_measurement_value"
-          header="Default"
+          header="Default Value"
           sortable
           body={measurementBody}
         />

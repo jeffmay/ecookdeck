@@ -181,6 +181,7 @@
 
 /* ---- Editable cells ---- */
 .it-editable {
+  margin-left: .5em;
   cursor: pointer;
   display: inline;
   min-width: 4em;
@@ -192,14 +193,13 @@
 }
 
 .it-editing {
-  display: flex;
-  align-items: center;
+  margin-left: .5em;
+  display: inline-flex;
   gap: 2px;
 }
 
 .it-edit-input {
   font-size: 0.9em;
-  padding: 1px 4px;
   border: var(--border-width) solid var(--color-border);
   font-family: var(--font-body);
   background: var(--color-bg);
