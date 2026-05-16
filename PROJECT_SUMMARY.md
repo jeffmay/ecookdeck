@@ -267,7 +267,7 @@ npm run lint
 - [x] ProfileSettingsPage (rename user, persists to localStorage)
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
 - [x] `useIngredientStore` hook + DocContext (React)
-- [x] Ingredients Page — PrimeReact TreeTable tree view (expandable parent→child), filter bar above table (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), PrimeReact checkbox selection with bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
+- [x] Ingredients Page — PrimeReact TreeTable tree view (expandable parent→child), in-table per-column filter row (text name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), PrimeReact checkbox selection with bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
 - [x] `ItemLabel` type with branded `ItemLabelId` (7-char nanoid); `ItemKind`-scoped labels stored in `"labels"` Yjs map
 - [x] Branded IDs for all item types via `ts-brand` + TypeScript declaration merging (`IngredientId`, `ContainerId`, `EquipmentId`, `ItemLabelId`)
 - [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `useLabelStore` React hook with cascade-delete observer and transactional merge
@@ -301,6 +301,8 @@ npm run lint
 - [x] `IngredientsTable` "Type" column → "Default" — uses `MeasurementEditor` with `initially_open` for inline cell editing; `formatMeasurement` helper; bulk bar uses `MeasurementEditor` instead of type `<select>`; props renamed `onSetMeasurementValue` / `onBulkSetMeasurementValue`
 - [x] `RecipeEditorPage` "+ amount" button opens `MeasurementEditor` in editing mode (via `initially_open`) with cancel support; container selector uses `KitchenwareSelector` (WIP — `COMMON_CONTAINERS` fallback replaced); folder selector wired to `RecipeFolderSelector`
 - [x] `BulkIngredientEditorPage` add-form updated — `MeasurementEditor` replaces measurement type `<select>`; props updated for renamed ingredient store API
+- [x] `IngredientsTable` standalone filter bar replaced by TreeTable's native per-column filter row — name/type/labels filters render as column `filterElement`s in `<th>` cells aligned with their columns; controlled `filters` prop with `filterMode="lenient"` keeps matching descendants' parents visible; custom `filterFunction`s handle the derived measurement-type and array-valued labels columns; table wrapper set to `overflow: visible` so the `MultiSelectFilter` dropdown is not clipped
+- [x] `IngredientSelector` (`TreeSelect`) panel restyle — properly sized search/close/toggler SVG icons (PrimeReact `.p-icon` defaults to `1rem` and squishes in flex containers), repositioned magnifying-glass icon, indented child tree nodes; `MultiSelectFilter` option checkboxes no longer stretched by the global `input { width: 100% }` rule
 
 ---
 

@@ -1,4 +1,11 @@
-import { IngredientId, KitchenwareLabelId, paddedId, type Ingredient } from "@recipe-book/shared";
+import {
+  IngredientId,
+  KitchenwareLabelId,
+  paddedId,
+  type Ingredient,
+  type KitchenwareKind,
+  type KitchenwareLabel,
+} from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
@@ -80,6 +87,17 @@ const CHEESE = {
   labels: new Set([paddedId(KitchenwareLabelId, "sol")]),
 } as const satisfies Ingredient;
 
+const FAT_LABEL = {
+  id: paddedId(KitchenwareLabelId, "fat"),
+  name: "fat",
+  kinds: new Set<KitchenwareKind>(["ingredient"]),
+} as const satisfies KitchenwareLabel;
+const SOLID_LABEL = {
+  id: paddedId(KitchenwareLabelId, "sol"),
+  name: "solid",
+  kinds: new Set<KitchenwareKind>(["ingredient"]),
+} as const satisfies KitchenwareLabel;
+
 const onRename = vi.fn();
 const onSetMeasurementValue = vi.fn();
 const onSetLabels = vi.fn();
@@ -89,11 +107,14 @@ const onRemoveLabels = vi.fn();
 const onBulkSetMeasurementValue = vi.fn();
 const onBulkSetParent = vi.fn();
 
-function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
+function setup(
+  ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE],
+  labels: KitchenwareLabel[] = [],
+) {
   return render(
     <IngredientsTable
       ingredients={ingredients}
-      labels={[]}
+      labels={labels}
       onRename={onRename}
       onSetMeasurementValue={onSetMeasurementValue}
       onSetLabels={onSetLabels}
@@ -214,12 +235,26 @@ describe("IngredientsTable — multi-select filter (type)", () => {
   });
 });
 
+describe("IngredientsTable — multi-select filter (labels)", () => {
+  it("filters by label and keeps matching child's parent", async () => {
+    setup([DAIRY, BUTTER, FLOUR, CHEESE], [FAT_LABEL, SOLID_LABEL]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByLabelText("Filter by labels"));
+    await userEvent.click(screen.getByRole("checkbox", { name: "fat" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept filter" }));
+    expect(screen.getByText("Butter")).toBeInTheDocument();
+    expect(screen.getAllByText("Dairy").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Flour")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cheese")).not.toBeInTheDocument();
+  });
+});
+
 describe("IngredientsTable — sorting", () => {
   it("sorts by name ascending on first click", async () => {
     setup([FLOUR, CHEESE]);
     await screen.findByText("Flour");
     await userEvent.click(screen.getByText("Name"));
-    const rows = screen.getAllByRole("row").slice(1); // skip header row
+    const rows = screen.getAllByRole("row").filter((r) => !r.closest("thead"));
     expect(rows[0]).toHaveTextContent("Cheese");
     expect(rows[1]).toHaveTextContent("Flour");
   });
@@ -229,7 +264,7 @@ describe("IngredientsTable — sorting", () => {
     await screen.findByText("Flour");
     await userEvent.click(screen.getByText("Name"));
     await userEvent.click(screen.getByText("Name"));
-    const rows = screen.getAllByRole("row").slice(1);
+    const rows = screen.getAllByRole("row").filter((r) => !r.closest("thead"));
     expect(rows[0]).toHaveTextContent("Flour");
     expect(rows[1]).toHaveTextContent("Cheese");
   });
