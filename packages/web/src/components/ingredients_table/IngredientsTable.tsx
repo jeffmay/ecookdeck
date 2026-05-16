@@ -11,10 +11,11 @@ import {
 } from "@recipe-book/shared";
 import { Column } from "primereact/column";
 import type { TreeNode } from "primereact/treenode";
-import type { type } from 'arktype';
+import type { type } from "arktype";
 import {
   TreeTable,
   type TreeTableExpandedKeysType,
+  type TreeTableFilterMeta,
   type TreeTableSelectionKeysType,
 } from "primereact/treetable";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
@@ -77,34 +78,24 @@ function toTreeNode(row: IngredientRow): TreeNode {
   };
 }
 
-function rowNameMatches(row: IngredientRow, query: string): boolean {
-  if (row.name.toLowerCase().includes(query)) return true;
-  return row.subRows.some((child) => rowNameMatches(child, query));
+// TreeTable column filterFunctions — invoked per node with the resolved
+// field value and the active filter value. Returning true keeps the node;
+// the table itself walks the tree (lenient mode) to keep matching parents.
+
+function typeFilterFunction(value: Measurement, selected: readonly string[]): boolean {
+  if (selected.length === 0) return true;
+  return selected.includes(unitType(value.unit) ?? "volume");
 }
 
-function filterNodes(
-  nodes: TreeNode[],
-  name_q: string,
-  type_q: string[],
-  label_q: string[],
-): TreeNode[] {
-  const result: TreeNode[] = [];
-  for (const node of nodes) {
-    const row = node.data as IngredientRow;
-    const filtered_children = filterNodes(node.children ?? [], name_q, type_q, label_q);
-    const name_ok = name_q === "" || rowNameMatches(row, name_q.toLowerCase());
-    const row_type = unitType(row.default_measurement_value.unit) ?? "volume";
-    const type_ok = type_q.length === 0 || type_q.includes(row_type);
-    const label_ok = label_q.length === 0 || label_q.some((l) => row.labels.includes(l));
-    if ((name_ok && type_ok && label_ok) || filtered_children.length > 0) {
-      result.push({
-        ...node,
-        children: filtered_children.length > 0 ? filtered_children : node.children,
-      });
-    }
-  }
-  return result;
+function labelsFilterFunction(value: readonly string[], selected: readonly string[]): boolean {
+  if (selected.length === 0) return true;
+  return selected.some((l) => value.includes(l));
 }
+
+// Every filter input below is a custom `filterElement` that drives the
+// `filters` prop through component state, so the table never raises a real
+// filter event. This handler exists only so TreeTable honours `filters`.
+function noopFilter(): void {}
 
 function extractSelectedIds(keys: TreeTableSelectionKeysType): IngredientId[] {
   const ids: IngredientId[] = [];
@@ -187,14 +178,30 @@ export function IngredientsTable({
     return rows.map(toTreeNode);
   }, [filtered_ingredients, labels]);
 
-  const visible_nodes = useMemo(
-    () => filterNodes(tree_nodes, name_filter, type_filter, label_filter),
-    [tree_nodes, name_filter, type_filter, label_filter],
-  );
-
-  // Auto-expand all nodes when name filter is active so matched children are visible
-  useEffect(() => {
+  // TreeTable consults `filters` only when an `onFilter` handler is present.
+  // Each entry is keyed by the column's `field`; blank filters are omitted so
+  // the table skips filtering entirely when nothing is active.
+  const tree_filters = useMemo<TreeTableFilterMeta>(() => {
+    const filters: TreeTableFilterMeta = {};
     if (name_filter !== "") {
+      filters["name"] = { value: name_filter, matchMode: "contains" };
+    }
+    if (type_filter.length > 0) {
+      filters["default_measurement_value"] = { value: type_filter, matchMode: "custom" };
+    }
+    if (label_filter.length > 0) {
+      filters["labels"] = { value: label_filter, matchMode: "custom" };
+    }
+    return filters;
+  }, [name_filter, type_filter, label_filter]);
+
+  const has_active_filter =
+    name_filter !== "" || type_filter.length > 0 || label_filter.length > 0;
+
+  // Auto-expand every node while a filter is active so matched descendants
+  // (which the table keeps via lenient mode) are actually visible.
+  useEffect(() => {
+    if (has_active_filter) {
       const all_keys: TreeTableExpandedKeysType = {};
       function collectKeys(nodes: TreeNode[]) {
         for (const n of nodes) {
@@ -209,7 +216,7 @@ export function IngredientsTable({
     } else {
       set_expanded_keys({});
     }
-  }, [name_filter, tree_nodes]);
+  }, [has_active_filter, tree_nodes]);
 
   // ---------------------------------------------------------------------------
   // Edit handlers
@@ -543,35 +550,8 @@ export function IngredientsTable({
         </div>
       )}
 
-      <div className="it-filter-bar">
-        <input
-          type="text"
-          className="it-name-filter"
-          value={name_filter}
-          onChange={(e) => set_name_filter(e.target.value)}
-          placeholder="Filter by name…"
-          aria-label="Filter by name"
-        />
-        <div className="it-filter-cell">
-          <MultiSelectFilter
-            value={type_filter}
-            onChange={set_type_filter}
-            all_options={MEASUREMENT_TYPES}
-            aria_label="Filter by type"
-          />
-        </div>
-        <div className="it-filter-cell">
-          <MultiSelectFilter
-            value={label_filter}
-            onChange={set_label_filter}
-            all_options={all_label_names}
-            aria_label="Filter by labels"
-          />
-        </div>
-      </div>
-
       <TreeTable
-        value={visible_nodes}
+        value={tree_nodes}
         expandedKeys={expanded_keys}
         onToggle={(e) => set_expanded_keys(e.value)}
         selectionMode="checkbox"
@@ -581,17 +561,67 @@ export function IngredientsTable({
             set_selection_keys(e.value as TreeTableSelectionKeysType);
           }
         }}
+        filters={tree_filters}
+        filterMode="lenient"
+        onFilter={noopFilter}
         tableClassName="it-table"
         emptyMessage="No ingredients match the current filter."
       >
-        <Column field="name" header="Name" expander sortable body={nameBody} />
+        <Column
+          field="name"
+          header="Name"
+          expander
+          sortable
+          body={nameBody}
+          filter
+          filterMatchMode="contains"
+          filterHeaderClassName="it-filter-th"
+          filterElement={
+            <input
+              type="text"
+              className="it-col-filter"
+              value={name_filter}
+              onChange={(e) => set_name_filter(e.target.value)}
+              placeholder="Filter by name…"
+              aria-label="Filter by name"
+            />
+          }
+        />
         <Column
           field="default_measurement_value"
           header="Default Value"
           sortable
           body={measurementBody}
+          filter
+          filterMatchMode="custom"
+          filterFunction={typeFilterFunction}
+          filterHeaderClassName="it-filter-th"
+          filterElement={
+            <MultiSelectFilter
+              value={type_filter}
+              onChange={set_type_filter}
+              all_options={MEASUREMENT_TYPES}
+              aria_label="Filter by type"
+            />
+          }
         />
-        <Column field="labels" header="Labels" body={labelsBody} />
+        <Column
+          field="labels"
+          header="Labels"
+          body={labelsBody}
+          filter
+          filterMatchMode="custom"
+          filterFunction={labelsFilterFunction}
+          filterHeaderClassName="it-filter-th"
+          filterElement={
+            <MultiSelectFilter
+              value={label_filter}
+              onChange={set_label_filter}
+              all_options={all_label_names}
+              aria_label="Filter by labels"
+            />
+          }
+        />
         <Column field="parent_name" header="Parent" sortable body={parentBody} />
       </TreeTable>
     </div>

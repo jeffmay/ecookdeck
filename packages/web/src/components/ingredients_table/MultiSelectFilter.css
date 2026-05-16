@@ -94,6 +94,14 @@
   background: #f0f0f0;
 }
 
+/* Checkboxes inherit a global `input { width: 100% }` rule — keep them
+   intrinsically sized so the option label sits next to the box. */
+.msf-option input[type="checkbox"] {
+  width: auto;
+  flex-shrink: 0;
+  margin: 0;
+}
+
 .msf-no-options {
   padding: var(--spacing-xs) var(--spacing-sm);
   color: var(--color-muted);
