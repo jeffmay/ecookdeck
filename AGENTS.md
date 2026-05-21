@@ -51,6 +51,7 @@ recipe-book/
 ├── packages/
 │   ├── shared/        # Yjs models, types, operations — shared by web & server
 │   ├── web/           # Vite + React SPA (y-indexeddb for local persistence)
+|   │   ├── e2e/       # E2E tests + PlayWright
 │   │   └── public/
 │   │       └── kitchenware.csv   # Static asset: default kitchenware (served by Vite)
 │   └── server/        # Node.js sync server (Yjs document store per user)
