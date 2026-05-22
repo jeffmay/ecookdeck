@@ -82,7 +82,8 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 The [Preview Web App](${{ steps.deploy-web-preview.outputs.web_url }}) was successfully deployed for ${VERSION}! No Server changes detected.`
+              body: `🚀 The [Preview Web App](${{ steps.deploy-web-preview.outputs.deploy-url }}) was successfully deployed for ${VERSION}! No Server changes detected.`
+            })
 
       - name: No deployment comment
         if: steps.check-web-code.outputs.changed != 'true'
@@ -126,5 +127,4 @@ jobs:
               ${DEPLOY_LOGS}
               \`\\
               </details>`
-            })
             })
