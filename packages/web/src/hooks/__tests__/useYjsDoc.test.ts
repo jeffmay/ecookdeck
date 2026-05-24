@@ -5,6 +5,7 @@ import * as Y from "yjs";
 const mockDestroy = vi.fn();
 const MockIndexeddbPersistence = vi.fn().mockImplementation(() => ({
   destroy: mockDestroy,
+  whenSynced: Promise.resolve(),
 }));
 
 vi.mock("y-indexeddb", () => ({
@@ -20,7 +21,7 @@ beforeEach(() => {
 describe("useYjsDoc", () => {
   it("returns a Y.Doc instance", () => {
     const { result } = renderHook(() => useYjsDoc("Alice"));
-    expect(result.current).toBeInstanceOf(Y.Doc);
+    expect(result.current.doc).toBeInstanceOf(Y.Doc);
   });
 
   it("creates IndexeddbPersistence keyed by userName", () => {
@@ -36,8 +37,8 @@ describe("useYjsDoc", () => {
 
   it("returns the same doc instance across re-renders", () => {
     const { result, rerender } = renderHook(() => useYjsDoc("Alice"));
-    const first = result.current;
+    const first = result.current.doc;
     rerender();
-    expect(result.current).toBe(first);
+    expect(result.current.doc).toBe(first);
   });
 });

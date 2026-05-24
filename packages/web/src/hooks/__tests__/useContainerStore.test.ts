@@ -25,7 +25,11 @@ const BOWL: Container = {
 
 function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
-    return createElement(DocContext.Provider, { value: doc }, children);
+    return createElement(
+      DocContext.Provider,
+      { value: { doc, whenSynced: Promise.resolve() } },
+      children,
+    );
   };
 }
 
