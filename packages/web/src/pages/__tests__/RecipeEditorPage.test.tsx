@@ -13,7 +13,11 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 
 function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
-    return createElement(DocContext.Provider, { value: doc }, children);
+    return createElement(
+      DocContext.Provider,
+      { value: { doc, whenSynced: Promise.resolve() } },
+      children,
+    );
   };
 }
 

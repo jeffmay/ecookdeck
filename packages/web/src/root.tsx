@@ -42,11 +42,11 @@ interface AuthenticatedShellProps {
 }
 
 function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
-  const doc = useYjsDoc(userName);
+  const { doc, whenSynced } = useYjsDoc(userName);
   const navigate = useNavigate();
 
   return (
-    <DocContext.Provider value={doc}>
+    <DocContext.Provider value={{ doc, whenSynced }}>
       <div className="app">
         <header className="top-nav">
           <NavMenu />

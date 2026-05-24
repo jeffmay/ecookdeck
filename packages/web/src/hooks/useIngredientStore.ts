@@ -18,7 +18,7 @@ import {
 } from "@recipe-book/shared";
 import { randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { useDoc } from "../contexts/docContext.js";
+import { useDocContext } from "../contexts/docContext.js";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
@@ -47,23 +47,34 @@ export interface UseIngredientStoreResult {
 }
 
 export function useIngredientStore(): UseIngredientStoreResult {
-  const doc = useDoc();
+  const { doc, whenSynced } = useDocContext();
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => getIngredients(doc));
 
-  // Load defaults from static CSV asset if the store is empty
+  // Load defaults from static CSV asset if the store is empty after IndexedDB sync
   useEffect(() => {
-    const ingredientMap = doc.getMap("ingredients");
-    const labelsMap = doc.getMap("labels");
-    if (ingredientMap.size > 0 || labelsMap.size > 0) return;
+    (async function syncOrDefault() {
+      try {
+        await whenSynced;
+      } catch (e) {
+        console.error("failed to sync with server: ", e);
+        console.warn("skipping import of default kitchenware...");
+        return;
+      }
+      try {
+        const ingredientMap = doc.getMap("ingredients");
+        const labelsMap = doc.getMap("labels");
+        if (ingredientMap.size > 0 || labelsMap.size > 0) return;
 
-    fetch("/kitchenware.csv")
-      .then((r) => r.text())
-      .then((csv) => {
+        const r = await fetch("/kitchenware.csv");
+        const csv = await r.text();
         const templates = parseKitchenwareCsv(csv);
         initFromKitchenwareTemplates(doc, templates);
-      })
-      .catch((err) => console.error("Failed to load default kitchenware:", err));
-  }, [doc]);
+        console.debug("server synchronize complete.");
+      } catch (e) {
+        console.warn("failed to import default kitchenware from server: ", e);
+      }
+    })();
+  }, [doc, whenSynced]);
 
   useEffect(() => {
     const map = doc.getMap("ingredients");
