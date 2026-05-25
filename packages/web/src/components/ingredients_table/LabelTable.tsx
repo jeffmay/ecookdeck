@@ -1,6 +1,6 @@
 import type { Ingredient, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { RadioButton } from "primereact/radiobutton";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
 
@@ -31,6 +31,7 @@ export function LabelTable({
   const [editingId, setEditingId] = useState<KitchenwareLabelId | null>(null);
   const [editingName, setEditingName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const deleteBtnRef = useRef<HTMLButtonElement>(null);
 
   const selectedArray = [...selectedIds];
   const allSelected = labels.length > 0 && labels.every((l) => selectedIds.has(l.id));
@@ -75,6 +76,7 @@ export function LabelTable({
 
   function handleDeleteCancel(): void {
     setShowDeleteConfirm(false);
+    deleteBtnRef.current?.focus();
   }
 
   const affectedIngredients = useMemo(
@@ -174,6 +176,7 @@ export function LabelTable({
                 </label>
               </div>
               <button
+                ref={deleteBtnRef}
                 type="button"
                 className="lt-bulk-btn"
                 onClick={handleDeleteClick}
@@ -241,31 +244,38 @@ export function LabelTable({
               role="dialog"
               aria-modal="true"
               aria-label="Confirm delete labels"
+              aria-describedby="lt-delete-desc"
               tabIndex={-1}
               onClick={handleDeleteCancel}
               onKeyDown={(e) => {
                 if (e.key === "Escape") handleDeleteCancel();
               }}
             >
-              <div className="lt-delete-dialog" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="lt-delete-dialog"
+                data-testid="lt-delete-dialog-card"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <p className="lt-delete-title">
                   Delete {selectedIds.size} label{selectedIds.size !== 1 ? "s" : ""}?
                 </p>
-                {affectedIngredients.length > 0 ? (
-                  <>
-                    <p className="lt-delete-subtitle">
-                      The following ingredient{affectedIngredients.length !== 1 ? "s" : ""} will be
-                      affected:
-                    </p>
-                    <ul className="lt-delete-list">
-                      {affectedIngredients.map((ing) => (
-                        <li key={ing.id}>{ing.name}</li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <p className="lt-delete-subtitle">No ingredients use these labels.</p>
-                )}
+                <div id="lt-delete-desc">
+                  {affectedIngredients.length > 0 ? (
+                    <>
+                      <p className="lt-delete-subtitle">
+                        The following ingredient{affectedIngredients.length !== 1 ? "s" : ""} will
+                        be affected:
+                      </p>
+                      <ul className="lt-delete-list">
+                        {affectedIngredients.map((ing) => (
+                          <li key={ing.id}>{ing.name}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="lt-delete-subtitle">No ingredients use these labels.</p>
+                  )}
+                </div>
                 <div className="lt-delete-actions">
                   <button
                     type="button"

@@ -293,9 +293,29 @@ describe("LabelTable — delete confirmation dialog", () => {
 
   it("closes dialog without deleting when clicking the overlay background", async () => {
     await openDeleteDialog();
+    // fireEvent fires directly on the overlay element (bypasses position-based dispatch),
+    // exercising the overlay's own onClick={handleDeleteCancel} handler.
     fireEvent.click(screen.getByRole("dialog", { name: "Confirm delete labels" }));
     expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
     expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("does not close the dialog when clicking inside the dialog card", async () => {
+    await openDeleteDialog();
+    await userEvent.click(screen.getByTestId("lt-delete-dialog-card"));
+    expect(screen.getByRole("dialog", { name: "Confirm delete labels" })).toBeInTheDocument();
+  });
+
+  it("restores focus to the Delete button after Cancel", async () => {
+    await openDeleteDialog();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel delete" }));
+    expect(screen.getByRole("button", { name: "Delete selected labels" })).toHaveFocus();
+  });
+
+  it("restores focus to the Delete button after Escape key", async () => {
+    await openDeleteDialog();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("button", { name: "Delete selected labels" })).toHaveFocus();
   });
 
   it("calls onDelete and closes dialog on Confirm click", async () => {
