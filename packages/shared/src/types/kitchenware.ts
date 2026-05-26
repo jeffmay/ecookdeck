@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { Companion } from "./companion.js";
+import { Companion, extend } from "./companion.js";
 import { EnumCompanion } from "./enums.js";
 import { IdCompanion } from "./ids.js";
 import { Measurement } from "./measurement.js";
@@ -9,11 +9,11 @@ import { setOf } from "./sets.js";
 const KitchenwareIdLength = 12 as const;
 
 export type KitchenwareId = Kitchenware["id"];
-export const KitchenwareId = IdCompanion("KitchenwareId", KitchenwareIdLength, (base) => {
+export const KitchenwareId = extend(IdCompanion("KitchenwareId", KitchenwareIdLength), (self) => {
   return {
-    ...base,
+    ...self,
     length: KitchenwareIdLength,
-  } as const;
+  };
 });
 
 export const KitchenwareKind = EnumCompanion("KitchenwareKind", [

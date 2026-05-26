@@ -23,17 +23,16 @@ export interface IdCompanion<
  * @param extend extend the default companion object with additional properties or methods.
  * @returns an IdCompanion object with the specified idName and length, and an idType function that generates a branded type for the ID.
  */
-export function IdCompanion<
-  const N extends string,
-  const L extends number,
-  const R extends IdCompanion<N, { length: L }> = IdCompanion<N, { length: L }>,
->(name: N, length: L, extend?: (o: IdCompanion<N, { length: L }>) => R): R {
-  const base: IdCompanion<N, { length: L }> = {
+export function IdCompanion<const N extends string, const L extends number>(
+  name: N,
+  length: L,
+): IdCompanion<N, { length: L }> {
+  const init: IdCompanion<N, { length: L }> = {
     type: type.string.exactlyLength(length).brand(name),
     name,
     length,
   };
-  return extend ? extend(base) : (base as R);
+  return init;
 }
 
 /**
