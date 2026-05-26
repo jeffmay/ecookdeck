@@ -191,6 +191,31 @@ describe("LabelTable — selection and bulk actions", () => {
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
+  it("Clear button calls onFilterAll([]) to clear the ingredient filter when a filter was active", async () => {
+    await expand_and_select();
+    await userEvent.click(screen.getByRole("radio", { name: "All" }));
+    vi.clearAllMocks();
+    await userEvent.click(screen.getByRole("button", { name: /Clear/ }));
+    expect(onFilterAll).toHaveBeenCalledWith([]);
+  });
+
+  it("deselecting the last label via its checkbox clears the ingredient filter", async () => {
+    await expand_and_select();
+    await userEvent.click(screen.getByRole("radio", { name: "Any" }));
+    vi.clearAllMocks();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+    expect(onFilterAll).toHaveBeenCalledWith([]);
+  });
+
+  it("deselect-all via header checkbox clears the ingredient filter", async () => {
+    await expand_and_select([FAT, SOLID]);
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all labels" }));
+    await userEvent.click(screen.getByRole("radio", { name: "All" }));
+    vi.clearAllMocks();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all labels" }));
+    expect(onFilterAll).toHaveBeenCalledWith([]);
+  });
+
   it("select-all selects all labels", async () => {
     await expand_and_select([FAT, SOLID]);
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all labels" }));
