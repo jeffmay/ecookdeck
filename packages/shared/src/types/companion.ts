@@ -32,13 +32,35 @@ export interface Companion<N extends string, T> {
  * @param extend a function that takes the base companion object and returns an extended version of it with additional properties or methods
  * @returns a companion object with the specified name and type, and any additional properties or methods provided by the extend function
  */
-export function Companion<
-  const N extends string,
-  const Z extends AnyType,
-  const R extends Companion<N, Z["infer"]> = Companion<N, Z["infer"]>,
->(name: N, type: Z, extend?: (o: Companion<N, Z["infer"]>) => R): R {
-  const base: Companion<N, Z["infer"]> = { name, type };
-  return extend ? extend(base) : (base as R);
+export function Companion<const N extends string, const Z extends AnyType>(
+  name: N,
+  type: Z,
+): Companion<N, Z["infer"]> {
+  const init: Companion<N, Z["infer"]> = {
+    name,
+    type,
+  };
+  return init;
+}
+
+export interface DefCompanion<in out N extends string, in out Def> extends Companion<
+  N,
+  type.instantiate<Def>
+> {
+  readonly def: Def;
+}
+
+export function DefCompanion<const N extends string, const Def>(
+  name: N,
+  def: type.validate<Def>,
+): DefCompanion<N, Def> {
+  const defType = type.raw(def) as AnyType<type.instantiate<Def>>;
+  const init: DefCompanion<N, Def> = {
+    name,
+    def: def as Def,
+    type: defType,
+  };
+  return init;
 }
 
 /**
@@ -51,13 +73,22 @@ export function Companion<
 export function ScopedCompanion<
   const S extends { [K in N]: AnyType },
   const N extends keyof S & string,
-  const R extends Companion<N, S[N]["infer"]> = Companion<N, S[N]["infer"]>,
->(scope: S, name: N, extend?: (o: Companion<N, S[N]["infer"]>) => R): R {
-  const base: Companion<N, S[N]["infer"]> = {
+>(scope: S, name: N): Companion<N, S[N]["infer"]> {
+  const companion: Companion<N, S[N]["infer"]> = {
     name,
     type: scope[name] as AnyType<S[N]["infer"]>,
   };
-  return extend ? extend(base) : (base as R);
+  return companion;
+}
+
+/**
+ * A helper function for extending a companion object with additional properties before it is assigned to a const.
+ */
+export function extend<C extends AnyCompanion, const R extends C>(
+  companion: C,
+  fn: (self: C) => R,
+): R {
+  return fn(companion);
 }
 
 /**

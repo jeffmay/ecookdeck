@@ -1,6 +1,5 @@
-import { Companion, EnumCompanion } from "@recipe-book/shared";
+import { DefCompanion, EnumCompanion, unionOf } from "@recipe-book/shared";
 import arkenv from "arkenv";
-import { type } from "arktype";
 
 export const StorageEngine = EnumCompanion("StorageEngine", [
   "local-memory",
@@ -9,13 +8,11 @@ export const StorageEngine = EnumCompanion("StorageEngine", [
 ]);
 export type StorageEngine = typeof StorageEngine.type.infer;
 
-export const ServerConfigDef = {
+export const ServerConfig = DefCompanion("ServerConfig", {
   PORT: "0 <= number.integer <= 65535 = 3001",
-  STORAGE_ENGINE: StorageEngine.type,
+  STORAGE_ENGINE: unionOf(StorageEngine.values),
   "NETLIFY_PROJECT_ID?": "string",
-} as const;
-
-export const ServerConfig = Companion("ServerConfig", type(ServerConfigDef));
+});
 export type ServerConfig = typeof ServerConfig.type.infer;
 
-export const serverConfig = arkenv(ServerConfigDef, { env: process.env });
+export default arkenv(ServerConfig.def, { env: process.env });

@@ -1,5 +1,6 @@
 import { type, type Type } from "arktype";
 import { constantCase, snakeCase, type ConstantCase, type SnakeCase } from "string-ts";
+import { NonEmptyTuple } from "type-fest";
 import { type Companion } from "./companion";
 
 /**
@@ -25,11 +26,10 @@ export interface EnumCompanion<N extends string, V extends readonly string[]> ex
  * @param extend extend the default companion object with additional properties or methods.
  * @returns an EnumCompanion object with the specified name and values, and a type function that generates an Arktype enumerated type for the values.
  */
-export function EnumCompanion<
-  const N extends string,
-  const V extends readonly string[],
-  const R extends EnumCompanion<N, V> = EnumCompanion<N, V>,
->(name: N, values: V, extend?: (o: EnumCompanion<N, V>) => R): R {
+export function EnumCompanion<const N extends string, const V extends readonly string[]>(
+  name: N,
+  values: V,
+): EnumCompanion<N, V> {
   const enumeration: Record<string, string> = {};
   for (const v of values) {
     enumeration[constantCase(v).toUpperCase()] = v;
@@ -38,14 +38,46 @@ export function EnumCompanion<
   for (const v of values) {
     types[snakeCase(v).toUpperCase()] = type(`'${v}'`);
   }
-  const base: EnumCompanion<N, V> = {
+  const init: EnumCompanion<N, V> = {
     name,
     type: type.enumerated(...values),
     types: types as StringTypeEnum<V[number]>,
     enum: enumeration as StringEnum<V[number]>,
     values,
   };
-  return extend ? extend(base) : (base as R);
+  return init;
+}
+
+type JoinableItem = string | number | bigint | boolean | undefined | null;
+
+type PrimitiveDef<V extends JoinableItem> = V extends string ? `'${V}'` : `${V}`;
+
+/**
+ * The arktype definition for a union of the provided tuple.
+ */
+export type UnionDef<A extends readonly JoinableItem[]> = A extends readonly [
+  infer V extends JoinableItem,
+]
+  ? PrimitiveDef<V>
+  : A extends readonly [
+        infer First extends JoinableItem,
+        ...infer Tail extends readonly JoinableItem[],
+      ]
+    ? `${PrimitiveDef<First>} | ${UnionDef<Tail>}`
+    : A extends readonly [
+          ...infer Head extends readonly JoinableItem[],
+          infer Last extends JoinableItem,
+        ]
+      ? `${UnionDef<Head>} | ${PrimitiveDef<Last>}`
+      : never;
+
+/**
+ * Returns an arktype definition for a union of the given tuple.
+ */
+export function unionOf<const V extends NonEmptyTuple<JoinableItem>>(values: V): UnionDef<V> {
+  return values
+    .map((x) => (x === null ? "null" : typeof x === "string" ? `'${x}'` : x))
+    .join(" | ") as UnionDef<V>;
 }
 
 /**
