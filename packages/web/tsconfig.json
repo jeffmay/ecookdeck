@@ -3,7 +3,10 @@
   "compilerOptions": {
     "outDir": "dist",
     "jsx": "react-jsx",
-    "types": ["node"]
+    "isolatedModules": true,
+    "rewriteRelativeImportExtensions": true,
+    "types": ["node"],
+    "rootDirs": [".", "./.react-router/types"]
   },
-  "include": ["src", "react-router.config.ts"]
+  "include": [".react-router/types/**/*", "src", "react-router.config.ts"]
 }

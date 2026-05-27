@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router";
-import { useRecipeStore } from "../hooks/useRecipeStore.js";
-import { RecipeEditor } from "../pages/RecipeEditorPage.js";
+import { useRecipeStore } from "../hooks/useRecipeStore.ts";
+import { RecipeEditor } from "../pages/RecipeEditorPage.tsx";
 
 export default function RecipeDetail() {
   const { recipe_id } = useParams();

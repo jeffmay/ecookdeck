@@ -1,4 +1,4 @@
-import type { DocumentStore } from "./types.js";
+import type { DocumentStore } from "./types.ts";
 
 export class LocalMemoryStore implements DocumentStore {
   private readonly docs = new Map<string, Uint8Array>();

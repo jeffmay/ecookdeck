@@ -1,17 +1,13 @@
 import { type } from "arktype";
-import * as Y from "yjs";
-import { isTypeError } from "../assertions/index.js";
-import type { KitchenwareTemplate } from "../fixtures/kitchenware.js";
-import { loadId } from "../types/ids.js";
-import {
-  Ingredient,
-  IngredientId,
-  KitchenwareKind,
-  KitchenwareLabelId,
-} from "../types/kitchenware.js";
-import { Measurement, MeasurementType } from "../types/measurement.js";
-import { setOf } from "../types/sets.js";
-import { findOrCreateLabel, getLabelsYmap } from "./labelStore.js";
+import type * as Y from "yjs";
+import { isTypeError } from "../assertions/index.ts";
+import type { KitchenwareTemplate } from "../fixtures/kitchenware.ts";
+import { loadId } from "../types/ids.ts";
+import type { Ingredient, KitchenwareKind } from "../types/kitchenware.ts";
+import { IngredientId, KitchenwareLabelId } from "../types/kitchenware.ts";
+import { Measurement, MeasurementType } from "../types/measurement.ts";
+import { setOf } from "../types/sets.ts";
+import { findOrCreateLabel, getLabelsYmap } from "./labelStore.ts";
 
 const MAP_KEY = "ingredients";
 

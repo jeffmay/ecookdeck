@@ -1,7 +1,7 @@
 import { type } from "arktype";
 import { snakeCase } from "string-ts";
-import { Companion } from "./companion.js";
-import { IdCompanion } from "./ids.js";
+import { Companion } from "./companion.ts";
+import { IdCompanion } from "./ids.ts";
 
 export const UserId = IdCompanion("UserId", 12);
 export type UserId = typeof UserId.type.infer;

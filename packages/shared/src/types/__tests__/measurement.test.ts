@@ -7,8 +7,8 @@ import {
   CountUnit,
   Fraction,
   Measurement,
-} from "../measurement.js";
-import { is } from "../enums.js";
+} from "../measurement.ts";
+import { is } from "../enums.ts";
 
 describe("unitType", () => {
   it("classifies volume units", () => {

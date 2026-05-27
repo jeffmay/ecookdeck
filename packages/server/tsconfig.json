@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
+    "isolatedModules": true,
+    "rewriteRelativeImportExtensions": true,
     "rootDir": "src",
     "lib": ["ES2022"],
     "types": ["node"]

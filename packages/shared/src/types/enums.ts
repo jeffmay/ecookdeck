@@ -1,7 +1,7 @@
 import { type, type Type } from "arktype";
 import { constantCase, snakeCase, type ConstantCase, type SnakeCase } from "string-ts";
-import { NonEmptyTuple } from "type-fest";
-import { type Companion } from "./companion";
+import type { NonEmptyTuple } from "type-fest";
+import type { Companion } from "./companion.ts";
 
 /**
  * The expected shape of a companion object for generating and validating enums.

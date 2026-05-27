@@ -1,6 +1,6 @@
 import { type } from "arktype";
-import { Companion } from "./companion";
-import { EnumCompanion, is } from "./enums";
+import { Companion } from "./companion.ts";
+import { EnumCompanion, is } from "./enums.ts";
 
 export const MeasurementType = EnumCompanion("MeasurementType", ["volume", "weight", "count"]);
 export type MeasurementType = typeof MeasurementType.type.infer;

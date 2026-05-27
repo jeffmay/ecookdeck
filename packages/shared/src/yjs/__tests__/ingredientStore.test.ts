@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { paddedId } from "../../types/ids.js";
-import type { IngredientTemplate } from "../../fixtures/kitchenware.js";
-import { IngredientId, KitchenwareLabelId, type Ingredient } from "../../types/kitchenware.js";
-import type { Measurement } from "../../types/measurement.js";
+import { paddedId } from "../../types/ids.ts";
+import type { IngredientTemplate } from "../../fixtures/kitchenware.ts";
+import { IngredientId, KitchenwareLabelId, type Ingredient } from "../../types/kitchenware.ts";
+import type { Measurement } from "../../types/measurement.ts";
 import {
   addIngredient,
   addLabelsToIngredients,
@@ -14,7 +14,7 @@ import {
   setLabelsForIngredient,
   setMeasurementValueForIngredients,
   setParentForIngredients,
-} from "../ingredientStore.js";
+} from "../ingredientStore.ts";
 
 // Test label IDs formatted to the expected length
 const FAT_ID = paddedId(KitchenwareLabelId, "fat");

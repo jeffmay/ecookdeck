@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.js";
-import { RecipeEditorPage } from "../RecipeEditorPage.js";
+import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
+import { RecipeEditorPage } from "../RecipeEditorPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid

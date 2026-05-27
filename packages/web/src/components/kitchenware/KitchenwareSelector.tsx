@@ -1,7 +1,7 @@
 import { type Container, type ContainerId, type KitchenwareLabelId } from "@recipe-book/shared";
 import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
-import { KitchenwareEditor } from "./KitchenwareEditor.js";
+import { KitchenwareEditor } from "./KitchenwareEditor.tsx";
 import "./KitchenwareSelector.css";
 
 interface SelectOption {

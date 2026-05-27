@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
 import { type ReactNode } from "react";
 import { MemoryRouter } from "react-router";
-import { NavMenu } from "../NavMenu.js";
+import { NavMenu } from "../NavMenu.tsx";
 
 function renderMenu(extraChildren?: ReactNode) {
   return render(

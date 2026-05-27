@@ -1,13 +1,11 @@
+import type { Ingredient, KitchenwareKind, KitchenwareLabelId } from "@recipe-book/shared";
 import {
   addIngredient,
   addLabelsToIngredients,
   findOrCreateLabel,
   getIngredients,
-  Ingredient,
   IngredientId,
   initFromKitchenwareTemplates,
-  KitchenwareKind,
-  KitchenwareLabelId,
   type Measurement,
   parseKitchenwareCsv,
   removeLabelsFromIngredients,
@@ -18,7 +16,7 @@ import {
 } from "@recipe-book/shared";
 import { randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { useKitchenwareDoc } from "../contexts/docContext.js";
+import { useKitchenwareDoc } from "../contexts/docContext.ts";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 

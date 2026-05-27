@@ -1,9 +1,9 @@
 import { type } from "arktype";
 import Papa from "papaparse";
-import { validOrThrow } from "../assertions/index.js";
-import { paddedId } from "../types/ids.js";
-import { KitchenwareId } from "../types/kitchenware.js";
-import { MeasurementType } from "../types/measurement.js";
+import { validOrThrow } from "../assertions/index.ts";
+import { paddedId } from "../types/ids.ts";
+import { KitchenwareId } from "../types/kitchenware.ts";
+import { MeasurementType } from "../types/measurement.ts";
 
 export interface IngredientTemplate {
   readonly kind: "ingredient";

@@ -13,8 +13,8 @@ import {
 } from "@recipe-book/shared";
 import { loadId, randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import * as Y from "yjs";
-import { useKitchenwareDoc } from "../contexts/docContext.js";
+import type * as Y from "yjs";
+import { useKitchenwareDoc } from "../contexts/docContext.ts";
 
 export interface UseLabelStoreResult {
   readonly labels: readonly KitchenwareLabel[];

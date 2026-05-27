@@ -1,11 +1,11 @@
-import type { StorageEngine } from "../config.js";
-import config from "../config.js";
-import { LocalFileStore } from "./localFile.js";
-import { LocalMemoryStore } from "./localMemory.js";
-import { NetlifyBlobStore } from "./netlifyBlobs.js";
-import type { DocumentStore } from "./types.js";
+import type { StorageEngine } from "../config.ts";
+import config from "../config.ts";
+import { LocalFileStore } from "./localFile.ts";
+import { LocalMemoryStore } from "./localMemory.ts";
+import { NetlifyBlobStore } from "./netlifyBlobs.ts";
+import type { DocumentStore } from "./types.ts";
 
-export { DocumentStore };
+export type { DocumentStore };
 
 export function createDocumentStore(engine?: StorageEngine): DocumentStore {
   const storageEngine = engine ?? config.STORAGE_ENGINE;

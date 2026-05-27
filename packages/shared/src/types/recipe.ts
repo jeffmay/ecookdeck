@@ -1,10 +1,11 @@
 import { type } from "arktype";
-import { AnyCompanion, Companion, ScopedCompanion } from "./companion.js";
-import { EnumCompanion } from "./enums.js";
-import { IdCompanion } from "./ids.js";
-import { ContainerId, EquipmentId, IngredientId } from "./kitchenware.js";
-import { Measurement } from "./measurement.js";
-import { RecipeFolderId } from "./recipeGroup.js";
+import type { AnyCompanion } from "./companion.ts";
+import { Companion, ScopedCompanion } from "./companion.ts";
+import { EnumCompanion } from "./enums.ts";
+import { IdCompanion } from "./ids.ts";
+import { ContainerId, EquipmentId, IngredientId } from "./kitchenware.ts";
+import { Measurement } from "./measurement.ts";
+import { RecipeFolderId } from "./recipeGroup.ts";
 
 export const RecipeId = IdCompanion("RecipeId", 12);
 export type RecipeId = typeof RecipeId.type.infer;

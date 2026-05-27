@@ -10,8 +10,8 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { KitchenwareDocContext } from "../../contexts/docContext.js";
-import { useContainerStore } from "../useContainerStore.js";
+import { KitchenwareDocContext } from "../../contexts/docContext.ts";
+import { useContainerStore } from "../useContainerStore.ts";
 
 const BOWL_ID = paddedId(ContainerId, "bowl");
 const LABEL_A = paddedId(KitchenwareLabelId, "aaa");

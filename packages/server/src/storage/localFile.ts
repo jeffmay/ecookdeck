@@ -1,6 +1,6 @@
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { DocumentStore } from "./types.js";
+import type { DocumentStore } from "./types.ts";
 
 const FILE_SUFFIX = ".yjs";
 

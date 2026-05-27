@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import express from "express";
 import request from "supertest";
 import * as Y from "yjs";
-import { LocalMemoryStore } from "../../storage/localMemory.js";
-import { createSyncRouter } from "../sync.js";
+import { LocalMemoryStore } from "../../storage/localMemory.ts";
+import { createSyncRouter } from "../sync.ts";
 
 function createTestApp() {
   const store = new LocalMemoryStore();

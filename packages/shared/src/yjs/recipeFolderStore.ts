@@ -1,9 +1,10 @@
 import { type } from "arktype";
-import * as Y from "yjs";
-import { isTypeError } from "../assertions/index.js";
-import { Companion } from "../types/companion.js";
-import { loadId, randomId } from "../types/ids.js";
-import { RecipeFolder, RecipeFolderId, SortOrder } from "../types/recipeGroup.js";
+import type * as Y from "yjs";
+import { isTypeError } from "../assertions/index.ts";
+import { Companion } from "../types/companion.ts";
+import { loadId, randomId } from "../types/ids.ts";
+import type { RecipeFolder } from "../types/recipeGroup.ts";
+import { RecipeFolderId, SortOrder } from "../types/recipeGroup.ts";
 
 const MAP_KEY = "recipe_folders";
 

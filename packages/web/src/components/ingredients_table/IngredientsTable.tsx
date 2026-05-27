@@ -10,9 +10,9 @@ import {
   type MeasurementType,
   type MeasurementUnit,
 } from "@recipe-book/shared";
+import type { type } from "arktype";
 import { Column } from "primereact/column";
 import type { TreeNode } from "primereact/treenode";
-import type { type } from "arktype";
 import {
   TreeTable,
   type TreeTableExpandedKeysType,
@@ -20,12 +20,12 @@ import {
   type TreeTableSelectionKeysType,
 } from "primereact/treetable";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { MeasurementEditor } from "../measurement/MeasurementEditor.js";
-import { buildIngredientTree, IngredientRow, IngredientRows } from "./buildIngredientTree.js";
-import { IngredientSelector } from "./IngredientSelector.js";
+import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
+import { buildIngredientTree, IngredientRow, IngredientRows } from "./buildIngredientTree.ts";
+import { IngredientSelector } from "./IngredientSelector.tsx";
 import "./IngredientsTable.css";
-import { LabelEditor } from "./LabelEditor.js";
-import { MultiSelectFilter } from "./MultiSelectFilter.js";
+import { LabelEditor } from "./LabelEditor.tsx";
+import { MultiSelectFilter } from "./MultiSelectFilter.tsx";
 
 // ---------------------------------------------------------------------------
 // External label filter

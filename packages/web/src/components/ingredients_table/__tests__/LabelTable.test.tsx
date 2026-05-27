@@ -1,16 +1,11 @@
-import {
-  type Ingredient,
-  IngredientId,
-  type KitchenwareKind,
-  type KitchenwareLabel,
-  KitchenwareLabelId,
-  paddedId,
-} from "@recipe-book/shared";
+import type { Ingredient, KitchenwareKind, KitchenwareLabel } from "@recipe-book/shared";
+import { IngredientId, KitchenwareLabelId, paddedId } from "@recipe-book/shared";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ReadonlyDeep } from "type-fest";
+import type { ReadonlyDeep } from "type-fest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LabelTable, LabelTableProps } from "../LabelTable.js";
+import type { LabelTableProps } from "../LabelTable.tsx";
+import { LabelTable } from "../LabelTable.tsx";
 
 const KIND_INGREDIENT: Set<KitchenwareKind> = new Set(["ingredient"]);
 

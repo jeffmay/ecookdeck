@@ -4,12 +4,13 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.css";
 import "primeicons/primeicons.css";
 import "./styles/global.css";
-import { ActiveBookMeta, useActiveBookMeta } from "./hooks/useActiveBookMeta.js";
-import { useKitchenwareDoc, useRecipeBookDoc } from "./hooks/useYjsDoc.js";
-import { KitchenwareDocContext, RecipeBookDocContext } from "./contexts/docContext.js";
-import { NavMenu } from "./components/NavMenu.js";
-import { SelectBookPage } from "./pages/SelectBookPage.js";
-import { RecipeBookId } from "@recipe-book/shared";
+import type { ActiveBookMeta } from "./hooks/useActiveBookMeta.ts";
+import { useActiveBookMeta } from "./hooks/useActiveBookMeta.ts";
+import { useKitchenwareDoc, useRecipeBookDoc } from "./hooks/useYjsDoc.ts";
+import { KitchenwareDocContext, RecipeBookDocContext } from "./contexts/docContext.ts";
+import { NavMenu } from "./components/NavMenu.tsx";
+import { SelectBookPage } from "./pages/SelectBookPage.tsx";
+import type { RecipeBookId } from "@recipe-book/shared";
 
 export interface RootContext {
   readonly bookId: RecipeBookId;

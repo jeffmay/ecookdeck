@@ -12,8 +12,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { KitchenwareDocContext } from "../../contexts/docContext.js";
-import { useIngredientStore } from "../useIngredientStore.js";
+import { KitchenwareDocContext } from "../../contexts/docContext.ts";
+import { useIngredientStore } from "../useIngredientStore.ts";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 

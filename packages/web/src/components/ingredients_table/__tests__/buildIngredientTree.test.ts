@@ -1,8 +1,8 @@
 import type { Ingredient, KitchenwareKind, KitchenwareLabel } from "@recipe-book/shared";
 import { IngredientId, KitchenwareLabelId, paddedId } from "@recipe-book/shared";
 import { describe, expect, it } from "vitest";
-import { buildIngredientTree } from "../buildIngredientTree.js";
-import { ReadonlyDeep } from "type-fest";
+import { buildIngredientTree } from "../buildIngredientTree.ts";
+import type { ReadonlyDeep } from "type-fest";
 
 // Label fixtures
 const FAT_LABEL: ReadonlyDeep<KitchenwareLabel> = {

@@ -1,9 +1,9 @@
 import { type } from "arktype";
-import * as Y from "yjs";
-import { isTypeError } from "../assertions/index.js";
-import { loadId, randomId } from "../types/ids.js";
-import { ContainerId, EquipmentId, IngredientId } from "../types/kitchenware.js";
-import { Measurement } from "../types/measurement.js";
+import type * as Y from "yjs";
+import { isTypeError } from "../assertions/index.ts";
+import { loadId, randomId } from "../types/ids.ts";
+import { ContainerId, EquipmentId, IngredientId } from "../types/kitchenware.ts";
+import type { Measurement } from "../types/measurement.ts";
 import {
   type ContainerItem,
   type IngredientItem,
@@ -18,8 +18,8 @@ import {
   RecipeIngredientId,
   RecipeVersionId,
   SectionItemId,
-} from "../types/recipe.js";
-import { RecipeFolderId } from "../types/recipeGroup.js";
+} from "../types/recipe.ts";
+import { RecipeFolderId } from "../types/recipeGroup.ts";
 
 const MAP_KEY = "recipes";
 

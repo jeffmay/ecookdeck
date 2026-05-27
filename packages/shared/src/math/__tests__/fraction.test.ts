@@ -11,7 +11,7 @@ import {
   fractionalPart,
   formatFraction,
   fractionFromInteger,
-} from "../fraction.js";
+} from "../fraction.ts";
 
 describe("makeFraction", () => {
   it("simplifies to lowest terms", () => {

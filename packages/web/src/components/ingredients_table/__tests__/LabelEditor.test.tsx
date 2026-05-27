@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { LabelEditor } from "../LabelEditor.js";
+import { LabelEditor } from "../LabelEditor.tsx";
 
 const ALL_LABELS = ["baking", "dairy", "fat", "solid"];
 

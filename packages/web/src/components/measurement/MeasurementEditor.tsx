@@ -13,7 +13,7 @@ import {
   type VolumeUnit,
   type WeightUnit,
 } from "@recipe-book/shared";
-import { FractionDisplay, OP_MODES, OP_ROWS, type OpMode } from "./FractionEditor.js";
+import { FractionDisplay, OP_MODES, OP_ROWS, type OpMode } from "./FractionEditor.tsx";
 import "./MeasurementEditor.css";
 
 // ---------------------------------------------------------------------------

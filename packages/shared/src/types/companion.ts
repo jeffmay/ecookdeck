@@ -1,4 +1,5 @@
-import { distill, type } from "arktype";
+import type { distill } from "arktype";
+import { type } from "arktype";
 
 /**
  * A {@link type.Any} reified as `AnyType<T>` — a Type with the given output type,

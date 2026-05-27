@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type } from "arktype";
-import { paddedId } from "../ids.js";
-import { RecipeFolder, RecipeFolderId, SortOrder } from "../recipeGroup.js";
+import { paddedId } from "../ids.ts";
+import { RecipeFolder, RecipeFolderId, SortOrder } from "../recipeGroup.ts";
 
 const ROOT_ID = paddedId(RecipeFolderId, "root");
 const CHILD_ID = paddedId(RecipeFolderId, "child");

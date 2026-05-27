@@ -1,6 +1,6 @@
 import type { Recipe } from "@recipe-book/shared";
 import { useNavigate } from "react-router";
-import { RecipeEditor } from "../pages/RecipeEditorPage.js";
+import { RecipeEditor } from "../pages/RecipeEditorPage.tsx";
 
 export default function RecipesNew() {
   const navigate = useNavigate();
