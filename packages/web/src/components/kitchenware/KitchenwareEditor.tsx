@@ -1,6 +1,6 @@
 import { type Container, type ContainerId, type KitchenwareLabelId } from "@recipe-book/shared";
-import { LabelEditor } from "../ingredients_table/LabelEditor.js";
-import { KitchenwareParentSelector } from "./KitchenwareParentSelector.js";
+import { LabelEditor } from "../ingredients_table/LabelEditor.tsx";
+import { KitchenwareParentSelector } from "./KitchenwareParentSelector.tsx";
 import "./KitchenwareEditor.css";
 
 export interface KitchenwareEditorProps {

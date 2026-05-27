@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRoutesStub } from "react-router";
-import { ACTIVE_BOOK_KEY, ActiveBookMeta } from "../hooks/useActiveBookMeta.js";
+import { ACTIVE_BOOK_KEY, ActiveBookMeta } from "../hooks/useActiveBookMeta.ts";
 import { randomId, RecipeBookId } from "@recipe-book/shared";
 import { type } from "arktype";
 
@@ -13,9 +13,9 @@ vi.mock("y-indexeddb", () => ({
   })),
 }));
 
-const { default: Root } = await import("../root.js");
-const { default: Dashboard } = await import("../routes/dashboard.js");
-// const { default: Profile } = await import("../routes/profile.js");
+const { default: Root } = await import("../root.tsx");
+const { default: Dashboard } = await import("../routes/dashboard.tsx");
+// const { default: Profile } = await import("../routes/profile.ts");
 
 function makeStub(initialEntries = ["/dashboard"]) {
   const Stub = createRoutesStub([

@@ -1,15 +1,15 @@
 import { type } from "arktype";
-import { ReadonlyDeep } from "type-fest";
-import * as Y from "yjs";
-import { isTypeError } from "../assertions/index.js";
-import { Companion } from "../types/companion.js";
-import { randomId } from "../types/ids.js";
+import type { ReadonlyDeep } from "type-fest";
+import type * as Y from "yjs";
+import { isTypeError } from "../assertions/index.ts";
+import { Companion } from "../types/companion.ts";
+import { randomId } from "../types/ids.ts";
 import {
   KitchenwareKind,
   KitchenwareLabelId,
   type KitchenwareLabel,
-} from "../types/kitchenware.js";
-import { setOf } from "../types/sets.js";
+} from "../types/kitchenware.ts";
+import { setOf } from "../types/sets.ts";
 
 const LABELS_MAP_KEY = "labels";
 

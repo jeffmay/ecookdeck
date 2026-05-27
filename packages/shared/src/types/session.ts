@@ -1,8 +1,8 @@
 import { type } from "arktype";
-import { IdCompanion } from "./ids.js";
-import { Fraction, Measurement } from "./measurement.js";
-import { EnumCompanion } from "./enums.js";
-import { Companion } from "./companion.js";
+import { IdCompanion } from "./ids.ts";
+import { Fraction, Measurement } from "./measurement.ts";
+import { EnumCompanion } from "./enums.ts";
+import { Companion } from "./companion.ts";
 
 export const ItemState = Companion(
   "ItemState",

@@ -7,8 +7,8 @@ import {
   findOrCreateLabel,
   deleteLabels,
   renameLabel,
-} from "../labelStore.js";
-import { KitchenwareLabelId } from "../../types/kitchenware.js";
+} from "../labelStore.ts";
+import type { KitchenwareLabelId } from "../../types/kitchenware.ts";
 
 let doc: Y.Doc;
 

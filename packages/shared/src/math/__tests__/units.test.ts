@@ -4,8 +4,8 @@ import {
   convertWeight,
   largestWholeVolumeUnit,
   largestWholeWeightUnit,
-} from "../units.js";
-import { makeFraction, fractionsEqual, fractionToDecimal } from "../fraction.js";
+} from "../units.ts";
+import { makeFraction, fractionsEqual, fractionToDecimal } from "../fraction.ts";
 
 describe("convertVolume", () => {
   it("returns same value when units match", () => {

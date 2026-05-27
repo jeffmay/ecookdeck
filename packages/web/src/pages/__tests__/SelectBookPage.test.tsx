@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { SelectBookPage } from "../SelectBookPage.js";
+import { SelectBookPage } from "../SelectBookPage.tsx";
 
 describe("SelectBookPage", () => {
   it("renders the title, subtitle, and form", () => {

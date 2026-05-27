@@ -1,5 +1,5 @@
 import type { ReadonlyDeep } from "type-fest";
-import type { Fraction } from "../types/measurement.js";
+import type { Fraction } from "../types/measurement.ts";
 
 function gcd(a: number, b: number): number {
   a = Math.abs(a);

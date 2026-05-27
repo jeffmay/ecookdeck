@@ -1,7 +1,8 @@
 import { type } from "arktype";
 import { nanoid } from "nanoid";
-import { padStart, PadStart } from "string-ts";
-import { type Companion } from "./companion";
+import type { PadStart } from "string-ts";
+import { padStart } from "string-ts";
+import { type Companion } from "./companion.ts";
 
 /**
  * The expected shape of a companion object for generating and validating identifiers.

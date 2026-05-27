@@ -1,6 +1,6 @@
-import { ReadonlyDeep } from "type-fest";
-import type { Fraction, VolumeUnit, WeightUnit } from "../types/measurement.js";
-import { divideFractions, fractionsEqual, makeFraction, multiplyFractions } from "./fraction.js";
+import type { ReadonlyDeep } from "type-fest";
+import type { Fraction, VolumeUnit, WeightUnit } from "../types/measurement.ts";
+import { divideFractions, fractionsEqual, makeFraction, multiplyFractions } from "./fraction.ts";
 
 // US customary volume: base unit is tsp (all conversions are exact integers)
 const TSP_PER: ReadonlyDeep<Record<VolumeUnit, Fraction | null>> = {

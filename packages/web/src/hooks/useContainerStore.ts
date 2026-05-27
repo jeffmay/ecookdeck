@@ -11,7 +11,7 @@ import {
   setParentForContainer,
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { useKitchenwareDoc } from "../contexts/docContext.js";
+import { useKitchenwareDoc } from "../contexts/docContext.ts";
 
 export interface NewContainerInput {
   readonly name: string;

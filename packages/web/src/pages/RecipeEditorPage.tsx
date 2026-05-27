@@ -21,12 +21,12 @@ import {
   SectionItemId,
   IngredientId,
 } from "@recipe-book/shared";
-import { ReadonlyDeep } from "type-fest";
-import { MeasurementEditor } from "../components/measurement/MeasurementEditor.js";
-import { DurationEditor } from "../components/duration/DurationEditor.js";
-import { useIngredientStore } from "../hooks/useIngredientStore.js";
-import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.js";
-import { useRecipeStore, latestVersion } from "../hooks/useRecipeStore.js";
+import type { ReadonlyDeep } from "type-fest";
+import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
+import { DurationEditor } from "../components/duration/DurationEditor.tsx";
+import { useIngredientStore } from "../hooks/useIngredientStore.ts";
+import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
+import { useRecipeStore, latestVersion } from "../hooks/useRecipeStore.ts";
 import "./RecipeEditorPage.css";
 
 // ---------------------------------------------------------------------------

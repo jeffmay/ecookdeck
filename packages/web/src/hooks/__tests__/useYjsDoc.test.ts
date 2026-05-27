@@ -12,7 +12,7 @@ vi.mock("y-indexeddb", () => ({
   IndexeddbPersistence: MockIndexeddbPersistence,
 }));
 
-const { useKitchenwareDoc, useRecipeBookDoc } = await import("../useYjsDoc.js");
+const { useKitchenwareDoc, useRecipeBookDoc } = await import("../useYjsDoc.ts");
 
 beforeEach(() => {
   vi.clearAllMocks();

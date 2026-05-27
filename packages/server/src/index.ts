@@ -1,7 +1,7 @@
 import express from "express";
-import config from "./config.js";
-import { createDocumentStore } from "./storage/index.js";
-import { createSyncRouter } from "./routes/sync.js";
+import config from "./config.ts";
+import { createDocumentStore } from "./storage/index.ts";
+import { createSyncRouter } from "./routes/sync.ts";
 
 const store = createDocumentStore();
 

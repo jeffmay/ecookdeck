@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import importX from "eslint-plugin-import-x";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import globals from "globals";
@@ -22,16 +23,32 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
+      "import-x": importX,
       react: reactPlugin,
       "react-hooks": reactHooksPlugin,
     },
+    settings: {
+      "import-x/resolver": {
+        typescript: true,
+        node: true,
+      },
+    },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          fixStyle: "separate-type-imports",
+        },
+      ],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true },
       ],
+      "import-x/extensions": ["error", "always", { ignorePackages: true }],
+      "import-x/no-unresolved": "error",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       quotes: ["error", "double", { avoidEscape: true }],
@@ -47,6 +64,6 @@ export default [
     },
   },
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/*.config.*"],
+    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**", "**/*.config.*"],
   },
 ];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { paddedId } from "../ids.js";
-import { ContainerId, EquipmentId, IngredientId } from "../kitchenware.js";
+import { paddedId } from "../ids.ts";
+import { ContainerId, EquipmentId, IngredientId } from "../kitchenware.ts";
 import {
   type ContainerItem,
   type IngredientItem,
@@ -16,7 +16,7 @@ import {
   type TextBlock,
   RecipeIngredient,
   RecipeIngredientId,
-} from "../recipe.js";
+} from "../recipe.ts";
 
 describe("recipe item type guards", () => {
   const ingredient_item: IngredientItem = {

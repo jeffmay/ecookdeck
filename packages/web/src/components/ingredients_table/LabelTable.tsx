@@ -1,7 +1,7 @@
 import type { Ingredient, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { RadioButton } from "primereact/radiobutton";
 import { useMemo, useRef, useState, type FormEvent } from "react";
-import { ReadonlyDeep } from "type-fest";
+import type { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
 
 export interface LabelTableProps {

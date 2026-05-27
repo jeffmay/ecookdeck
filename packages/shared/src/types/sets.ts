@@ -1,5 +1,5 @@
-import { type } from "arktype";
-import { ObjectType } from "arktype/internal/variants/object.ts";
+import type { type } from "arktype";
+import type { ObjectType } from "arktype/internal/variants/object.ts";
 
 /**
  * Creates a Set from an Array.

@@ -13,7 +13,7 @@ import {
   saveRecipe,
 } from "@recipe-book/shared";
 import type { RecipeFolderId } from "@recipe-book/shared";
-import { useRecipeBookDoc } from "../contexts/docContext.js";
+import { useRecipeBookDoc } from "../contexts/docContext.ts";
 
 export interface RecipeStore {
   readonly recipes: Recipe[];

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useActiveBookMeta, ACTIVE_BOOK_KEY } from "../useActiveBookMeta.js";
+import { useActiveBookMeta, ACTIVE_BOOK_KEY } from "../useActiveBookMeta.ts";
 import { paddedId, RecipeBookId } from "@recipe-book/shared";
 
 beforeEach(() => {

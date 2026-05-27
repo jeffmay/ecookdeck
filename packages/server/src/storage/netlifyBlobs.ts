@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import type { DocumentStore } from "./types.js";
+import type { DocumentStore } from "./types.ts";
 
 export class NetlifyBlobStore implements DocumentStore {
   private readonly siteId: string;

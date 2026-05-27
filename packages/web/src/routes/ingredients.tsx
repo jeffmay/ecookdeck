@@ -1,4 +1,4 @@
-import { BulkIngredientEditorPage } from "../pages/BulkIngredientEditorPage.js";
+import { BulkIngredientEditorPage } from "../pages/BulkIngredientEditorPage.tsx";
 
 export default function Ingredients() {
   return <BulkIngredientEditorPage />;

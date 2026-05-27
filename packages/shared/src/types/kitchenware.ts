@@ -1,9 +1,9 @@
 import { type } from "arktype";
-import { Companion, extend } from "./companion.js";
-import { EnumCompanion } from "./enums.js";
-import { IdCompanion } from "./ids.js";
-import { Measurement } from "./measurement.js";
-import { setOf } from "./sets.js";
+import { Companion, extend } from "./companion.ts";
+import { EnumCompanion } from "./enums.ts";
+import { IdCompanion } from "./ids.ts";
+import { Measurement } from "./measurement.ts";
+import { setOf } from "./sets.ts";
 
 // externalized to avoid circular definitions in KitchenwareId
 const KitchenwareIdLength = 12 as const;

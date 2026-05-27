@@ -9,7 +9,7 @@ import {
   getRecipeFoldersFlat,
   updateRecipeFolder,
 } from "@recipe-book/shared";
-import { useRecipeBookDoc } from "../contexts/docContext.js";
+import { useRecipeBookDoc } from "../contexts/docContext.ts";
 
 export interface RecipeFolderStore {
   readonly folders: RecipeFolder[];

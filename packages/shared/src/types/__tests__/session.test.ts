@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { paddedId } from "../ids.js";
-import { isActiveSession, isCompletedSession, SessionId, type Session } from "../session.js";
+import { paddedId } from "../ids.ts";
+import { isActiveSession, isCompletedSession, SessionId, type Session } from "../session.ts";
 
 describe("session type guards", () => {
   const active_session: Session = {

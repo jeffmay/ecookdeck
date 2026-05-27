@@ -2,7 +2,7 @@ import { IngredientId, loadId, type Ingredient, type KitchenwareLabel } from "@r
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo } from "react";
-import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.js";
+import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.ts";
 import "./IngredientSelector.css";
 
 export interface IngredientSelectorProps {

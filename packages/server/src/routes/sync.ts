@@ -1,7 +1,7 @@
 import { type } from "arktype";
 import { Router, type Request, type Response } from "express";
 import * as Y from "yjs";
-import type { DocumentStore } from "../storage/types.js";
+import type { DocumentStore } from "../storage/types.ts";
 
 const SyncRequestBody = type({
   book_id: "string > 0",

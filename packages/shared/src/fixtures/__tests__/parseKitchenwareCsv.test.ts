@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseKitchenwareCsv } from "../kitchenware.js";
-import { paddedId } from "../../types/ids.js";
-import { ContainerId, EquipmentId, IngredientId } from "../../types/kitchenware.js";
+import { parseKitchenwareCsv } from "../kitchenware.ts";
+import { paddedId } from "../../types/ids.ts";
+import { ContainerId, EquipmentId, IngredientId } from "../../types/kitchenware.ts";
 
 // IDs are left-padded to 12 characters with "-" by the parser
 const SAMPLE_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels

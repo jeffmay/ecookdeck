@@ -1,21 +1,15 @@
-import {
-  findOrCreateLabel,
-  IngredientId,
-  KitchenwareKind,
-  KitchenwareLabelId,
-  loadId,
-  type Measurement,
-} from "@recipe-book/shared";
+import type { KitchenwareKind, KitchenwareLabelId } from "@recipe-book/shared";
+import { findOrCreateLabel, IngredientId, loadId, type Measurement } from "@recipe-book/shared";
 import { useState } from "react";
-import { MeasurementEditor } from "../components/measurement/MeasurementEditor.js";
+import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
 import {
   IngredientsTable,
   type ExternalLabelFilter,
-} from "../components/ingredients_table/IngredientsTable.js";
-import { LabelTable } from "../components/ingredients_table/LabelTable.js";
-import { useKitchenwareDoc } from "../contexts/docContext.js";
-import { useIngredientStore } from "../hooks/useIngredientStore.js";
-import { useLabelStore } from "../hooks/useLabelStore.js";
+} from "../components/ingredients_table/IngredientsTable.tsx";
+import { LabelTable } from "../components/ingredients_table/LabelTable.tsx";
+import { useKitchenwareDoc } from "../contexts/docContext.ts";
+import { useIngredientStore } from "../hooks/useIngredientStore.ts";
+import { useLabelStore } from "../hooks/useLabelStore.ts";
 import "./BulkIngredientEditorPage.css";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);

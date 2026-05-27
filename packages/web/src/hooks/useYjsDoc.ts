@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
-import type { DocContextValue } from "../contexts/docContext.js";
+import type { DocContextValue } from "../contexts/docContext.ts";
 
 interface ResolvableSync {
   readonly promise: Promise<unknown>;

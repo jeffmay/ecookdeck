@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { paddedId } from "../../types/ids.js";
-import { type Container, ContainerId, KitchenwareLabelId } from "../../types/kitchenware.js";
+import { paddedId } from "../../types/ids.ts";
+import { type Container, ContainerId, KitchenwareLabelId } from "../../types/kitchenware.ts";
 import {
   addContainer,
   getContainers,
   renameContainer,
   setLabelsForContainer,
   setParentForContainer,
-} from "../containerStore.js";
+} from "../containerStore.ts";
 
 const BOWL_ID = paddedId(ContainerId, "bowl");
 const POT_ID = paddedId(ContainerId, "pot");

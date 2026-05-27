@@ -1,6 +1,6 @@
 import { type } from "arktype";
 import { describe, expect, it } from "vitest";
-import { unionOf } from "../enums";
+import { unionOf } from "../enums.ts";
 
 describe("enums", () => {
   describe("unionOf", () => {

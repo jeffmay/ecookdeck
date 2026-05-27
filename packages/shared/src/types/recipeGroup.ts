@@ -1,7 +1,7 @@
 import { type } from "arktype";
-import { ScopedCompanion } from "./companion.js";
-import { IdCompanion } from "./ids.js";
-import { EnumCompanion } from "./enums.js";
+import { ScopedCompanion } from "./companion.ts";
+import { IdCompanion } from "./ids.ts";
+import { EnumCompanion } from "./enums.ts";
 
 export const SortOrder = EnumCompanion("SortOrder", [
   "last_modified",

@@ -1,6 +1,6 @@
 import { type } from "arktype";
 import { describe, expect, it } from "vitest";
-import { paddedId } from "../ids.js";
+import { paddedId } from "../ids.ts";
 import {
   Container,
   ContainerId,
@@ -14,8 +14,8 @@ import {
   KitchenwareKind,
   type Kitchenware,
   type KitchenwareLabelId,
-} from "../kitchenware.js";
-import { is } from "../enums.js";
+} from "../kitchenware.ts";
+import { is } from "../enums.ts";
 
 describe("kitchenware type guards", () => {
   const ingredient: Kitchenware = {

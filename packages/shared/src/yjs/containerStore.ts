@@ -1,9 +1,10 @@
 import { type } from "arktype";
-import * as Y from "yjs";
-import { isTypeError } from "../assertions/index.js";
-import { loadId } from "../types/ids.js";
-import { Container, ContainerId, KitchenwareLabelId } from "../types/kitchenware.js";
-import { setOf } from "../types/sets.js";
+import type * as Y from "yjs";
+import { isTypeError } from "../assertions/index.ts";
+import { loadId } from "../types/ids.ts";
+import type { Container } from "../types/kitchenware.ts";
+import { ContainerId, KitchenwareLabelId } from "../types/kitchenware.ts";
+import { setOf } from "../types/sets.ts";
 
 const MAP_KEY = "containers";
 
