@@ -2,6 +2,7 @@ import {
   IngredientId,
   loadId,
   unitType,
+  validateAndPassthrough,
   type Ingredient,
   type KitchenwareLabel,
   type KitchenwareLabelId,
@@ -20,7 +21,7 @@ import {
 } from "primereact/treetable";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.js";
-import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.js";
+import { buildIngredientTree, IngredientRow, IngredientRows } from "./buildIngredientTree.js";
 import { IngredientSelector } from "./IngredientSelector.js";
 import "./IngredientsTable.css";
 import { LabelEditor } from "./LabelEditor.js";
@@ -318,7 +319,7 @@ export function IngredientsTable({
   // ---------------------------------------------------------------------------
 
   function nameBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
       return (
@@ -371,7 +372,7 @@ export function IngredientsTable({
   }
 
   function measurementBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     if (editingMeasurementFor === row.id) {
       return (
         <MeasurementEditor
@@ -402,7 +403,7 @@ export function IngredientsTable({
   }
 
   function labelsBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "labels"));
     const display = row.labels.join(", ");
     if (pending !== undefined) {
@@ -435,7 +436,7 @@ export function IngredientsTable({
   }
 
   function parentBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "parent_name"));
     const display = row.parent_name || "— None —";
     if (pending !== undefined) {
@@ -494,7 +495,10 @@ export function IngredientsTable({
 
   function selectAllVisible(): void {
     const result: TreeTableSelectionKeysType = {};
-    const rows = treeNodes.map((n) => n.data as IngredientRow);
+    const [rows] = validateAndPassthrough(
+      IngredientRows,
+      treeNodes.map((n) => n.data),
+    );
     collectVisibleKeys(rows, nameFilter, typeFilter, labelFilter, result);
     setSelectionKeys(result);
   }
