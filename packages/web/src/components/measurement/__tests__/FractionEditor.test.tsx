@@ -66,6 +66,15 @@ describe("FractionEditor — opening the editor", () => {
 });
 
 describe("FractionEditor — operation mode switching", () => {
+  it("switching to = shows constant buttons", async () => {
+    await openEditor();
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "÷2" })).not.toBeInTheDocument();
+  });
+
   it("switching to × shows multiply buttons", async () => {
     await openEditor();
     await userEvent.click(screen.getByRole("radio", { name: "×" }));
@@ -121,6 +130,42 @@ describe("FractionEditor — applying operations", () => {
     await userEvent.click(screen.getByRole("button", { name: "÷3" }));
     // 3 ÷ 3 = 1
     expect(screen.getByLabelText("1")).toBeInTheDocument();
+  });
+
+  it("= button sets value to 1", async () => {
+    await openEditor(THREE);
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    await userEvent.click(screen.getByRole("button", { name: "1" }));
+    expect(screen.getByLabelText("1")).toBeInTheDocument();
+  });
+
+  it("= button sets value to 2", async () => {
+    await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    await userEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(screen.getByLabelText("2")).toBeInTheDocument();
+  });
+
+  it("= button sets value to 3", async () => {
+    await openEditor(ONE_HALF);
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    await userEvent.click(screen.getByRole("button", { name: "3" }));
+    expect(screen.getByLabelText("3")).toBeInTheDocument();
+  });
+
+  it("clamps to zero when subtracting below zero", async () => {
+    await openEditor(ONE_HALF);
+    await userEvent.click(screen.getByRole("radio", { name: "−" }));
+    await userEvent.click(screen.getByRole("button", { name: "−1" }));
+    expect(screen.getByLabelText("0")).toBeInTheDocument();
+  });
+
+  it("clamps to zero when repeatedly subtracting", async () => {
+    await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "−" }));
+    await userEvent.click(screen.getByRole("button", { name: "−1" }));
+    await userEvent.click(screen.getByRole("button", { name: "−1" }));
+    expect(screen.getByLabelText("0")).toBeInTheDocument();
   });
 });
 
