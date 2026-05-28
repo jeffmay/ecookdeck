@@ -82,7 +82,7 @@ describe("FractionEditor — operation mode switching", () => {
     expect(screen.queryByRole("button", { name: "÷2" })).not.toBeInTheDocument();
   });
 
-  it("switching to − shows subtract buttons", async () => {
+  it("switching to - shows subtract buttons", async () => {
     await openEditor();
     await userEvent.click(screen.getByRole("radio", { name: "−" }));
     expect(screen.getByRole("button", { name: "−1" })).toBeInTheDocument();

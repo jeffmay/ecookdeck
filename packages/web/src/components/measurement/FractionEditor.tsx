@@ -12,6 +12,7 @@ import {
   clampToZero,
   type Fraction,
   EnumCompanion,
+  extend,
 } from "@recipe-book/shared";
 import "./FractionEditor.css";
 
@@ -24,7 +25,20 @@ export interface OpButton {
   readonly apply: (f: Fraction) => Fraction;
 }
 
-export const OpMode = EnumCompanion("OpMode", ["=", "+", "-", "x", "÷"]);
+export const OpMode = extend(EnumCompanion("OpMode", ["=", "+", "-", "✕", "÷"]), (init) => {
+  const alphaEnum = {
+    SET: "=",
+    ADD: "+",
+    SUB: "-",
+    MUL: "✕",
+    DIV: "÷",
+  } as const satisfies Record<string, (typeof init.values)[number]>;
+  return {
+    ...init,
+    enum: alphaEnum,
+    default: alphaEnum.SET,
+  };
+});
 export type OpMode = typeof OpMode.type.infer;
 
 export const OP_ROWS: Record<OpMode, readonly OpButton[]> = {
@@ -47,7 +61,7 @@ export const OP_ROWS: Record<OpMode, readonly OpButton[]> = {
     { label: "−⅕", apply: (f) => subtractFractions(f, makeFraction(1, 5)) },
     { label: "−⅛", apply: (f) => subtractFractions(f, makeFraction(1, 8)) },
   ],
-  x: [
+  "✕": [
     { label: "x2", apply: (f) => multiplyFractions(f, makeFraction(2, 1)) },
     { label: "x3", apply: (f) => multiplyFractions(f, makeFraction(3, 1)) },
     { label: "x5", apply: (f) => multiplyFractions(f, makeFraction(5, 1)) },
@@ -108,7 +122,7 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
   function openEditor() {
     setOriginal(value);
     setCurrent(value);
-    setOpMode("÷");
+    setOpMode(OpMode.default);
     setEditing(true);
   }
 
