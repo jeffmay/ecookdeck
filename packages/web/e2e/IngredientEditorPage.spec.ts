@@ -59,6 +59,82 @@ test.describe("Ingredient Editor", () => {
     await page.waitForTimeout(300);
   });
 
+  test("LabelEditor ArrowDown does not move focus to a table row", async ({ page }) => {
+    const labelsHeaderIndex = await page.evaluate(() => {
+      const headers = Array.from(document.querySelectorAll("th"));
+      return headers.findIndex((h) => h.textContent.includes("Labels"));
+    });
+    expect(labelsHeaderIndex).toBeGreaterThanOrEqual(0);
+
+    const labelsCell = page
+      .locator(`tbody tr:first-child td:nth-child(${labelsHeaderIndex + 1}) span.it-editable`)
+      .first();
+    await labelsCell.click();
+    await page.waitForTimeout(500);
+
+    // Dropdown must be open before we can test navigation
+    await expect(page.locator(".le__menu").first()).toBeVisible();
+
+    await page.keyboard.press("ArrowDown");
+    await page.waitForTimeout(300);
+
+    // Focus must still be inside the LabelEditor combobox, not on a bare table row
+    const focusEscaped = await page.evaluate(() => {
+      const focused = document.activeElement;
+      if (!focused) return true;
+      const inLabelEditor = focused.closest(".le__control") !== null;
+      return !inLabelEditor;
+    });
+    expect(focusEscaped).toBe(false);
+
+    // Dropdown must still be open
+    await expect(page.locator(".le__menu").first()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  });
+
+  test("IngredientSelector ArrowDown does not move focus outside the dropdown panel", async ({
+    page,
+  }) => {
+    const parentHeaderIndex = await page.evaluate(() => {
+      const headers = Array.from(document.querySelectorAll("th"));
+      return headers.findIndex((h) => h.textContent?.includes("Parent"));
+    });
+    expect(parentHeaderIndex).toBeGreaterThanOrEqual(0);
+
+    const parentCell = page
+      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .first();
+    await parentCell.click();
+    await page.waitForTimeout(500);
+
+    const panel = page.locator(".is-panel").first();
+    await expect(panel).toBeVisible();
+
+    // Focus on the filter input inside the panel
+    const filterInput = page.locator(".is-panel input[type='text']").first();
+    await filterInput.click();
+
+    await page.keyboard.press("ArrowDown");
+    await page.waitForTimeout(300);
+
+    // Panel must still be open
+    await expect(panel).toBeVisible();
+
+    // Focus must be within the panel or on the selector itself — not on a bare table row
+    const focusEscaped = await page.evaluate(() => {
+      const focused = document.activeElement;
+      if (!focused) return true;
+      const inPanel = focused.closest(".is-panel") !== null;
+      const inSelector = focused.closest(".is-selector") !== null;
+      return !inPanel && !inSelector;
+    });
+    expect(focusEscaped).toBe(false);
+
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  });
+
   test("MeasurementEditor closes on Escape key", async ({ page }) => {
     const valueHeaderIndex = await page.evaluate(() => {
       const headers = Array.from(document.querySelectorAll("th"));
@@ -82,6 +158,90 @@ test.describe("Ingredient Editor", () => {
 
     const editorStillVisible = await page.locator(".me-root--open").first().isVisible();
     expect(editorStillVisible).toBe(false);
+  });
+
+  test("IngredientSelector panel renders as portal outside the table", async ({ page }) => {
+    const parentHeaderIndex = await page.evaluate(() => {
+      const headers = Array.from(document.querySelectorAll("th"));
+      return headers.findIndex((h) => h.textContent?.includes("Parent"));
+    });
+    expect(parentHeaderIndex).toBeGreaterThanOrEqual(0);
+
+    const parentCell = page
+      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .first();
+    await expect(parentCell).toBeVisible();
+    await parentCell.click();
+    await page.waitForTimeout(500);
+
+    const panel = page.locator(".is-panel").first();
+    await expect(panel).toBeVisible();
+
+    // Verify the panel is NOT inside the table — it renders as a body-level portal
+    const isPortal = await page.evaluate(() => {
+      const panel = document.querySelector(".is-panel");
+      if (!panel) return false;
+      let el: Element | null = panel.parentElement;
+      while (el) {
+        if (el.classList.contains("p-treetable")) return false;
+        el = el.parentElement;
+      }
+      return true;
+    });
+    expect(isPortal).toBe(true);
+
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  });
+
+  test("IngredientSelector panel is fully visible in viewport after opening", async ({ page }) => {
+    const parentHeaderIndex = await page.evaluate(() => {
+      const headers = Array.from(document.querySelectorAll("th"));
+      return headers.findIndex((h) => h.textContent?.includes("Parent"));
+    });
+
+    const parentCell = page
+      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .first();
+    await parentCell.click();
+    await page.waitForTimeout(500);
+
+    const panelInViewport = await page.evaluate(() => {
+      const panel = document.querySelector(".is-panel");
+      if (!panel) return false;
+      const rect = panel.getBoundingClientRect();
+      // Allow a small tolerance below the fold for the panel bottom edge
+      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight + 100;
+    });
+    expect(panelInViewport).toBe(true);
+
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  });
+
+  test("IngredientSelector filter input accepts keyboard input", async ({ page }) => {
+    const parentHeaderIndex = await page.evaluate(() => {
+      const headers = Array.from(document.querySelectorAll("th"));
+      return headers.findIndex((h) => h.textContent?.includes("Parent"));
+    });
+
+    const parentCell = page
+      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .first();
+    await parentCell.click();
+    await page.waitForTimeout(500);
+
+    const filterInput = page.locator(".is-panel input[type='text']").first();
+    await expect(filterInput).toBeVisible();
+    await filterInput.fill("Butter");
+    await page.waitForTimeout(300);
+
+    await expect(filterInput).toHaveValue("Butter");
+    // Panel stays open while typing
+    await expect(page.locator(".is-panel").first()).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
   });
 
   test("MultiSelectFilter shows accept/revert buttons in viewport", async ({ page }) => {

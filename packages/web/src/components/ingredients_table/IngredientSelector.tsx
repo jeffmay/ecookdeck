@@ -1,7 +1,7 @@
 import { IngredientId, loadId, type Ingredient, type KitchenwareLabel } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
-import { useMemo } from "react";
+import { useMemo, type KeyboardEvent } from "react";
 import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.ts";
 import "./IngredientSelector.css";
 
@@ -45,18 +45,26 @@ export function IngredientSelector({
     }
   }
 
+  function handleKeyDown(e: KeyboardEvent<HTMLSpanElement>): void {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      e.stopPropagation();
+    }
+  }
+
   return (
-    <TreeSelect
-      value={value ?? null}
-      options={treeNodes}
-      onChange={handleChange}
-      selectionMode="single"
-      filter
-      placeholder={placeholder}
-      className="is-selector"
-      panelClassName="is-panel"
-      ariaLabel={ariaLabel}
-      appendTo="self"
-    />
+    <span className="is-key-interceptor" onKeyDown={handleKeyDown}>
+      <TreeSelect
+        value={value ?? null}
+        options={treeNodes}
+        onChange={handleChange}
+        selectionMode="single"
+        filter
+        placeholder={placeholder}
+        className="is-selector"
+        panelClassName="is-panel"
+        ariaLabel={ariaLabel}
+        appendTo={document.body}
+      />
+    </span>
   );
 }

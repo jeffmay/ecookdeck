@@ -34,7 +34,7 @@ export interface LabelEditorProps {
   readonly ariaLabel: string;
   readonly placeholder?: string;
   readonly onChange: (names: readonly string[]) => void;
-  readonly onCommit: () => void;
+  readonly onCommit?: () => void;
   readonly onCancel?: () => void;
   readonly commitAriaLabel?: string;
   readonly commitDisabled?: boolean;
@@ -95,7 +95,7 @@ export function LabelEditor({
         onMenuOpen={() => setMenuOpen(true)}
         onMenuClose={() => setMenuOpen(false)}
         onKeyDown={(e) => {
-          if (menuOpen && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
             e.stopPropagation();
           }
           if (e.key === "Escape" && !menuOpen) {
@@ -110,15 +110,17 @@ export function LabelEditor({
           ↩
         </button>
       )}
-      <button
-        type="button"
-        className="it-confirm-btn"
-        onClick={onCommit}
-        disabled={commitDisabled}
-        aria-label={commitAriaLabel ?? "Confirm edit"}
-      >
-        ✔︎
-      </button>
+      {onCommit !== undefined && (
+        <button
+          type="button"
+          className="it-confirm-btn"
+          onClick={onCommit}
+          disabled={commitDisabled}
+          aria-label={commitAriaLabel ?? "Confirm edit"}
+        >
+          ✔︎
+        </button>
+      )}
     </span>
   );
 }

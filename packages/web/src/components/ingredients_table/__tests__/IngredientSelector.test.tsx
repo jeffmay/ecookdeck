@@ -4,7 +4,7 @@ import {
   type KitchenwareLabel,
   paddedId,
 } from "@recipe-book/shared";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
@@ -159,5 +159,61 @@ describe("IngredientSelector — onChange", () => {
       "",
     );
     expect(onChange).toHaveBeenCalledWith(undefined);
+  });
+});
+
+describe("IngredientSelector — arrow key propagation", () => {
+  it("does not propagate ArrowDown to parent elements", () => {
+    const parentHandler = vi.fn();
+    render(
+      <div role="group" onKeyDown={parentHandler}>
+        <IngredientSelector
+          value={undefined}
+          options={[DAIRY, BUTTER, CHEESE]}
+          labels={LABELS}
+          onChange={onChange}
+          ariaLabel="Select parent ingredient"
+        />
+      </div>,
+    );
+    const select = screen.getByRole("combobox", { name: "Select parent ingredient" });
+    fireEvent.keyDown(select, { key: "ArrowDown", bubbles: true });
+    expect(parentHandler).not.toHaveBeenCalled();
+  });
+
+  it("does not propagate ArrowUp to parent elements", () => {
+    const parentHandler = vi.fn();
+    render(
+      <div role="group" onKeyDown={parentHandler}>
+        <IngredientSelector
+          value={undefined}
+          options={[DAIRY, BUTTER, CHEESE]}
+          labels={LABELS}
+          onChange={onChange}
+          ariaLabel="Select parent ingredient"
+        />
+      </div>,
+    );
+    const select = screen.getByRole("combobox", { name: "Select parent ingredient" });
+    fireEvent.keyDown(select, { key: "ArrowUp", bubbles: true });
+    expect(parentHandler).not.toHaveBeenCalled();
+  });
+
+  it("does propagate other keys (e.g. Tab) to parent elements", () => {
+    const parentHandler = vi.fn();
+    render(
+      <div role="group" onKeyDown={parentHandler}>
+        <IngredientSelector
+          value={undefined}
+          options={[DAIRY, BUTTER, CHEESE]}
+          labels={LABELS}
+          onChange={onChange}
+          ariaLabel="Select parent ingredient"
+        />
+      </div>,
+    );
+    const select = screen.getByRole("combobox", { name: "Select parent ingredient" });
+    fireEvent.keyDown(select, { key: "Tab", bubbles: true });
+    expect(parentHandler).toHaveBeenCalled();
   });
 });

@@ -2,6 +2,11 @@
    IngredientSelector — PrimeReact TreeSelect overrides
    ============================================================ */
 
+/* Transparent wrapper that intercepts arrow-key events before they reach the TreeTable row */
+.is-key-interceptor {
+  display: contents;
+}
+
 .is-selector {
   font-family: var(--font-body);
   font-size: 0.9em;

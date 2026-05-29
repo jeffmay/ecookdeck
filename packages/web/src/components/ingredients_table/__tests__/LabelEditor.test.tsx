@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LabelEditor } from "../LabelEditor.tsx";
@@ -37,6 +37,19 @@ describe("LabelEditor — rendering", () => {
     setup();
     expect(screen.getByRole("button", { name: "Confirm edit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel edit" })).toBeInTheDocument();
+  });
+
+  it("does not render the Confirm button when onCommit is not provided", () => {
+    const onChange = vi.fn();
+    render(
+      <LabelEditor
+        selectedLabelNames={[]}
+        allLabelNames={ALL_LABELS}
+        ariaLabel="Edit labels for Flour"
+        onChange={onChange}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Confirm edit" })).not.toBeInTheDocument();
   });
 
   it("renders the select input with the given aria-label", () => {
@@ -113,5 +126,62 @@ describe("LabelEditor — creating new labels", () => {
     await userEvent.type(input, "spicy");
     await userEvent.click(await screen.findByText(/Create "spicy"/));
     expect(onChange).toHaveBeenCalledWith(["spicy"]);
+  });
+});
+
+describe("LabelEditor — arrow key propagation", () => {
+  it("does not propagate ArrowDown to parent elements when menu is open", async () => {
+    const parentHandler = vi.fn();
+    render(
+      <div role="group" onKeyDown={parentHandler}>
+        <LabelEditor
+          selectedLabelNames={[]}
+          allLabelNames={ALL_LABELS}
+          ariaLabel="Edit labels for Flour"
+          onChange={vi.fn()}
+          onCommit={vi.fn()}
+        />
+      </div>,
+    );
+    const combobox = screen.getByRole("combobox", { name: "Edit labels for Flour" });
+    await userEvent.click(combobox);
+    fireEvent.keyDown(combobox, { key: "ArrowDown", bubbles: true });
+    expect(parentHandler).not.toHaveBeenCalled();
+  });
+
+  it("does not propagate ArrowDown to parent elements when menu is closed", () => {
+    const parentHandler = vi.fn();
+    render(
+      <div role="group" onKeyDown={parentHandler}>
+        <LabelEditor
+          selectedLabelNames={[]}
+          allLabelNames={ALL_LABELS}
+          ariaLabel="Edit labels for Flour"
+          onChange={vi.fn()}
+          onCommit={vi.fn()}
+        />
+      </div>,
+    );
+    const combobox = screen.getByRole("combobox", { name: "Edit labels for Flour" });
+    fireEvent.keyDown(combobox, { key: "ArrowDown", bubbles: true });
+    expect(parentHandler).not.toHaveBeenCalled();
+  });
+
+  it("does not propagate ArrowUp to parent elements", () => {
+    const parentHandler = vi.fn();
+    render(
+      <div role="group" onKeyDown={parentHandler}>
+        <LabelEditor
+          selectedLabelNames={[]}
+          allLabelNames={ALL_LABELS}
+          ariaLabel="Edit labels for Flour"
+          onChange={vi.fn()}
+          onCommit={vi.fn()}
+        />
+      </div>,
+    );
+    const combobox = screen.getByRole("combobox", { name: "Edit labels for Flour" });
+    fireEvent.keyDown(combobox, { key: "ArrowUp", bubbles: true });
+    expect(parentHandler).not.toHaveBeenCalled();
   });
 });
