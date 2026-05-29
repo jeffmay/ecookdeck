@@ -6,6 +6,7 @@ import {
   IngredientsTable,
   type ExternalLabelFilter,
 } from "../components/ingredients_table/IngredientsTable.tsx";
+import { LabelEditor } from "../components/ingredients_table/LabelEditor.tsx";
 import { LabelTable } from "../components/ingredients_table/LabelTable.tsx";
 import { useKitchenwareDoc } from "../contexts/docContext.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
@@ -23,14 +24,14 @@ const DEFAULT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1
 interface AddFormState {
   name: string;
   measurement_value: Measurement;
-  labels_raw: string;
+  labels: readonly string[];
   parent_id: string;
 }
 
 const EMPTY_ADD_FORM: AddFormState = {
   name: "",
   measurement_value: DEFAULT_MEASUREMENT,
-  labels_raw: "",
+  labels: [],
   parent_id: "",
 };
 
@@ -68,14 +69,11 @@ export function BulkIngredientEditorPage() {
     e.preventDefault();
     const labelName = addForm.name.trim();
     if (labelName === "") return;
-    const labelNames = addForm.labels_raw
-      .split(",")
-      .map((l) => l.trim())
-      .filter((l) => l !== "");
+    const labelNames = addForm.labels;
     const input: {
       name: string;
       default_measurement_value: Measurement;
-      labelNames: string[];
+      labelNames: readonly string[];
       parent_id?: IngredientId;
     } = {
       name: labelName,
@@ -155,14 +153,13 @@ export function BulkIngredientEditorPage() {
             />
           </label>
           <label className="bie-add-label">
-            Labels (comma-separated)
-            <input
-              className="bie-add-input"
-              type="text"
-              value={addForm.labels_raw}
-              onChange={(e) => setAddForm((f) => ({ ...f, labels_raw: e.target.value }))}
-              placeholder="e.g. solid, fat"
-              aria-label="New ingredient labels"
+            Labels
+            <LabelEditor
+              selectedLabelNames={addForm.labels}
+              allLabelNames={labels.map((l) => l.name)}
+              ariaLabel="New ingredient labels"
+              placeholder="Add labels…"
+              onChange={(names) => setAddForm((f) => ({ ...f, labels: names }))}
             />
           </label>
           <label className="bie-add-label">

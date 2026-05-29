@@ -98,6 +98,17 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
     expect(screen.queryByLabelText("New ingredient name")).not.toBeInTheDocument();
   });
 
+  it("creates an ingredient with labels using LabelEditor", async () => {
+    setup();
+    await userEvent.click(screen.getByLabelText("Add new ingredient"));
+    await userEvent.type(screen.getByLabelText("New ingredient name"), "Olive Oil");
+    await userEvent.type(screen.getByRole("combobox", { name: "New ingredient labels" }), "oil");
+    await userEvent.click(await screen.findByText(/Create "oil"/));
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(within(getTable()).getByText("Olive Oil")).toBeInTheDocument();
+    expect(screen.queryByLabelText("New ingredient name")).not.toBeInTheDocument();
+  });
+
   it("creates an ingredient with a parent", async () => {
     await setupAndWait();
     await userEvent.click(screen.getByLabelText("Add new ingredient"));
