@@ -3,10 +3,18 @@ name: opencode-review
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [ready_for_review]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
 
 jobs:
   review:
+    if: |
+      github.event_name == 'pull_request' && github.event.action == 'ready_for_review' ||
+      startsWith(github.event.comment.body, '/review') ||
+      contains(github.event.comment.body, '/review')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -28,3 +36,4 @@ jobs:
             - Check for code quality issues
             - Look for potential bugs
             - Suggest improvements
+            - Reference past review comments if still unresolved or unaddressed by changes or comment in code or on the pull request
