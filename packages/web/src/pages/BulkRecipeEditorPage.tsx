@@ -40,18 +40,8 @@ type TreeRow = FolderRow | RecipeRow | VersionRow;
 // Tree building
 // ---------------------------------------------------------------------------
 
-function sortLevelRecipes(recipes: Recipe[], sortOrder: string): Recipe[] {
-  if (sortOrder === "alphabetical") {
-    return [...recipes].sort((a, b) => a.title.localeCompare(b.title));
-  }
-  if (sortOrder === "created") {
-    return [...recipes].sort((a, b) => b.created_at - a.created_at);
-  }
-  if (sortOrder === "update_at") {
-    return [...recipes].sort((a, b) => b.updated_at - a.updated_at);
-  }
-  console.warn(`Unrecognized sortOrder for recipes: ${sortOrder}`);
-  return recipes;
+function sortLevelRecipes(recipes: Recipe[]): Recipe[] {
+  return [...recipes].sort((a, b) => b.updated_at - a.updated_at);
 }
 
 function buildRows(
@@ -82,7 +72,6 @@ function buildRows(
 
   const levelRecipes = sortLevelRecipes(
     allRecipes.filter((r) => r.parent_folder_id === parentFolderId),
-    "update_at",
   );
 
   for (const recipe of levelRecipes) {
@@ -104,7 +93,7 @@ function buildRows(
 
 export function BulkRecipeEditorPage() {
   const navigate = useNavigate();
-  const { recipes, remove, merge } = useRecipeStore();
+  const { recipes, removeAll, merge } = useRecipeStore();
   const { folders } = useRecipeFolderStore();
 
   const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<RecipeFolderId>>(new Set());
@@ -112,6 +101,7 @@ export function BulkRecipeEditorPage() {
   const [selectedRecipeIds, setSelectedRecipeIds] = useState<ReadonlySet<RecipeId>>(new Set());
   const [showMergeForm, setShowMergeForm] = useState(false);
   const [mergeName, setMergeName] = useState("");
+  const [mergeError, setMergeError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -161,10 +151,11 @@ export function BulkRecipeEditorPage() {
     setSelectedRecipeIds(new Set());
     setShowMergeForm(false);
     setMergeName("");
+    setMergeError(null);
   }
 
   function handleDeleteConfirm(): void {
-    for (const id of selectedArray) remove(id);
+    removeAll(selectedArray);
     clearSelection();
     setShowDeleteConfirm(false);
   }
@@ -178,10 +169,14 @@ export function BulkRecipeEditorPage() {
     e.preventDefault();
     const name = mergeName.trim();
     if (name === "" || selectedArray.length < 2) return;
-    merge(selectedArray, name);
-    setMergeName("");
-    setShowMergeForm(false);
-    clearSelection();
+    try {
+      merge(selectedArray, name);
+      setMergeName("");
+      setShowMergeForm(false);
+      clearSelection();
+    } catch (err) {
+      setMergeError(err instanceof Error ? err.message : "Merge failed. Please try again.");
+    }
   }
 
   function editRecipe(recipe: Recipe): void {
@@ -231,7 +226,10 @@ export function BulkRecipeEditorPage() {
                     type="text"
                     className="bre-merge-input"
                     value={mergeName}
-                    onChange={(e) => setMergeName(e.target.value)}
+                    onChange={(e) => {
+                      setMergeName(e.target.value);
+                      setMergeError(null);
+                    }}
                     placeholder="Merged recipe name…"
                     aria-label="Merged recipe name"
                     autoFocus
@@ -239,9 +237,15 @@ export function BulkRecipeEditorPage() {
                       if (e.key === "Escape") {
                         setShowMergeForm(false);
                         setMergeName("");
+                        setMergeError(null);
                       }
                     }}
                   />
+                  {mergeError !== null && (
+                    <span className="bre-merge-error" role="alert">
+                      {mergeError}
+                    </span>
+                  )}
                   <button
                     type="submit"
                     className="bre-bulk-btn"
@@ -256,6 +260,7 @@ export function BulkRecipeEditorPage() {
                     onClick={() => {
                       setShowMergeForm(false);
                       setMergeName("");
+                      setMergeError(null);
                     }}
                     aria-label="Cancel merge"
                   >

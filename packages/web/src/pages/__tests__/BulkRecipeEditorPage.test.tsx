@@ -1,4 +1,4 @@
-import { createRecipe, createRecipeFolder } from "@recipe-book/shared";
+import { createRecipe, createRecipeFolder, deleteRecipe } from "@recipe-book/shared";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
@@ -292,18 +292,50 @@ describe("BulkRecipeEditorPage — merge", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel merge" }));
     expect(screen.queryByRole("textbox", { name: "Merged recipe name" })).not.toBeInTheDocument();
   });
+
+  it("shows an error alert and keeps the form open when merge throws", async () => {
+    const a = createRecipe(recipeBookDoc, { title: "A" });
+    createRecipe(recipeBookDoc, { title: "B" });
+    setup();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe B" }));
+    await userEvent.click(screen.getByRole("button", { name: "Merge selected recipes" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Merged recipe name" }), "A+B");
+
+    // Delete recipe A externally so merge() will throw "Recipe not found"
+    deleteRecipe(recipeBookDoc, a.id);
+
+    await userEvent.click(screen.getByRole("button", { name: "Confirm merge" }));
+
+    // Error alert must appear and the form must stay open
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Merged recipe name" })).toBeInTheDocument();
+  });
 });
 
-describe("BulkRecipeEditorPage — paddedId usage", () => {
-  it("renders recipes created with paddedId without errors", () => {
-    createRecipe(recipeBookDoc, { title: "Test" });
+describe("BulkRecipeEditorPage — edit navigation", () => {
+  it("Edit keeps the recipe in the list after navigating away", async () => {
+    const recipe = createRecipe(recipeBookDoc, { title: "Lasagne" });
+    const latestVersionId = recipe.versions.at(-1)?.id;
     setup();
-    expect(screen.getByText("Test")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Edit recipe Lasagne" }));
+    expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${latestVersionId}`);
+    // Recipe must still be visible — Edit does not delete or clear it
+    expect(screen.getByText("Lasagne")).toBeInTheDocument();
   });
 
-  it("renders folders created with paddedId without errors", () => {
-    createRecipeFolder(recipeBookDoc, "Test Folder");
+  it("Edit a specific version navigates to that version and keeps recipe in list", async () => {
+    const recipe = createRecipe(recipeBookDoc, { title: "Risotto" });
+    const version = recipe.versions[0];
     setup();
-    expect(screen.getByText("Test Folder")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Expand versions of Risotto" }));
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: `Edit version ${version?.description || "Untitled version"}`,
+      }),
+    );
+    expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${version?.id}`);
+    // Recipe row must still be present — version edit does not mutate the list
+    expect(screen.getByText("Risotto")).toBeInTheDocument();
   });
 });

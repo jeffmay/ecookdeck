@@ -4,7 +4,7 @@
 
 .bre-page {
   padding: var(--spacing-md);
-  max-width: 100vw;
+  max-width: 100%;
 }
 
 .bre-header {
@@ -80,6 +80,13 @@
   background: var(--color-bg);
   color: var(--color-fg);
   min-width: 20vw;
+}
+
+.bre-merge-error {
+  font-size: 0.85em;
+  color: var(--color-fg);
+  border: var(--border-width) solid var(--color-fg);
+  padding: 1px var(--spacing-xs);
 }
 
 /* ============================================================

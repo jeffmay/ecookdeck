@@ -356,6 +356,15 @@ export function deleteRecipe(doc: Y.Doc, id: RecipeId): void {
   getRecipeYmap(doc).delete(id);
 }
 
+export function deleteRecipes(doc: Y.Doc, ids: RecipeId[]): void {
+  const map = getRecipeYmap(doc);
+  doc.transact(() => {
+    for (const id of ids) {
+      map.delete(id);
+    }
+  });
+}
+
 export function mergeRecipes(
   doc: Y.Doc,
   recipe_ids: RecipeId[],

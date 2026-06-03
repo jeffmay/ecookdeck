@@ -8,6 +8,7 @@ import {
   copyRecipe,
   createRecipe,
   deleteRecipe,
+  deleteRecipes,
   getRecipeYmap,
   getRecipes,
   mergeRecipes,
@@ -22,6 +23,7 @@ export interface RecipeStore {
   readonly save: (recipeId: RecipeId, input: Omit<SaveRecipeInput, "created_by">) => Recipe;
   readonly copy: (recipeId: RecipeId, newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
   readonly remove: (recipeId: RecipeId) => void;
+  readonly removeAll: (recipeIds: RecipeId[]) => void;
   readonly merge: (recipeIds: RecipeId[], newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
 }
 
@@ -46,6 +48,7 @@ export function useRecipeStore(): RecipeStore {
     copy: (recipeId, newTitle, newFolderId) =>
       copyRecipe(doc, recipeId, newTitle, newFolderId /* userName */),
     remove: (recipeId) => deleteRecipe(doc, recipeId),
+    removeAll: (recipeIds) => deleteRecipes(doc, recipeIds),
     merge: (recipeIds, newTitle, newFolderId) =>
       mergeRecipes(doc, recipeIds, newTitle, newFolderId),
   };
