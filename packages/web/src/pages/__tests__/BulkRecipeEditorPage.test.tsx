@@ -313,6 +313,182 @@ describe("BulkRecipeEditorPage — merge", () => {
   });
 });
 
+describe("BulkRecipeEditorPage — virtual root folder", () => {
+  it("shows the virtual Recipes folder row", () => {
+    setup();
+    expect(screen.getByRole("button", { name: "Collapse Recipes folder" })).toBeInTheDocument();
+    // "Recipes" appears in both the h1 heading and the virtual root folder cell
+    expect(screen.getAllByText("Recipes").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("Recipes folder is expanded by default", () => {
+    createRecipe(recipeBookDoc, { title: "Stew" });
+    setup();
+    expect(screen.getByRole("button", { name: "Collapse Recipes folder" })).toBeInTheDocument();
+    expect(screen.getByText("Stew")).toBeInTheDocument();
+  });
+
+  it("collapsing root hides all recipes", async () => {
+    createRecipe(recipeBookDoc, { title: "Stew" });
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "Collapse Recipes folder" }));
+    expect(screen.queryByText("Stew")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Expand Recipes folder" })).toBeInTheDocument();
+  });
+
+  it("collapsing then expanding root shows recipes again", async () => {
+    createRecipe(recipeBookDoc, { title: "Stew" });
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "Collapse Recipes folder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Expand Recipes folder" }));
+    expect(screen.getByText("Stew")).toBeInTheDocument();
+  });
+
+  it("shows empty message inside table when no recipes exist", () => {
+    setup();
+    expect(screen.getByText(/No recipes yet/i)).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Recipe list" })).toBeInTheDocument();
+  });
+});
+
+describe("BulkRecipeEditorPage — New menu on root folder", () => {
+  it("root folder row has a New button", () => {
+    setup();
+    expect(screen.getByRole("button", { name: "New item in Recipes" })).toBeInTheDocument();
+  });
+
+  it("clicking New opens a menu with Recipe and Folder options", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    expect(screen.getByRole("menuitem", { name: "Recipe" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Folder" })).toBeInTheDocument();
+  });
+
+  it("New > Recipe from root navigates to /recipes/new without folder state", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Recipe" }));
+    expect(mockNavigate).toHaveBeenCalledWith("/recipes/new");
+  });
+
+  it("New > Folder from root shows inline folder name form", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    expect(screen.getByRole("textbox", { name: "New folder name" })).toBeInTheDocument();
+  });
+
+  it("submitting the new root folder creates the folder", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "New folder name" }), "Desserts");
+    await userEvent.click(screen.getByRole("button", { name: "Confirm new folder" }));
+    expect(screen.getByText("Desserts")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+
+  it("cancelling the new root folder hides the form", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel new folder" }));
+    expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+});
+
+describe("BulkRecipeEditorPage — New menu on folder rows", () => {
+  it("folder rows have a New button", () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    expect(screen.getByRole("button", { name: "New item in folder Mains" })).toBeInTheDocument();
+  });
+
+  it("clicking New on a folder opens a menu with Recipe and Folder options", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
+    expect(screen.getByRole("menuitem", { name: "Recipe" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Folder" })).toBeInTheDocument();
+  });
+
+  it("New > Recipe from a folder navigates to /recipes/new with parentFolderId state", async () => {
+    const folder = createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Recipe" }));
+    expect(mockNavigate).toHaveBeenCalledWith("/recipes/new", {
+      state: { parentFolderId: folder.id },
+    });
+  });
+
+  it("New > Folder from a folder shows inline folder name form", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    expect(screen.getByRole("textbox", { name: "New folder name" })).toBeInTheDocument();
+  });
+
+  it("cancelling the new sub-folder form hides the form", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel new folder" }));
+    expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+
+  it("submitting the new sub-folder creates it and hides the form", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    // Expand Mains first so the new child folder will be visible after creation.
+    await userEvent.click(screen.getByRole("button", { name: "Expand folder Mains" }));
+    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "New folder name" }), "Pasta");
+    await userEvent.click(screen.getByRole("button", { name: "Confirm new folder" }));
+    expect(screen.getByText("Pasta")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+});
+
+describe("BulkRecipeEditorPage — New menu keyboard navigation", () => {
+  it("autoFocus puts focus on Recipe when menu opens", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    expect(screen.getByRole("menuitem", { name: "Recipe" })).toHaveFocus();
+  });
+
+  it("ArrowDown moves focus from Recipe to Folder", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Folder" })).toHaveFocus();
+  });
+
+  it("ArrowDown wraps from Folder back to Recipe", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Recipe" })).toHaveFocus();
+  });
+
+  it("ArrowUp from Recipe wraps to Folder (last item)", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{ArrowUp}");
+    expect(screen.getByRole("menuitem", { name: "Folder" })).toHaveFocus();
+  });
+
+  it("Escape closes the menu", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+});
+
 describe("BulkRecipeEditorPage — edit navigation", () => {
   it("Edit keeps the recipe in the list after navigating away", async () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Lasagne" });
