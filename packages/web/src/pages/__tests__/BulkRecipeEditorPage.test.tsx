@@ -453,6 +453,42 @@ describe("BulkRecipeEditorPage — New menu on folder rows", () => {
   });
 });
 
+describe("BulkRecipeEditorPage — New menu keyboard navigation", () => {
+  it("autoFocus puts focus on Recipe when menu opens", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    expect(screen.getByRole("menuitem", { name: "Recipe" })).toHaveFocus();
+  });
+
+  it("ArrowDown moves focus from Recipe to Folder", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Folder" })).toHaveFocus();
+  });
+
+  it("ArrowDown wraps from Folder back to Recipe", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Recipe" })).toHaveFocus();
+  });
+
+  it("ArrowUp from Recipe wraps to Folder (last item)", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{ArrowUp}");
+    expect(screen.getByRole("menuitem", { name: "Folder" })).toHaveFocus();
+  });
+
+  it("Escape closes the menu", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+});
+
 describe("BulkRecipeEditorPage — edit navigation", () => {
   it("Edit keeps the recipe in the list after navigating away", async () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Lasagne" });

@@ -200,11 +200,8 @@
   text-align: center;
 }
 
-/* Depth-based name cell indentation */
+/* Depth-based name cell indentation — <td> handles padding only */
 .bre-td--name {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
   padding-left: var(--spacing-sm);
 }
 
@@ -218,6 +215,21 @@
 
 .bre-td--name[data-depth="3"] {
   padding-left: calc(var(--spacing-sm) + 6em);
+}
+
+.bre-td--name[data-depth="4"] {
+  padding-left: calc(var(--spacing-sm) + 8em);
+}
+
+.bre-td--name[data-depth="5"] {
+  padding-left: calc(var(--spacing-sm) + 10em);
+}
+
+/* Flex layout lives in a <div> wrapper to avoid display:flex on <td> */
+.bre-td-name-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 /* ============================================================

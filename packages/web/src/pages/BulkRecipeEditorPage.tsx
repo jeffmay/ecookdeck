@@ -71,36 +71,38 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
     <tr className="bre-row bre-row--new-folder">
       <td className="bre-td bre-td--select" />
       <td className="bre-td bre-td--name" data-depth={depth}>
-        <form className="bre-new-folder-form" onSubmit={onSubmit}>
-          <input
-            type="text"
-            className="bre-new-folder-input"
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder="Folder name…"
-            aria-label="New folder name"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Escape") onCancel();
-            }}
-          />
-          <button
-            type="submit"
-            className="bre-new-folder-confirm"
-            disabled={name.trim() === ""}
-            aria-label="Confirm new folder"
-          >
-            ✔︎
-          </button>
-          <button
-            type="button"
-            className="bre-new-folder-cancel"
-            onClick={onCancel}
-            aria-label="Cancel new folder"
-          >
-            ↩
-          </button>
-        </form>
+        <div className="bre-td-name-inner">
+          <form className="bre-new-folder-form" onSubmit={onSubmit}>
+            <input
+              type="text"
+              className="bre-new-folder-input"
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="Folder name…"
+              aria-label="New folder name"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") onCancel();
+              }}
+            />
+            <button
+              type="submit"
+              className="bre-new-folder-confirm"
+              disabled={name.trim() === ""}
+              aria-label="Confirm new folder"
+            >
+              ✔︎
+            </button>
+            <button
+              type="button"
+              className="bre-new-folder-cancel"
+              onClick={onCancel}
+              aria-label="Cancel new folder"
+            >
+              ↩
+            </button>
+          </form>
+        </div>
       </td>
       <td className="bre-td bre-td--date" />
       <td className="bre-td bre-td--date" />
@@ -135,10 +137,14 @@ function NewItemMenuDropdown({ onRecipe, onFolder, onClose }: NewItemMenuDropdow
       btn?.focus();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      items[(idx + 1) % items.length]?.focus();
+      e.stopPropagation();
+      // When nothing is focused yet, start at the first item.
+      items[idx === -1 ? 0 : (idx + 1) % items.length]?.focus();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      items[(idx - 1 + items.length) % items.length]?.focus();
+      e.stopPropagation();
+      // When nothing is focused yet, start at the last item.
+      items[idx === -1 ? items.length - 1 : (idx - 1 + items.length) % items.length]?.focus();
     }
   }
 
@@ -532,21 +538,23 @@ export function BulkRecipeEditorPage() {
           <tr className="bre-row bre-row--folder bre-row--root">
             <td className="bre-td bre-td--select" />
             <td className="bre-td bre-td--name" data-depth={0}>
-              <button
-                type="button"
-                className="bre-expand-btn"
-                onClick={() => setRootExpanded((v) => !v)}
-                aria-expanded={rootExpanded}
-                aria-label={`${rootExpanded ? "Collapse" : "Expand"} Recipes folder`}
-              >
-                <span className="bre-expand-icon" aria-hidden>
-                  {rootExpanded ? "▼" : "▶"}
+              <div className="bre-td-name-inner">
+                <button
+                  type="button"
+                  className="bre-expand-btn"
+                  onClick={() => setRootExpanded((v) => !v)}
+                  aria-expanded={rootExpanded}
+                  aria-label={`${rootExpanded ? "Collapse" : "Expand"} Recipes folder`}
+                >
+                  <span className="bre-expand-icon" aria-hidden>
+                    {rootExpanded ? "▼" : "▶"}
+                  </span>
+                </button>
+                <span className="bre-folder-icon" aria-hidden>
+                  📁
                 </span>
-              </button>
-              <span className="bre-folder-icon" aria-hidden>
-                📁
-              </span>
-              <span className="bre-name">Recipes</span>
+                <span className="bre-name">Recipes</span>
+              </div>
             </td>
             <td className="bre-td bre-td--date">—</td>
             <td className="bre-td bre-td--date">—</td>
@@ -609,21 +617,23 @@ export function BulkRecipeEditorPage() {
                       <tr className="bre-row bre-row--folder">
                         <td className="bre-td bre-td--select" />
                         <td className="bre-td bre-td--name" data-depth={depth}>
-                          <button
-                            type="button"
-                            className="bre-expand-btn"
-                            onClick={() => toggleFolder(folder.id)}
-                            aria-expanded={isExpanded}
-                            aria-label={`${isExpanded ? "Collapse" : "Expand"} folder ${folder.name}`}
-                          >
-                            <span className="bre-expand-icon" aria-hidden>
-                              {isExpanded ? "▼" : "▶"}
+                          <div className="bre-td-name-inner">
+                            <button
+                              type="button"
+                              className="bre-expand-btn"
+                              onClick={() => toggleFolder(folder.id)}
+                              aria-expanded={isExpanded}
+                              aria-label={`${isExpanded ? "Collapse" : "Expand"} folder ${folder.name}`}
+                            >
+                              <span className="bre-expand-icon" aria-hidden>
+                                {isExpanded ? "▼" : "▶"}
+                              </span>
+                            </button>
+                            <span className="bre-folder-icon" aria-hidden>
+                              📁
                             </span>
-                          </button>
-                          <span className="bre-folder-icon" aria-hidden>
-                            📁
-                          </span>
-                          <span className="bre-name">{folder.name}</span>
+                            <span className="bre-name">{folder.name}</span>
+                          </div>
                         </td>
                         <td className="bre-td bre-td--date">—</td>
                         <td className="bre-td bre-td--date">—</td>
@@ -688,25 +698,27 @@ export function BulkRecipeEditorPage() {
                         />
                       </td>
                       <td className="bre-td bre-td--name" data-depth={depth}>
-                        {hasVersions ? (
-                          <button
-                            type="button"
-                            className="bre-expand-btn"
-                            onClick={() => toggleRecipeExpand(recipe.id)}
-                            aria-expanded={isExpanded}
-                            aria-label={`${isExpanded ? "Collapse" : "Expand"} versions of ${recipe.title}`}
-                          >
-                            <span className="bre-expand-icon" aria-hidden>
-                              {isExpanded ? "▼" : "▶"}
-                            </span>
-                          </button>
-                        ) : (
-                          <span className="bre-expand-spacer" aria-hidden />
-                        )}
-                        <span className="bre-name">{recipe.title}</span>
-                        {recipe.subtitle !== undefined && (
-                          <span className="bre-subtitle">{recipe.subtitle}</span>
-                        )}
+                        <div className="bre-td-name-inner">
+                          {hasVersions ? (
+                            <button
+                              type="button"
+                              className="bre-expand-btn"
+                              onClick={() => toggleRecipeExpand(recipe.id)}
+                              aria-expanded={isExpanded}
+                              aria-label={`${isExpanded ? "Collapse" : "Expand"} versions of ${recipe.title}`}
+                            >
+                              <span className="bre-expand-icon" aria-hidden>
+                                {isExpanded ? "▼" : "▶"}
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="bre-expand-spacer" aria-hidden />
+                          )}
+                          <span className="bre-name">{recipe.title}</span>
+                          {recipe.subtitle !== undefined && (
+                            <span className="bre-subtitle">{recipe.subtitle}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="bre-td bre-td--date">
                         {new Date(recipe.created_at).toLocaleDateString()}
@@ -734,14 +746,16 @@ export function BulkRecipeEditorPage() {
                   <tr key={`version-${version.id}`} className="bre-row bre-row--version">
                     <td className="bre-td bre-td--select" />
                     <td className="bre-td bre-td--name" data-depth={depth}>
-                      <span className="bre-expand-spacer" aria-hidden />
-                      <span className="bre-version-desc">
-                        {version.description !== "" ? (
-                          version.description
-                        ) : (
-                          <em>Untitled version</em>
-                        )}
-                      </span>
+                      <div className="bre-td-name-inner">
+                        <span className="bre-expand-spacer" aria-hidden />
+                        <span className="bre-version-desc">
+                          {version.description !== "" ? (
+                            version.description
+                          ) : (
+                            <em>Untitled version</em>
+                          )}
+                        </span>
+                      </div>
                     </td>
                     <td className="bre-td bre-td--date">
                       {new Date(version.created_at).toLocaleDateString()}
