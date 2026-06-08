@@ -489,6 +489,55 @@ describe("BulkRecipeEditorPage — New menu keyboard navigation", () => {
   });
 });
 
+describe("BulkRecipeEditorPage — inline folder rename", () => {
+  it("double-clicking a folder name shows the rename input pre-filled with the current name", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    const input = screen.getByRole("textbox", { name: "Rename folder Mains" });
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue("Mains");
+  });
+
+  it("changing the name and confirming updates the folder", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    const input = screen.getByRole("textbox", { name: "Rename folder Mains" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "Dinners");
+    await userEvent.click(screen.getByRole("button", { name: "Confirm rename folder" }));
+    expect(screen.queryByRole("textbox", { name: "Rename folder Mains" })).not.toBeInTheDocument();
+    expect(screen.getByText("Dinners")).toBeInTheDocument();
+  });
+
+  it("pressing Escape cancels the rename and restores the original name", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("textbox", { name: "Rename folder Mains" })).not.toBeInTheDocument();
+    expect(screen.getByText("Mains")).toBeInTheDocument();
+  });
+
+  it("clicking the cancel button hides the rename form", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel rename folder" }));
+    expect(screen.queryByRole("textbox", { name: "Rename folder Mains" })).not.toBeInTheDocument();
+    expect(screen.getByText("Mains")).toBeInTheDocument();
+  });
+
+  it("confirm button is disabled when the name is empty", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    await userEvent.clear(screen.getByRole("textbox", { name: "Rename folder Mains" }));
+    expect(screen.getByRole("button", { name: "Confirm rename folder" })).toBeDisabled();
+  });
+});
+
 describe("BulkRecipeEditorPage — edit navigation", () => {
   it("Edit keeps the recipe in the list after navigating away", async () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Lasagne" });

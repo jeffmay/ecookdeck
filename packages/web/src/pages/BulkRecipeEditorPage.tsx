@@ -55,6 +55,16 @@ type CreatingFolderState =
 const FOLDER_IDLE: CreatingFolderState = { kind: "idle" };
 
 // ---------------------------------------------------------------------------
+// EditingFolderState — inline rename state for existing folders
+// ---------------------------------------------------------------------------
+
+type EditingFolderState =
+  | { readonly kind: "idle" }
+  | { readonly kind: "editing"; readonly folderId: RecipeFolderId; readonly name: string };
+
+const FOLDER_EDIT_IDLE: EditingFolderState = { kind: "idle" };
+
+// ---------------------------------------------------------------------------
 // NewFolderRow
 // ---------------------------------------------------------------------------
 
@@ -224,7 +234,7 @@ function buildRows(
 export function BulkRecipeEditorPage() {
   const navigate = useNavigate();
   const { recipes, removeAll, merge } = useRecipeStore();
-  const { folders, createFolder } = useRecipeFolderStore();
+  const { folders, createFolder, updateFolder } = useRecipeFolderStore();
 
   const [rootExpanded, setRootExpanded] = useState(true);
   const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<RecipeFolderId>>(new Set());
@@ -241,6 +251,9 @@ export function BulkRecipeEditorPage() {
   // Inline folder-creation state.
   const [creatingFolder, setCreatingFolder] = useState<CreatingFolderState>(FOLDER_IDLE);
   const [newFolderName, setNewFolderName] = useState("");
+
+  // Inline folder-rename state.
+  const [editingFolder, setEditingFolder] = useState<EditingFolderState>(FOLDER_EDIT_IDLE);
 
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -359,6 +372,27 @@ export function BulkRecipeEditorPage() {
   function handleNewFolderCancel(): void {
     setCreatingFolder(FOLDER_IDLE);
     setNewFolderName("");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rename-folder helpers
+  // ---------------------------------------------------------------------------
+
+  function handleStartRenameFolder(folder: RecipeFolder): void {
+    setEditingFolder({ kind: "editing", folderId: folder.id, name: folder.name });
+  }
+
+  function handleRenameFolderSubmit(e: FormEvent, folder: RecipeFolder): void {
+    e.preventDefault();
+    if (editingFolder.kind !== "editing") return;
+    const name = editingFolder.name.trim();
+    if (name === "") return;
+    updateFolder({ ...folder, name });
+    setEditingFolder(FOLDER_EDIT_IDLE);
+  }
+
+  function handleRenameFolderCancel(): void {
+    setEditingFolder(FOLDER_EDIT_IDLE);
   }
 
   const isCreatingAtRoot =
@@ -632,7 +666,54 @@ export function BulkRecipeEditorPage() {
                             <span className="bre-folder-icon" aria-hidden>
                               📁
                             </span>
-                            <span className="bre-name">{folder.name}</span>
+                            {editingFolder.kind === "editing" &&
+                            editingFolder.folderId === folder.id ? (
+                              <form
+                                className="bre-rename-folder-form"
+                                onSubmit={(e) => handleRenameFolderSubmit(e, folder)}
+                              >
+                                <input
+                                  type="text"
+                                  className="bre-rename-folder-input"
+                                  value={editingFolder.name}
+                                  onChange={(e) =>
+                                    setEditingFolder({
+                                      kind: "editing",
+                                      folderId: folder.id,
+                                      name: e.target.value,
+                                    })
+                                  }
+                                  aria-label={`Rename folder ${folder.name}`}
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Escape") handleRenameFolderCancel();
+                                  }}
+                                />
+                                <button
+                                  type="submit"
+                                  className="bre-rename-folder-confirm"
+                                  disabled={editingFolder.name.trim() === ""}
+                                  aria-label="Confirm rename folder"
+                                >
+                                  ✔︎
+                                </button>
+                                <button
+                                  type="button"
+                                  className="bre-rename-folder-cancel"
+                                  onClick={handleRenameFolderCancel}
+                                  aria-label="Cancel rename folder"
+                                >
+                                  ↩
+                                </button>
+                              </form>
+                            ) : (
+                              <span
+                                className="bre-name bre-name--editable"
+                                onDoubleClick={() => handleStartRenameFolder(folder)}
+                              >
+                                {folder.name}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="bre-td bre-td--date">—</td>
