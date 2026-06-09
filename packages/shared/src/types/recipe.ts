@@ -37,7 +37,7 @@ const section = type
       "...": "BaseSectionItem",
       kind: "'ingredient'",
       ingredient_id: IngredientId.type,
-      "amount?": Measurement.type,
+      "customAmount?": Measurement.type,
     },
     ContainerItem: {
       "...": "BaseSectionItem",

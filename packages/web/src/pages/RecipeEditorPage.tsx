@@ -1,15 +1,21 @@
-import type { IngredientId, RecipeFolder } from "@recipe-book/shared";
+import type { AnyCompanion, IngredientId, RecipeFolder } from "@recipe-book/shared";
 import {
+  addFractions,
+  assertDefined,
   ContainerId,
   type ContainerItem,
   EquipmentId,
+  formatFraction,
   type Fraction,
-  type Ingredient,
+  Ingredient,
   type IngredientItem,
   type Instruction,
   type KitchenwareLabel,
+  loadId,
   type Measurement,
   MeasurementUnit,
+  paddedId,
+  randomId,
   type Recipe,
   RecipeFolderId,
   type RecipeIngredient,
@@ -20,15 +26,10 @@ import {
   type SectionItem,
   SectionItemId,
   type TextBlock,
-  addFractions,
-  formatFraction,
-  loadId,
-  paddedId,
-  randomId,
   unitType,
 } from "@recipe-book/shared";
-import { assertDefined } from "@recipe-book/shared/src/assertions/index.ts";
 import { useMemo, useState } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
 import { IngredientSelector } from "../components/ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
@@ -73,10 +74,10 @@ function headingForDepth(depth: number): HeadingLevel {
 // Helper: collect all IngredientItems from sections (including inside containers)
 // ---------------------------------------------------------------------------
 
-function collectIngredientItems(sections: readonly Section[]): IngredientItem[] {
-  const items: IngredientItem[] = [];
+function collectIngredientItems(sections: ReadonlyDeep<Section[]>): ReadonlyDeep<IngredientItem>[] {
+  const items: ReadonlyDeep<IngredientItem>[] = [];
 
-  function walk(contents: readonly SectionItem[]) {
+  function walk(contents: ReadonlyDeep<SectionItem[]>) {
     for (const item of contents) {
       if (item.kind === "ingredient") {
         items.push(item);
@@ -116,12 +117,14 @@ function computeIngredientTotals(
     if (!grouped.has(item.ingredient_id)) {
       grouped.set(item.ingredient_id, new Map());
     }
-    if (item.amount !== undefined) {
+    if (item.customAmount !== undefined) {
       const unitMap = grouped.get(item.ingredient_id)!;
-      const existing = unitMap.get(item.amount.unit);
+      const existing = unitMap.get(item.customAmount.unit);
       unitMap.set(
-        item.amount.unit,
-        existing !== undefined ? addFractions(existing, item.amount.value) : item.amount.value,
+        item.customAmount.unit,
+        existing !== undefined
+          ? addFractions(existing, item.customAmount.value)
+          : item.customAmount.value,
       );
     }
   }
@@ -137,10 +140,33 @@ function computeIngredientTotals(
 }
 
 // ---------------------------------------------------------------------------
+// Helper: compute the amount of an ingredient
+// ---------------------------------------------------------------------------
+
+export function computeAmountOrDefault(
+  item: IngredientItem,
+  allIngredients: ReadonlyDeep<Ingredient[]>,
+): Measurement {
+  if (item.customAmount) return item.customAmount;
+  const ingredient = getByIdOrThrow(Ingredient, allIngredients, item.ingredient_id);
+  return ingredient.default_measurement_value;
+}
+
+export function getByIdOrThrow<A extends ReadonlyDeep<V[]>, V extends { id: string }>(
+  companion: AnyCompanion<V>,
+  values: A,
+  id: V["id"],
+): A[number] {
+  const found = values.find((v) => v.id === id);
+  assertDefined(found, `Could not find ${companion.name} by id=${id}`);
+  return found;
+}
+
+// ---------------------------------------------------------------------------
 // Helper: compute top-level RecipeIngredient[] from sections (for saving)
 // ---------------------------------------------------------------------------
 
-export function computeTopIngredients(sections: readonly Section[]): RecipeIngredient[] {
+export function computeTopIngredients(sections: ReadonlyDeep<Section[]>): RecipeIngredient[] {
   const items = collectIngredientItems(sections);
   const seen = new Set<IngredientId>();
   const result: RecipeIngredient[] = [];
@@ -151,7 +177,7 @@ export function computeTopIngredients(sections: readonly Section[]): RecipeIngre
       result.push({
         id: randomId(RecipeIngredientId),
         ingredient_id: item.ingredient_id,
-        ...(item.amount !== undefined && { amount: item.amount }),
+        ...(item.customAmount && { amount: item.customAmount }),
       });
     }
   }
@@ -197,12 +223,10 @@ export function resolveAmountOnIngredientChange(
   currentAmount: Measurement | undefined,
   allIngredients: readonly Ingredient[],
 ): Measurement {
-  const newIngredient = allIngredients.find((i) => i.id === newIngredientId);
-  assertDefined(newIngredient);
-
+  const newIngredient = getByIdOrThrow(Ingredient, allIngredients, newIngredientId);
   if (
-    currentAmount !== undefined &&
-    oldIngredientId !== undefined &&
+    currentAmount &&
+    oldIngredientId &&
     newIngredient.parent_id === oldIngredientId &&
     isSameMeasurementCategory(currentAmount.unit, newIngredient.default_measurement_value.unit)
   ) {
@@ -242,57 +266,55 @@ function IngredientItemRow({
   onRemove,
 }: IngredientItemRowProps) {
   const [isEditingIngredient, setIsEditingIngredient] = useState(false);
-  const ingredient = allIngredients.find((i) => i.id === item.ingredient_id);
-  const name = ingredient?.name ?? item.ingredient_id;
+  const ingredient = getByIdOrThrow(Ingredient, allIngredients, item.ingredient_id);
 
   function handleIngredientChange(id: IngredientId | undefined) {
-    if (id !== undefined) {
+    if (id) {
       const newAmount = resolveAmountOnIngredientChange(
         item.ingredient_id,
         id,
-        item.amount,
+        item.customAmount,
         allIngredients,
       );
-      onChange({ ...item, ingredient_id: id, amount: newAmount });
+      onChange({ ...item, ingredient_id: id, customAmount: newAmount });
     }
     setIsEditingIngredient(false);
   }
 
   return (
-    <div className={"re-item re-item--ingredients"} role="group" aria-label={`Ingredient: ${name}`}>
+    <div
+      className={"re-item re-item--ingredients"}
+      role="group"
+      aria-label={`Ingredient: ${ingredient.name}`}
+    >
       {isEditingIngredient ? (
-        <IngredientSelector
-          value={item.ingredient_id}
-          options={allIngredients}
-          labels={allLabels}
-          onChange={handleIngredientChange}
-          ariaLabel={`Change ingredient (currently ${name})`}
-        />
+        <>
+          <IngredientSelector
+            value={item.ingredient_id}
+            options={allIngredients}
+            labels={allLabels}
+            onChange={handleIngredientChange}
+            ariaLabel={`Change ingredient (currently ${ingredient.name})`}
+          />
+          <MeasurementEditor
+            value={item.customAmount ?? ingredient.default_measurement_value}
+            onCommit={(newAmount) => onChange({ ...item, customAmount: newAmount })}
+          />
+        </>
       ) : (
         <span
           className="re-item-label"
           title="Double-click to change ingredient"
           onDoubleClick={() => setIsEditingIngredient(true)}
         >
-          {name}
+          {ingredient.name}
         </span>
       )}
-      {ingredient && (
-        <MeasurementEditor
-          value={ingredient.default_measurement_value}
-          onCommit={(newAmount) => onChange({ ...item, amount: newAmount })}
-        />
-      )}
-      {/* {amountMissing && (
-        <span className="re-item-amount-warning" role="alert" aria-label="Amount required">
-          Amount required
-        </span>
-      )} */}
       <button
         type="button"
         className="re-item-remove"
         onClick={onRemove}
-        aria-label={`Remove ingredient ${name}`}
+        aria-label={`Remove ingredient ${ingredient.name}`}
       >
         −
       </button>
@@ -330,7 +352,7 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
       kind: "ingredient",
       id: randomId(SectionItemId),
       ingredient_id: selectedIngredient.id,
-      amount: amount ?? selectedIngredient.default_measurement_value,
+      ...(amount ? { customAmount: amount } : {}),
     });
   }
 
@@ -1090,12 +1112,12 @@ export function RecipeEditor({
     } else {
       const v = latestVersion(recipe);
       const version: RecipeVersion = {
-        id: v?.id ?? randomId(RecipeVersionId),
+        id: (form.create_new_version && v?.id) || randomId(RecipeVersionId),
         recipe_id: recipe.id,
         description: form.description,
         ingredients: computedIngredients,
         sections: form.sections,
-        created_at: v?.created_at ?? Date.now(),
+        created_at: (form.create_new_version && v?.created_at) || Date.now(),
       };
       const updated = save(recipe.id, {
         title: form.title,
@@ -1117,7 +1139,7 @@ export function RecipeEditor({
   }
 
   const missingAmountCount = useMemo(
-    () => collectIngredientItems(form.sections).filter((i) => i.amount === undefined).length,
+    () => collectIngredientItems(form.sections).filter((i) => i.customAmount == null).length,
     [form.sections],
   );
   const descriptionError =

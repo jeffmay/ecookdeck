@@ -1,4 +1,4 @@
-import type { Ingredient } from "@recipe-book/shared";
+import type { Ingredient, Measurement, Section } from "@recipe-book/shared";
 import {
   ContainerId,
   createRecipe,
@@ -238,80 +238,90 @@ describe("resolveAmountOnIngredientChange", () => {
 });
 
 describe("computeTopIngredients", () => {
-  const BUTTER_ID = paddedId(IngredientId, "------butter");
-  const FLOUR_ID = paddedId(IngredientId, "-------flour");
-  const BOWL_ID = paddedId(ContainerId, "--------bowl");
+  const BUTTER_ID = paddedId(IngredientId, "butter");
+  const FLOUR_ID = paddedId(IngredientId, "flour");
+  const BOWL_ID = paddedId(ContainerId, "bowl");
+
+  const ONE_CUP = {
+    value: { numerator: 1, denominator: 1 },
+    unit: "cup",
+  } as const satisfies Measurement;
+  const TWO_CUPS = {
+    value: { numerator: 2, denominator: 1 },
+    unit: "cup",
+  } as const satisfies Measurement;
+  const ONE_TSP = {
+    value: { numerator: 1, denominator: 1 },
+    unit: "tsp",
+  } as const satisfies Measurement;
 
   it("creates one entry per unique ingredient, using the first occurrence's amount", () => {
     const sections = [
       {
-        kind: "section" as const,
+        kind: "section",
         id: randomId(SectionItemId),
         contents: [
           {
-            kind: "ingredient" as const,
+            kind: "ingredient",
             id: randomId(SectionItemId),
             ingredient_id: BUTTER_ID,
-            amount: { value: { numerator: 2, denominator: 1 }, unit: "cup" as const },
+            customAmount: TWO_CUPS,
           },
           {
-            kind: "ingredient" as const,
+            kind: "ingredient",
             id: randomId(SectionItemId),
             ingredient_id: BUTTER_ID,
-            amount: { value: { numerator: 1, denominator: 1 }, unit: "tsp" as const },
+            customAmount: ONE_TSP,
           },
           {
-            kind: "ingredient" as const,
+            kind: "ingredient",
             id: randomId(SectionItemId),
             ingredient_id: FLOUR_ID,
           },
         ],
       },
-    ];
+    ] as const satisfies Section[];
     const result = computeTopIngredients(sections);
     expect(result).toHaveLength(2);
-    expect(result.find((r) => r.ingredient_id === BUTTER_ID)?.amount).toEqual({
-      value: { numerator: 2, denominator: 1 },
-      unit: "cup",
-    });
+    expect(result.find((r) => r.ingredient_id === BUTTER_ID)?.amount).toEqual(TWO_CUPS);
     expect(result.find((r) => r.ingredient_id === FLOUR_ID)?.amount).toBeUndefined();
   });
 
   it("includes ingredients from container contents and nested sections", () => {
     const sections = [
       {
-        kind: "section" as const,
+        kind: "section",
         id: randomId(SectionItemId),
         contents: [
           {
-            kind: "container" as const,
+            kind: "container",
             id: randomId(SectionItemId),
             container_id: BOWL_ID,
             descriptor: "mixing",
             contents: [
               {
-                kind: "ingredient" as const,
+                kind: "ingredient",
                 id: randomId(SectionItemId),
                 ingredient_id: BUTTER_ID,
-                amount: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
+                customAmount: ONE_CUP,
               },
             ],
           },
           {
-            kind: "section" as const,
+            kind: "section",
             id: randomId(SectionItemId),
             contents: [
               {
-                kind: "ingredient" as const,
+                kind: "ingredient",
                 id: randomId(SectionItemId),
                 ingredient_id: FLOUR_ID,
-                amount: { value: { numerator: 2, denominator: 1 }, unit: "cup" as const },
+                customAmount: TWO_CUPS,
               },
             ],
           },
         ],
       },
-    ];
+    ] as const satisfies Section[];
     const result = computeTopIngredients(sections);
     expect(result).toHaveLength(2);
     expect(result.some((r) => r.ingredient_id === BUTTER_ID)).toBe(true);
