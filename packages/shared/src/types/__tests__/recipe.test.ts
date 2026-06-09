@@ -10,12 +10,12 @@ import {
   isInstruction,
   isSection,
   isTextBlock,
-  type SectionItem,
-  SectionItemId,
-  type Section,
-  type TextBlock,
   RecipeIngredient,
   RecipeIngredientId,
+  type Section,
+  type SectionItem,
+  SectionItemId,
+  type TextBlock,
 } from "../recipe.ts";
 
 describe("recipe item type guards", () => {
@@ -23,7 +23,7 @@ describe("recipe item type guards", () => {
     kind: "ingredient",
     id: paddedId(SectionItemId, "item-1"),
     ingredient_id: paddedId(IngredientId, "butter"),
-    amount: { value: { numerator: 1, denominator: 2 }, unit: "cup" },
+    customAmount: { value: { numerator: 1, denominator: 2 }, unit: "cup" },
   };
 
   const container_item: ContainerItem = {
@@ -85,13 +85,15 @@ describe("recipe item type guards", () => {
 });
 
 describe("IngredientItem", () => {
-  it("accepts an item without amount", () => {
+  const oneTbsp = { value: { numerator: 1, denominator: 1 }, unit: "tbsp" } as const;
+
+  it("accepts an item without a custom amount", () => {
     const item: IngredientItem = {
       kind: "ingredient",
       id: paddedId(SectionItemId, "item-1"),
       ingredient_id: paddedId(IngredientId, "butter"),
     };
-    expect(item.amount).toBeUndefined();
+    expect(item.customAmount).toBeUndefined();
   });
 
   it("accepts an item with notes", () => {
@@ -99,6 +101,7 @@ describe("IngredientItem", () => {
       kind: "ingredient",
       id: paddedId(SectionItemId, "item-1"),
       ingredient_id: paddedId(IngredientId, "butter"),
+      customAmount: oneTbsp,
       notes: ["add more to taste", "better at room temp"],
     };
     expect(item.notes).toHaveLength(2);

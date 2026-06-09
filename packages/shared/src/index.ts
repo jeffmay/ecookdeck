@@ -1,3 +1,4 @@
+export * from "./assertions/index.ts";
 export * from "./types/ids.ts";
 export * from "./types/companion.ts";
 export * from "./types/enums.ts";
