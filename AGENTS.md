@@ -2,14 +2,14 @@
 
 ## Project Description
 
-A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with an e-ink compatible UI and aesthetic (2D wireframe, handwritten style), optimized for 880×528 pixel screen, focused on touch/click interactions.
+A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with a greyscale e-ink compatible UI and aesthetic (2D wireframe, handwritten style), optimized for the 1404 x 1872 pixel screen of the [PineNote](https://pine64.org/devices/pinenote/) greyscale e-ink tablet, focused on touch/click interactions using a stylus over a physical keyboard.
 
 ## Code Conventions
 
 - Prettier for formatting
 - ESLint for linting
 - Functional components with hooks for React
-- Optimize for 880×528 pixel e-ink screen
+- Optimize for the 1404 x 1872 pixel greyscale e-ink screen of the [PineNote](https://pine64.org/devices/pinenote/)
 - 2-space indentation
 - TitleCase for components, classes, and enum type names
 - camelCase for function names (including hooks, event handlers, and utility functions)
@@ -17,11 +17,14 @@ A local-first single-page web app for creating and managing recipes, with option
 
 ## Common Development Tasks
 
+Run the following in order before every commit:
+
 ```
 npm run typecheck     # Typecheck all files
 npm test              # Run all tests
 npm run format        # Run the autoformatter on all files
 npm run lint          # Run the linter on all files
+graphify update .     # Update the /graphify-out directory after changes
 ```
 
 The app is running at http://localhost:5173, and you can use the Playwright MCP to access it.
@@ -29,7 +32,8 @@ The app is running at http://localhost:5173, and you can use the Playwright MCP 
 ## Rules
 
 - ALWAYS use relative paths over absolute paths to avoid needing to prompt me for access.
-- MUST ALWAYS run `npm run typecheck`, `npm test`, `npm run format`, and then `npm run lint` for all files before commiting code changes.
+- MUST ALWAYS run `npm run typecheck`, `npm test`, `npm run format`, `npm run lint`, and then `graphify update .` for all files before commiting code changes.
+  (This is handled automatically by husky pre-commit-msg hook)
 - MUST NEVER commit changes to the `main` branch.
 - MUST ALWAYS commit all completed work to a kabob-case named feature branch with a comprehensive git commit message using [gitmoji](https://gitmoji.dev/) where applicable.
 - MUST ALWAYS keep CLAUDE.md up-to-date with file structure, architecture, testing, and data models.
@@ -208,6 +212,9 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 ## UI Pages & Components
 
+- All editor components use "↩" (cancel changes) and "✔︎" (accept changes) buttons in left-to-right order.
+  If the horizontal screen space is needed, the buttons can be stacked from top-to-bottom.
+
 ### Home Page
 
 - Active sessions list: progress bar, estimated time left, percent complete (opens in new tab)
@@ -247,7 +254,6 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Can open with pre-filled one-off adjustments
 - "Rescale to adjusted amount" button per ingredient (sets multiplier to ratio of one-off ÷ original)
 - Additional one-off adjustment inputs (reuses active session one-off component)
-- "↩" / "✔︎" buttons
 
 ### Edit Past Session
 
@@ -264,8 +270,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
    - ×2, ×3, ×5
    - −1, −½, −⅓, −⅕, −⅛
    - +⅛, +⅕, +⅓, +½, +1
-3. "✔︎" — accepts value; if a measurement unit, converts to largest evenly-dividing unit
-4. "↩" — resets to value before editor opened
+3. "↩" — resets to value before editor opened
+4. "✔︎" — accepts value; if a measurement unit, converts to largest evenly-dividing unit
 
 - Unit selector: radio/select for all units of the same measurement type
 
@@ -299,7 +305,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 ## Design System
 
-- **Aesthetic:** 2D wireframe / handwritten style, e-ink white background, optimized for 880×528 pixel screen
+- **Aesthetic:** 2D wireframe / handwritten style, greyscale e-ink white background, optimized for 1404 x 1872 pixel screen
 - **Interactions:** Optimized for touch / click, but also supports keyboard accessibility
 - **Layout:** Responsive — no horizontal scrolling; maximize horizontal space at all screen sizes
 - **Styling:** CSS-only (no JS layout), `vw` units for widths (except relative font sizes use `em`)
@@ -329,16 +335,6 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 | String discriminator values (enum)             | snake_case                    | `"measurement_type"`, `"ingredient_item"`, `"volume"` |
 | CSS classes (unless defined by 3rd party)      | kebab-case                    | `.re-editor`, `le__multi-value__remove`               |
 | CSS file names                                 | TitleCase (matches component) | `DurationEditor.css` for `DurationEditor.tsx`         |
-
-Run order before every commit:
-
-```
-npm run typecheck
-npm test
-npm run format
-npm run lint
-graphify update .
-```
 
 ## graphify
 
