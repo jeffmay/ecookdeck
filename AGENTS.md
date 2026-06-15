@@ -15,6 +15,17 @@ A local-first single-page web app for creating and managing recipes, with option
 - camelCase for function names (including hooks, event handlers, and utility functions)
 - snake_case for data: object/interface field names, Yjs map keys
 
+## Developer Setup
+
+First-time setup (installs external tools like `graphify`):
+
+```
+npm install
+npm run setup
+```
+
+`npm run setup` runs `scripts/setup.sh`, which installs `uv` (if missing) and then `uv tool install graphifyy`. The `graphify` command is used to maintain the knowledge graph at `graphify-out/`.
+
 ## Common Development Tasks
 
 Run the following in order before every commit:
